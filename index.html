@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Поэтическая Полка</title>
 
-    <!-- Google Fonts: за засечки и характер отвечают Playfair Display и Merriweather -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/styles.css">
@@ -165,5 +163,188 @@
     </div>
 </div>
 
+<!-- Модальное окно: Автор (Создание / Редактирование) -->
+<div class="modal fade" id="authorModal" tabindex="-1" aria-labelledby="authorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-display fw-bold mb-0" id="authorModalLabel">Автор</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1" id="parseClipboardBtn" title="Вставить ФИО и годы из буфера обмена" style="font-size: 0.75rem;">
+                        📋 Из буфера
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+            </div>
+            <form id="authorForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="authorId">
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="authorLastName" class="form-label small fw-bold text-muted mb-1">Фамилия *</label>
+                            <input type="text" class="form-control" id="authorLastName" required placeholder="Шевченко">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="authorFirstName" class="form-label small fw-bold text-muted mb-1">Имя *</label>
+                            <input type="text" class="form-control" id="authorFirstName" required placeholder="Тарас">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="authorSurName" class="form-label small fw-bold text-muted mb-1">Отчество</label>
+                            <input type="text" class="form-control" id="authorSurName" placeholder="Григорьевич">
+                        </div>
+
+                        <div class="col-6">
+                            <label for="authorBirthYear" class="form-label small fw-bold text-muted mb-1">Год рождения</label>
+                            <input type="number" class="form-control" id="authorBirthYear" placeholder="1814">
+                        </div>
+                        <div class="col-6">
+                            <label for="authorDeathYear" class="form-label small fw-bold text-muted mb-1">Год смерти</label>
+                            <input type="number" class="form-control" id="authorDeathYear" placeholder="1861">
+                        </div>
+
+                        <!-- Блок Фотографии с выбором источника (Файл, URL или Буфер) -->
+                        <div class="col-12 mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold text-muted mb-0">Фотография автора</label>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="photoSourceMode" id="photoModeFile" value="file" checked>
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="photoModeFile" style="font-size: 0.75rem;">Файл</label>
+
+                                    <input type="radio" class="btn-check" name="photoSourceMode" id="photoModeUrl" value="url">
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="photoModeUrl" style="font-size: 0.75rem;">URL</label>
+
+                                    <input type="radio" class="btn-check" name="photoSourceMode" id="photoModeBuffer" value="buffer">
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="photoModeBuffer" style="font-size: 0.75rem;">Буфер</label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-3 mt-2">
+                                <div class="position-relative flex-shrink-0">
+                                    <img id="authorPhotoPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d8c8b8'/><text x='50%' y='55%' font-size='35' text-anchor='middle' dominant-baseline='middle' fill='%235c4a3e'>📷</text></svg>" class="hero-avatar-img" style="width: 70px; height: 70px;" alt="Preview">
+                                </div>
+
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <!-- 1. Загрузка из файла -->
+                                    <div id="photoFileInputContainer">
+                                        <input type="file" class="form-control form-control-sm" id="authorPhotoInput" accept="image/*">
+                                    </div>
+
+                                    <!-- 2. Загрузка по URL -->
+                                    <div id="photoUrlInputContainer" class="d-none">
+                                        <div class="input-group input-group-sm">
+                                            <input type="url" class="form-control" id="authorPhotoUrlInput" placeholder="https://example.com/photo.jpg">
+                                            <button class="btn btn-outline-secondary" type="button" id="loadPhotoFromUrlBtn">Загрузить</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. Загрузка из Буфера обмена -->
+                                    <div id="photoBufferInputContainer" class="d-none">
+                                        <button type="button" class="btn btn-sm btn-outline-primary w-100" id="pastePhotoFromBufferBtn">
+                                            📋 Вставить изображение из буфера
+                                        </button>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <small class="text-muted" style="font-size: 0.75rem;">Сжимается в JPEG (300x300 px)</small>
+                                        <button type="button" class="btn btn-link text-danger p-0 d-none" id="removePhotoBtn" style="font-size: 0.8rem;">Удалить</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="authorPhotoBase64">
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top bg-light py-2 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger btn-sm d-none" id="deleteAuthorBtn">Удалить автора</button>
+                    <div class="ms-auto d-flex gap-2">
+                        <button type="button" class="btn btn-vintage-outline btn-sm" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-accent btn-sm rounded-pill px-4">Сохранить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно: Стих (Создание / Редактирование) -->
+<div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title font-display fw-bold mb-0" id="postModalLabel">Произведение</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <form id="postForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="postId">
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="postTitle" class="form-label small fw-bold text-muted mb-1">Название произведения</label>
+                            <input type="text" class="form-control" id="postTitle" placeholder="Если пустое — возьмется первая строка">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="postYear" class="form-label small fw-bold text-muted mb-1">Год написания</label>
+                            <input type="number" class="form-control" id="postYear" placeholder="1845">
+                        </div>
+
+                        <!-- Переключатель режима ввода текста -->
+                        <div class="col-12 mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold text-muted mb-0">Текст произведения *</label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="useHtmlToggle">
+                                    <label class="form-check-label small text-muted" for="useHtmlToggle">HTML разметка (contentHtml)</label>
+                                </div>
+                            </div>
+
+                            <!-- Простой текст -->
+                            <div id="plainTextContainer">
+                                <textarea class="form-control font-serif" id="postContent" rows="10" placeholder="Як умру, то поховайте..."></textarea>
+                            </div>
+
+                            <!-- HTML разметка -->
+                            <div id="htmlTextContainer" class="d-none">
+                                <textarea class="form-control font-monospace text-muted" id="postContentHtml" rows="10" style="font-size: 0.85rem;" placeholder="<p>Як умру, то поховайте...<br>Мене на могилі...</p>"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Заметка / Исторический контекст -->
+                        <div class="col-12 mt-3">
+                            <label for="postNote" class="form-label small fw-bold text-muted mb-1">Заметка / Контекст (💡)</label>
+                            <textarea class="form-control" id="postNote" rows="2" placeholder="Написано во время болезни в Переяславе..."></textarea>
+                        </div>
+
+                        <!-- Динамические внешние ссылки -->
+                        <div class="col-12 mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label small fw-bold text-muted mb-0">Внешние ссылки / Источники</label>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" id="addLinkRowBtn" style="font-size: 0.8rem;">+ Добавить ссылку</button>
+                            </div>
+                            <div id="linksListContainer" class="d-flex flex-column gap-2">
+                                <!-- Динамические строки ссылок будут вставляться сюда -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top bg-light py-2 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger btn-sm d-none" id="deletePostBtn">Удалить стих</button>
+                    <div class="ms-auto d-flex gap-2">
+                        <button type="button" class="btn btn-vintage-outline btn-sm" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-accent btn-sm rounded-pill px-4">Сохранить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/main.js"></script>
 </body>
 </html>

@@ -1,4 +1,90 @@
 /* ==========================================================================
+   Локальные шрифты
+   ========================================================================== */
+
+/* Merriweather */
+@font-face {
+    font-family: 'Merriweather';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/merriweather-v33-cyrillic_latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Merriweather';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/merriweather-v33-cyrillic_latin-italic.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Merriweather';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('fonts/merriweather-v33-cyrillic_latin-800.woff2') format('woff2');
+}
+
+/* Playfair Display */
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/playfair-display-v40-cyrillic_latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/playfair-display-v40-cyrillic_latin-italic.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('fonts/playfair-display-v40-cyrillic_latin-800.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans */
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/plus-jakarta-sans-v12-cyrillic-ext_latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/plus-jakarta-sans-v12-cyrillic-ext_latin-italic.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('fonts/plus-jakarta-sans-v12-cyrillic-ext_latin-800.woff2') format('woff2');
+}
+
+/* Переменные шрифтов */
+:root {
+    --font-serif: 'Merriweather', Georgia, serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* ==========================================================================
    Переменные и общие стили (Винтажный книжный стиль)
    ========================================================================== */
 :root {
@@ -265,4 +351,14 @@ body.vintage-app {
 .poem-link-badge:hover {
     background-color: var(--highlight-bg);
     color: var(--accent-hover);
+}
+
+.hero-avatar-img, .author-avatar-img {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-avatar-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
