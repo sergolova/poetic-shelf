@@ -170,6 +170,7 @@ class PoemStore {
         this.storageKey = storageKey;
         this.data = { authors: [] };
         this.selectedAuthorId = null;
+        this.selectedPostId = null; // null = оглавление (все), или id конкретного поста
     }
 
     async init() {
@@ -313,7 +314,7 @@ class PoemUI {
         this.postModal = new bootstrap.Modal(document.getElementById('postModal'));
     }
 
-    renderAuthorsList(authors, selectedId) {
+    renderAuthorsList(authors, selectedId, selectedPostId = null) {
         this.$authorsList.empty();
         this.$authorsCount.text(authors.length);
 
@@ -327,23 +328,44 @@ class PoemUI {
             const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
             const postsCount = author.posts ? author.posts.length : 0;
 
+            // Список произведений для выбранного автора
+            let postsListHtml = '';
+            if (isActive && author.posts && author.posts.length > 0) {
+                const isShowAll = !selectedPostId;
+                const itemsHtml = author.posts.map(p => {
+                    const isPostActive = p.id === selectedPostId;
+                    return `<a href="#" class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
+                        <span class="author-post-title text-truncate">${this.escape(p.title)}</span>
+                        ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
+                    </a>`;
+                }).join('');
+
+                postsListHtml = `
+                <div class="author-posts-list" style="display: none;">
+                    ${itemsHtml}
+                </div>`;
+            }
+
             const html = `
-        <a href="#" class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
-          <div class="author-avatar-wrapper">
-            <img src="${avatar}" class="author-avatar-img" alt="${author.lastName}">
-          </div>
-          <div class="author-info flex-grow-1 overflow-hidden">
-            <h6 class="author-name mb-0 text-truncate">${this.escape(author.lastName)} ${this.escape(author.firstName)}</h6>
-            <span class="author-years text-muted">${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
-          </div>
-          <span class="posts-count-badge">${postsCount}</span>
-        </a>
+        <div class="author-card-wrapper">
+          <a href="#" class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
+            <div class="author-avatar-wrapper">
+              <img src="${avatar}" class="author-avatar-img" alt="${author.lastName}">
+            </div>
+            <div class="author-info flex-grow-1 overflow-hidden">
+              <h6 class="author-name mb-0 text-truncate">${this.escape(author.lastName)} ${this.escape(author.firstName)}</h6>
+              <span class="author-years text-muted">${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
+            </div>
+            <span class="posts-count-badge">${postsCount}</span>
+          </a>
+          ${postsListHtml}
+        </div>
       `;
             this.$authorsList.append(html);
         });
     }
 
-    renderAuthorMain(author, searchQuery = '') {
+    renderAuthorMain(author, searchQuery = '', selectedPostId = null) {
         if (!author) {
             this.$mainContent.html(`
         <div class="text-center text-muted my-5 py-5">
@@ -357,7 +379,7 @@ class PoemUI {
         const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
         let posts = author.posts || [];
 
-        // Если есть поисковый запрос — фильтруем и подсвечиваем стихи
+        // Если есть поисковый запрос — фильтруем стихи
         const q = searchQuery.toLowerCase().trim();
         if (q) {
             posts = posts.filter(post => {
@@ -370,8 +392,14 @@ class PoemUI {
             });
         }
 
-        const postsHtml = posts.length > 0
-            ? posts.map(p => this.createPoemCardHtml(p, q)).join('')
+        // Фильтрация постов по выбранному
+        let displayPosts = posts;
+        if (selectedPostId) {
+            displayPosts = posts.filter(p => p.id === selectedPostId);
+        }
+
+        const postsHtml = displayPosts.length > 0
+            ? displayPosts.map(p => this.createPoemCardHtml(p, q)).join('')
             : `<div class="alert alert-light text-center border py-4 text-muted">
           ${searchQuery ? 'В произведениях этого автора совпадений не найдено' : 'У этого автора пока нет сохранённых стихов'}
          </div>`;
@@ -564,7 +592,13 @@ class PoemApp {
     async init() {
         await this.store.init();
         this.bindEvents();
+        this.toggleClearButton();
         this.refresh();
+    }
+
+    toggleClearButton() {
+        const hasValue = $('#searchInput').val().trim().length > 0;
+        $('#clearSearchBtn').toggleClass('d-none', !hasValue);
     }
 
     refresh() {
@@ -580,10 +614,13 @@ class PoemApp {
             this.store.selectedAuthorId = authors[0].id;
         }
 
-        this.ui.renderAuthorsList(authors, this.store.selectedAuthorId);
+        this.ui.renderAuthorsList(authors, this.store.selectedAuthorId, this.store.selectedPostId);
+
+        // Плавное раскрытие списка произведений
+        $('.author-posts-list').slideDown(250);
 
         const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
-        this.ui.renderAuthorMain(currentAuthor, searchQuery);
+        this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
     }
     
     bindEvents() {
@@ -592,11 +629,29 @@ class PoemApp {
             e.preventDefault();
             const id = $(e.currentTarget).data('id');
             this.store.selectedAuthorId = id;
+            this.store.selectedPostId = null;
+            this.refresh();
+        });
+
+        // Клик по списку произведений в сайдбаре
+        $(document).on('click', '.author-post-item', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const postId = $(e.currentTarget).data('post-id');
+            this.store.selectedPostId = postId || null;
             this.refresh();
         });
 
         // Поиск
-        $('#searchInput').on('input', () => this.refresh());
+        $('#searchInput').on('input', () => {
+            this.refresh();
+            this.toggleClearButton();
+        });
+
+        // Очистка поиска
+        $('#clearSearchBtn').on('click', () => {
+            $('#searchInput').val('').trigger('input').focus();
+        });
 
         // --- События Автора ---
         $('#addAuthorBtn').on('click', () => {

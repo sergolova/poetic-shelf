@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/styles.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230d6efd'><path d='M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.35-.75-2.1-1zM21 18.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z'/></svg>">
 </head>
 <body class="vintage-app">
 
@@ -20,14 +21,15 @@
             <span class="brand-icon">🖋️</span>
             <div>
                 <h1 class="brand-title h4 mb-0">Поэтическая Полка</h1>
-                <small class="text-muted small-subtitle">Частная коллекция стихов и отрывков</small>
+                <small class="text-muted small-subtitle">Уголок шизофреника</small>
             </div>
         </div>
 
         <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0 header-search-box">
-            <div class="input-group input-group-sm">
+            <div class="input-group input-group-sm search-input-wrapper">
                 <span class="input-group-text border-0 bg-white">🔍</span>
                 <input type="search" id="searchInput" class="form-control border-0 shadow-none" placeholder="Поиск по авторам и строкам...">
+                <button class="btn btn-clear-search border-0 bg-white d-none" id="clearSearchBtn" type="button" title="Очистить">✕</button>
             </div>
         </div>
 

@@ -150,6 +150,17 @@ body.vintage-app {
     font-size: 0.875rem;
 }
 
+.btn-clear-search {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 0 6px;
+    transition: color 0.15s ease;
+}
+
+.btn-clear-search:hover {
+    color: var(--accent-color);
+}
+
 /* Кнопки в стиле винтажа */
 .btn-accent {
     background-color: var(--accent-color);
@@ -361,4 +372,82 @@ body.vintage-app {
 .hero-avatar-img:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================================================
+   Раскрывающийся список произведений в сайдбаре
+   ========================================================================== */
+.author-card-wrapper {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.author-card-wrapper:last-child {
+    border-bottom: none;
+}
+
+.author-posts-list {
+    background-color: var(--bg-main);
+    border-top: 1px solid var(--border-color);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.author-post-item {
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.15s ease;
+}
+
+.author-post-item:last-child {
+    border-bottom: none;
+}
+
+.author-post-item:hover {
+    background-color: var(--highlight-bg);
+    text-decoration: none;
+    color: var(--text-main);
+}
+
+.author-post-item.active {
+    background-color: var(--highlight-bg);
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.author-post-all {
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color) !important;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.author-post-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.author-post-year {
+    font-size: 0.75rem;
+}
+
+.author-post-count {
+    font-size: 0.7rem;
+    background-color: var(--bg-card);
+    padding: 1px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+/* Кастомный скроллбар для списка произведений */
+.author-posts-list::-webkit-scrollbar {
+    width: 4px;
+}
+.author-posts-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.author-posts-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
 }
