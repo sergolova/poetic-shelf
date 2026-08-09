@@ -53,7 +53,11 @@
         <aside class="col-lg-3 col-md-4">
             <div class="authors-sidebar card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-bottom d-flex align-items-center justify-content-between py-3">
-                    <span class="sidebar-heading">Авторы <span class="badge rounded-pill bg-accent ms-1" id="authorsCount">0</span></span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="sidebar-heading">Авторы <span class="badge rounded-pill bg-accent ms-1" id="authorsCount">0</span></span>
+                        <span class="sidebar-heading">•</span>
+                        <span class="sidebar-heading">Стихов <span class="badge rounded-pill bg-secondary ms-1" id="postsCount">0</span></span>
+                    </div>
                     <button class="btn btn-accent btn-sm rounded-pill px-3" id="addAuthorBtn">+ Автор</button>
                 </div>
 
@@ -167,7 +171,7 @@
 
 <!-- Модальное окно: Автор (Создание / Редактирование) -->
 <div class="modal fade" id="authorModal" tabindex="-1" aria-labelledby="authorModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom py-3 d-flex justify-content-between align-items-center">
                 <h5 class="modal-title font-display fw-bold mb-0" id="authorModalLabel">Автор</h5>
@@ -183,6 +187,23 @@
                     <input type="hidden" id="authorId">
 
                     <div class="row g-3">
+                        <!-- Переключатель порядка ФИО -->
+                        <div class="col-12">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <label class="form-label small fw-bold text-muted mb-0">Порядок:</label>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="nameOrder" id="nameOrderFIO" value="FIO" checked>
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="nameOrderFIO" style="font-size: 0.75rem;">ФИО</label>
+
+                                    <input type="radio" class="btn-check" name="nameOrder" id="nameOrderIFO" value="IFO">
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="nameOrderIFO" style="font-size: 0.75rem;">ИФО</label>
+
+                                    <input type="radio" class="btn-check" name="nameOrder" id="nameOrderIOF" value="IOF">
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="nameOrderIOF" style="font-size: 0.75rem;">ИОФ</label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-4">
                             <label for="authorLastName" class="form-label small fw-bold text-muted mb-1">Фамилия *</label>
                             <input type="text" class="form-control" id="authorLastName" required placeholder="Шевченко">

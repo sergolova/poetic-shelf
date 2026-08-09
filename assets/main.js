@@ -101,11 +101,8 @@ function cleanPastedText(text) {
  * Утилита: Парсинг строки ФИО и годов жизни
  */
 function parseAuthorText(rawText) {
-    console.log('parseAuthorText');
     const result = {
-        lastName: '',
-        firstName: '',
-        surName: '',
+        parts: [],
         birthYear: null,
         deathYear: null
     };
@@ -118,23 +115,59 @@ function parseAuthorText(rawText) {
     // Удаляем знаки ударения (Unicode combining characters)
     text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
 
-    // Парсим годы
-    const yearsRegex = /(?:\(?\s*(\d{3,4})\s*(?:[\–\—\−\-]\s*(\d{3,4})?)?\s*\)?)/;
-    const yearsMatch = text.match(yearsRegex);
-
-    if (yearsMatch) {
-        if (yearsMatch[1]) result.birthYear = parseInt(yearsMatch[1], 10);
-        if (yearsMatch[2]) result.deathYear = parseInt(yearsMatch[2], 10);
-        text = text.replace(yearsRegex, '').trim();
+    // Сначала находим годы (пока текст не обрезан)
+    const allYears = text.match(/\b(\d{4})\b/g);
+    
+    if (allYears && allYears.length >= 2) {
+        result.birthYear = parseInt(allYears[0], 10);
+        result.deathYear = parseInt(allYears[1], 10);
+    } else if (allYears && allYears.length === 1) {
+        result.birthYear = parseInt(allYears[0], 10);
     }
 
-    text = text.replace(/[(),]/g, '').trim();
-    const parts = text.split(/\s+/).filter(Boolean);
+    // Удаляем скобки с содержимым
+    text = text.replace(/\([^)]*\)/g, '').trim();
+    text = text.replace(/\[[^\]]*\]/g, '').trim();
 
-    if (parts.length >= 1) result.lastName = parts[0];
-    if (parts.length >= 2) result.firstName = parts[1];
-    if (parts.length >= 3) result.surName = parts.slice(2).join(' ');
+    // Удаляем всё начиная с первого года (если он был вне скобок)
+    text = text.replace(/\b\d{4}\b.*$/, '').trim();
 
+    // Удаляем остатки: числа, запятые, двоеточия, точки с запятой
+    text = text.replace(/\b\d+\b/g, '').trim();
+    text = text.replace(/[(),:;]/g, '').trim();
+
+    // Разбиваем на части, фильтруем пустые и берём максимум 3 слова
+    result.parts = text.split(/\s+/).filter(Boolean).slice(0, 3);
+
+    return result;
+}
+
+/**
+ * Распределяет части имени по полям в зависимости от порядка
+ */
+function distributeNameParts(parts, order) {
+    const result = { lastName: '', firstName: '', surName: '' };
+    
+    if (!parts || parts.length === 0) return result;
+    
+    switch (order) {
+        case 'FIO': // Фамилия Имя Отчество
+            result.lastName = parts[0] || '';
+            result.firstName = parts[1] || '';
+            result.surName = parts[2] || '';
+            break;
+        case 'IFO': // Имя Фамилия Отчество
+            result.firstName = parts[0] || '';
+            result.lastName = parts[1] || '';
+            result.surName = parts[2] || '';
+            break;
+        case 'IOF': // Имя Отчество Фамилия
+            result.firstName = parts[0] || '';
+            result.surName = parts[1] || '';
+            result.lastName = parts[2] || '';
+            break;
+    }
+    
     return result;
 }
 
@@ -312,11 +345,22 @@ class PoemUI {
 
         this.authorModal = new bootstrap.Modal(document.getElementById('authorModal'));
         this.postModal = new bootstrap.Modal(document.getElementById('postModal'));
+
+        // Автофокус на textarea при открытии модалки произведения
+        document.getElementById('postModal').addEventListener('shown.bs.modal', () => {
+            const isHtml = $('#useHtmlToggle').prop('checked');
+            const target = isHtml ? '#postContentHtml' : '#postContent';
+            $(target).focus();
+        });
     }
 
     renderAuthorsList(authors, selectedId, selectedPostId = null) {
         this.$authorsList.empty();
         this.$authorsCount.text(authors.length);
+
+        // Подсчёт общего количества стихов
+        const totalPosts = authors.reduce((sum, author) => sum + (author.posts ? author.posts.length : 0), 0);
+        $('#postsCount').text(totalPosts);
 
         if (authors.length === 0) {
             this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены</div>');
@@ -673,16 +717,35 @@ class PoemApp {
                 }
 
                 const parsed = parseAuthorText(text);
+                
+                // Сохраняем исходные части для перераспределения
+                $('#authorForm').data('parsedParts', parsed.parts);
+                
+                const order = $('input[name="nameOrder"]:checked').val();
+                const distributed = distributeNameParts(parsed.parts, order);
 
-                if (parsed.lastName) $('#authorLastName').val(parsed.lastName);
-                if (parsed.firstName) $('#authorFirstName').val(parsed.firstName);
-                if (parsed.surName) $('#authorSurName').val(parsed.surName);
+                if (distributed.lastName) $('#authorLastName').val(distributed.lastName);
+                if (distributed.firstName) $('#authorFirstName').val(distributed.firstName);
+                if (distributed.surName) $('#authorSurName').val(distributed.surName);
                 if (parsed.birthYear) $('#authorBirthYear').val(parsed.birthYear);
                 if (parsed.deathYear) $('#authorDeathYear').val(parsed.deathYear);
 
             } catch (err) {
                 alert('Не удалось прочитать буфер обмена. Разрешите доступ к буферу в браузере.');
             }
+        });
+
+        // Переключатель порядка ФИО — перераспределяет значения из исходных parts
+        $(document).on('change', 'input[name="nameOrder"]', () => {
+            const parts = $('#authorForm').data('parsedParts');
+            if (!parts || parts.length === 0) return;
+            
+            const order = $('input[name="nameOrder"]:checked').val();
+            const distributed = distributeNameParts(parts, order);
+            
+            $('#authorLastName').val(distributed.lastName);
+            $('#authorFirstName').val(distributed.firstName);
+            $('#authorSurName').val(distributed.surName);
         });
 
         // Переключение источника фото (Файл / URL / Буфер)
@@ -982,7 +1045,7 @@ class PoemApp {
             const pastedText = clipboardData.getData('text/plain');
 
             // Если в тексте есть ссылки или слово "Источник"
-            if (pastedText && /(?:https?:\/\/|Источник|Подробнее)/i.test(pastedText)) {
+            if (pastedText) {
                 e.preventDefault(); // Отменяем стандартное вставление
 
                 const cleaned = cleanPastedText(pastedText);
