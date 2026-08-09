@@ -1,0 +1,268 @@
+/* ==========================================================================
+   Переменные и общие стили (Винтажный книжный стиль)
+   ========================================================================== */
+:root {
+    --bg-main: #f7f4ef;            /* Цвет бумаги / слоновой кости */
+    --bg-card: #ffffff;
+    --text-main: #2b2621;          /* Глубокий темно-коричневый вместо мертвого черного */
+    --text-muted: #706860;
+    --accent-color: #8c4227;       /* Терракотовый акцент */
+    --accent-hover: #70331d;
+    --border-color: #e8e1d7;
+    --highlight-bg: #f2ebd9;
+
+    --font-serif: 'Merriweather', Georgia, serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+body.vintage-app {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Шапка (Header)
+   ========================================================================== */
+.app-header {
+    background-color: var(--bg-card);
+    border-color: var(--border-color) !important;
+}
+
+.brand-icon {
+    font-size: 1.8rem;
+}
+
+.brand-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+.small-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.header-search-box {
+    min-width: 280px;
+}
+
+.header-search-box .input-group {
+    background-color: var(--bg-main);
+    border-radius: 20px;
+    padding: 2px 8px;
+    border: 1px solid var(--border-color);
+}
+
+.header-search-box input {
+    background: transparent;
+    font-size: 0.875rem;
+}
+
+/* Кнопки в стиле винтажа */
+.btn-accent {
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-accent:hover {
+    background-color: var(--accent-hover);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-vintage-outline {
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-vintage-outline:hover {
+    background-color: var(--highlight-bg);
+    border-color: #d1c5b4;
+    color: var(--text-main);
+}
+
+/* ==========================================================================
+   Сайдбар Авторов
+   ========================================================================== */
+.authors-sidebar {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.sidebar-heading {
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.bg-accent {
+    background-color: var(--accent-color);
+}
+
+.author-card {
+    background-color: transparent;
+    border-color: var(--border-color) !important;
+    transition: background-color 0.15s ease;
+    cursor: pointer;
+}
+
+.author-card:hover {
+    background-color: var(--bg-main);
+}
+
+.author-card.active {
+    background-color: var(--highlight-bg) !important;
+    border-left: 4px solid var(--accent-color) !important;
+    color: var(--text-main);
+}
+
+.author-avatar-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+}
+
+.author-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.author-years {
+    font-size: 0.78rem;
+}
+
+.posts-count-badge {
+    font-size: 0.75rem;
+    background-color: var(--bg-main);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+/* Кастомный скроллбар */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+
+/* ==========================================================================
+   Главная область: Профиль и Карточки Стихов
+   ========================================================================== */
+.author-profile-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 100%);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px;
+}
+
+.hero-avatar-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.hero-author-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: var(--text-main);
+}
+
+.hero-author-meta {
+    font-size: 0.875rem;
+}
+
+/* Карточка стиха */
+.poem-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.poem-card:hover {
+    box-shadow: 0 8px 24px rgba(60, 45, 30, 0.06) !important;
+}
+
+.poem-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: var(--text-main);
+}
+
+.poem-year-tag {
+    font-size: 0.75rem;
+    background-color: var(--bg-main);
+    color: var(--text-muted);
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+/* Вывод текста стиха */
+.poem-text-container {
+    padding-left: 1rem;
+    border-left: 3px solid var(--highlight-bg);
+}
+
+.poem-content {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    line-height: 1.75;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    margin: 0;
+    background: transparent;
+    border: none;
+}
+
+.poem-note-box {
+    background-color: var(--bg-main);
+    border: 1px dashed var(--border-color);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.poem-link-badge {
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: var(--accent-color);
+    background-color: var(--bg-main);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+}
+
+.poem-link-badge:hover {
+    background-color: var(--highlight-bg);
+    color: var(--accent-hover);
+}
