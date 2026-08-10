@@ -34,6 +34,16 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+            <div class="btn-group btn-group-sm" role="group" id="fontSizeToggle">
+                <input type="radio" class="btn-check" name="fontSize" id="fontSmall" value="small">
+                <label class="btn btn-outline-secondary py-0 px-2" for="fontSmall" style="font-size: 0.7rem;">A</label>
+
+                <input type="radio" class="btn-check" name="fontSize" id="fontNormal" value="normal" checked>
+                <label class="btn btn-outline-secondary py-0 px-2" for="fontNormal" style="font-size: 0.85rem;">A</label>
+
+                <input type="radio" class="btn-check" name="fontSize" id="fontLarge" value="large">
+                <label class="btn btn-outline-secondary py-0 px-2" for="fontLarge" style="font-size: 1rem;">A</label>
+            </div>
             <button class="btn btn-vintage-outline btn-sm" id="exportBtn">
                 <span>↓</span> Экспорт
             </button>
@@ -52,13 +62,28 @@
         <!-- Левый сайдбар: Список авторов -->
         <aside class="col-lg-3 col-md-4">
             <div class="authors-sidebar card border-0 shadow-sm">
-                <div class="card-header bg-transparent border-bottom d-flex align-items-center justify-content-between py-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="sidebar-heading">Авторы <span class="badge rounded-pill bg-accent ms-1" id="authorsCount">0</span></span>
-                        <span class="sidebar-heading">•</span>
-                        <span class="sidebar-heading">Стихов <span class="badge rounded-pill bg-secondary ms-1" id="postsCount">0</span></span>
+                <div class="card-header bg-transparent border-bottom py-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="sidebar-heading">Авторы <span class="badge rounded-pill bg-accent ms-1" id="authorsCount">0</span></span>
+                            <span class="sidebar-heading">•</span>
+                            <span class="sidebar-heading">Стихов <span class="badge rounded-pill bg-secondary ms-1" id="postsCount">0</span></span>
+                        </div>
+                        <button class="btn btn-accent btn-sm rounded-pill px-3" id="addAuthorBtn">+ Автор</button>
                     </div>
-                    <button class="btn btn-accent btn-sm rounded-pill px-3" id="addAuthorBtn">+ Автор</button>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label small text-muted mb-0" style="font-size: 0.75rem;">Сортировка:</label>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="authorSort" id="sortNone" value="none" checked>
+                            <label class="btn btn-outline-secondary py-0 px-2" for="sortNone" style="font-size: 0.7rem;">—</label>
+
+                            <input type="radio" class="btn-check" name="authorSort" id="sortAZ" value="az">
+                            <label class="btn btn-outline-secondary py-0 px-2" for="sortAZ" style="font-size: 0.7rem;">А-Я</label>
+
+                            <input type="radio" class="btn-check" name="authorSort" id="sortRecent" value="recent">
+                            <label class="btn btn-outline-secondary py-0 px-2" for="sortRecent" style="font-size: 0.7rem;">🕐</label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="list-group list-group-flush custom-scrollbar" id="authorsList" style="max-height: calc(100vh - 200px); overflow-y: auto;">
@@ -368,6 +393,9 @@
 
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="assets/main.js"></script>
+<script src="assets/utilities.js"></script>
+<script src="assets/store.js"></script>
+<script src="assets/ui.js"></script>
+<script src="assets/app.js"></script>
 </body>
 </html>

@@ -110,6 +110,50 @@ body.vintage-app {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Бледные placeholders */
+::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.5 !important;
+}
+
+::-webkit-input-placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.5 !important;
+}
+
+::-moz-placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.5 !important;
+}
+
+:-ms-input-placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.5 !important;
+}
+
+/* Размеры шрифта */
+body.font-small {
+    font-size: 14px;
+}
+
+body.font-small .poem-content,
+body.font-small .poem-note-content {
+    font-size: 0.95rem;
+}
+
+body.font-normal {
+    font-size: 16px;
+}
+
+body.font-large {
+    font-size: 18px;
+}
+
+body.font-large .poem-content,
+body.font-large .poem-note-content {
+    font-size: 1.2rem;
+}
+
 /* ==========================================================================
    Шапка (Header)
    ========================================================================== */
@@ -346,6 +390,18 @@ body.vintage-app {
     border: 1px dashed var(--border-color);
     font-size: 0.875rem;
     color: var(--text-muted);
+}
+
+.poem-note-content {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    margin: 0;
+    background: transparent;
+    border: none;
+    display: inline;
 }
 
 .poem-link-badge {
