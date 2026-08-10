@@ -15,7 +15,7 @@ class PoemUI {
         });
     }
 
-    renderAuthorsList(authors, selectedId, selectedPostId = null) {
+    renderAuthorsList(authors, selectedId, selectedPostId = null, searchQuery = '') {
         this.$authorsList.empty();
         this.$authorsCount.text(authors.length);
 
@@ -28,16 +28,32 @@ class PoemUI {
             return;
         }
 
+        const q = searchQuery.toLowerCase().trim();
+
         authors.forEach(author => {
             const isActive = author.id === selectedId;
             const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
-            const postsCount = author.posts ? author.posts.length : 0;
+            
+            // Фильтрация постов по поисковому запросу
+            let authorPosts = author.posts || [];
+            if (q && authorPosts.length > 0) {
+                authorPosts = authorPosts.filter(post => {
+                    const title = (post.title || '').toLowerCase();
+                    const content = (post.content || '').toLowerCase();
+                    const contentHtml = (post.contentHtml || '').toLowerCase();
+                    const note = (post.note || '').toLowerCase();
+                    return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
+                });
+            }
+            
+            const postsCount = authorPosts.length;
 
-            // Список произведений для выбранного автора
+            // Список произведений для выбранного автора (или для всех с найденными стихами при поиске)
             let postsListHtml = '';
-            if (isActive && author.posts && author.posts.length > 0) {
+            const showPostsList = q ? authorPosts.length > 0 : (isActive && authorPosts.length > 0);
+            if (showPostsList) {
                 const isShowAll = !selectedPostId;
-                const itemsHtml = author.posts.map(p => {
+                const itemsHtml = authorPosts.map(p => {
                     const isPostActive = p.id === selectedPostId;
                     return `<a href="#" class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
                         <span class="author-post-title text-truncate">${this.escape(p.title)}</span>

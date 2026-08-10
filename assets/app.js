@@ -32,6 +32,9 @@ class PoemApp {
     refresh() {
         const searchQuery = $('#searchInput').val();
         const authors = this.store.getAuthors(searchQuery);
+        const prevSearchQuery = this._prevSearchQuery || '';
+        const searchChanged = searchQuery !== prevSearchQuery;
+        this._prevSearchQuery = searchQuery;
 
         if (!this.store.selectedAuthorId && authors.length > 0) {
             this.store.selectedAuthorId = authors[0].id;
@@ -42,7 +45,41 @@ class PoemApp {
             this.store.selectedAuthorId = authors[0].id;
         }
 
-        this.ui.renderAuthorsList(authors, this.store.selectedAuthorId, this.store.selectedPostId);
+        // При изменении поискового запроса автоматически выбираем первое найденное стихотворение
+        if (searchChanged && searchQuery && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            let firstFoundPostId = null;
+            
+            for (const author of authors) {
+                if (author.posts && author.posts.length > 0) {
+                    const foundPost = author.posts.find(post => {
+                        const title = (post.title || '').toLowerCase();
+                        const content = (post.content || '').toLowerCase();
+                        const contentHtml = (post.contentHtml || '').toLowerCase();
+                        const note = (post.note || '').toLowerCase();
+                        return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
+                    });
+                    if (foundPost) {
+                        firstFoundPostId = foundPost.id;
+                        this.store.selectedAuthorId = author.id;
+                        break;
+                    }
+                }
+            }
+            
+            if (firstFoundPostId) {
+                this.store.selectedPostId = firstFoundPostId;
+            } else {
+                this.store.selectedPostId = null;
+            }
+        }
+
+        // При очистке поиска сбрасываем selectedPostId
+        if (searchChanged && (!searchQuery || !searchQuery.trim())) {
+            this.store.selectedPostId = null;
+        }
+
+        this.ui.renderAuthorsList(authors, this.store.selectedAuthorId, this.store.selectedPostId, searchQuery);
 
         // Плавное раскрытие списка произведений
         $('.author-posts-list').slideDown(250);
@@ -81,6 +118,17 @@ class PoemApp {
             e.preventDefault();
             e.stopPropagation();
             const postId = $(e.currentTarget).data('post-id');
+            
+            // Получаем автора, которому принадлежит этот стих
+            const $authorCard = $(e.currentTarget).closest('.author-card-wrapper').find('.author-card');
+            const authorId = $authorCard.data('id');
+            
+            // Переключаемся на этого автора
+            if (authorId) {
+                this.store.selectedAuthorId = authorId;
+                this.store.markAsViewed(authorId);
+            }
+            
             this.store.selectedPostId = postId || null;
             this.refresh();
         });
