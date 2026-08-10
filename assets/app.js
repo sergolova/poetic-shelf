@@ -91,6 +91,11 @@ class PoemApp {
             this.toggleClearButton();
         });
 
+        // Выделение всего текста при фокусе на поле поиска
+        $('#searchInput').on('focus', function() {
+            $(this).select();
+        });
+
         // Очистка поиска
         $('#clearSearchBtn').on('click', () => {
             $('#searchInput').val('').trigger('input').focus();
@@ -321,13 +326,55 @@ class PoemApp {
                 alert('Сначала выберите или создайте автора!');
                 return;
             }
-            this.ui.openPostModal();
+            this.ui.openPostModal(null, this.store.selectedAuthorId, this.store.data.authors);
         });
 
         $(document).on('click', '.edit-post-btn', (e) => {
             const postId = $(e.currentTarget).data('post-id');
-            const post = this.store.getPostById(this.store.selectedAuthorId, postId);
-            if (post) this.ui.openPostModal(post);
+            // Ищем пост у всех авторов
+            let post = null;
+            let postAuthorId = null;
+            for (const author of this.store.data.authors) {
+                const found = author.posts?.find(p => p.id === postId);
+                if (found) {
+                    post = found;
+                    postAuthorId = author.id;
+                    break;
+                }
+            }
+            if (post) {
+                post.authorId = postAuthorId;
+                this.ui.openPostModal(post, this.store.selectedAuthorId, this.store.data.authors);
+            }
+        });
+
+        // Поиск автора в модалке произведения
+        $(document).on('input', '#postAuthorSearch', () => {
+            const query = $('#postAuthorSearch').val();
+            this.ui.renderAuthorSearchDropdown(this.store.data.authors, query);
+        });
+
+        // Выделение всего текста при фокусе на поле автора
+        $(document).on('focus', '#postAuthorSearch', function() {
+            $(this).select();
+        });
+
+        // Клик по элементу списка авторов
+        $(document).on('click', '.author-search-item', (e) => {
+            const authorId = $(e.currentTarget).data('author-id');
+            const author = this.store.getAuthorById(authorId);
+            if (author) {
+                $('#postAuthorId').val(author.id);
+                $('#postAuthorSearch').val(`${author.lastName} ${author.firstName}`);
+                $('#authorSearchDropdown').addClass('d-none');
+            }
+        });
+
+        // Скрыть dropdown при клике вне его
+        $(document).on('click', (e) => {
+            if (!$(e.target).closest('.author-search-wrapper').length) {
+                $('#authorSearchDropdown').addClass('d-none');
+            }
         });
 
         // Переключение тумблера HTML
@@ -349,7 +396,6 @@ class PoemApp {
         });
 
         // Сохранение формы стиха
-// Сохранение формы стиха
         $('#postForm').on('submit', (e) => {
             e.preventDefault();
 
@@ -364,6 +410,13 @@ class PoemApp {
 
             if (isHtml && !contentHtml) {
                 alert('Заполните HTML код произведения!');
+                return;
+            }
+
+            // Проверяем что выбран автор
+            const authorId = $('#postAuthorId').val();
+            if (!authorId) {
+                alert('Выберите автора!');
                 return;
             }
 
@@ -398,7 +451,25 @@ class PoemApp {
                 postData.contentHtml = '';
             }
 
-            this.store.savePost(this.store.selectedAuthorId, postData);
+            // Сохраняем пост к выбранному автору
+            this.store.savePost(authorId, postData);
+            
+            // Если автор изменился, удаляем пост у старого автора
+            const originalPostId = $('#postId').val();
+            if (originalPostId) {
+                // Ищем пост у других авторов и удаляем
+                for (const author of this.store.data.authors) {
+                    if (author.id !== authorId && author.posts) {
+                        const postIdx = author.posts.findIndex(p => p.id === originalPostId);
+                        if (postIdx !== -1) {
+                            author.posts.splice(postIdx, 1);
+                            this.store.save();
+                            break;
+                        }
+                    }
+                }
+            }
+            
             this.ui.closePostModal();
             this.refresh();
         });
@@ -406,10 +477,11 @@ class PoemApp {
         // Удаление стиха
         $('#deletePostBtn').on('click', () => {
             const postId = $('#postId').val();
-            if (!postId) return;
+            const authorId = $('#postAuthorId').val();
+            if (!postId || !authorId) return;
 
             if (confirm('Удалить это произведение?')) {
-                this.store.deletePost(this.store.selectedAuthorId, postId);
+                this.store.deletePost(authorId, postId);
                 this.ui.closePostModal();
                 this.refresh();
             }

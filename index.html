@@ -328,8 +328,18 @@
             <form id="postForm">
                 <div class="modal-body p-4">
                     <input type="hidden" id="postId">
+                    <input type="hidden" id="postAuthorId">
 
                     <div class="row g-3">
+                        <!-- Поле выбора автора с поиском -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted mb-1">Автор</label>
+                            <div class="author-search-wrapper position-relative">
+                                <input type="text" class="form-control" id="postAuthorSearch" placeholder="Начните вводить имя автора..." autocomplete="off">
+                                <div class="author-search-dropdown d-none" id="authorSearchDropdown"></div>
+                            </div>
+                        </div>
+
                         <div class="col-md-8">
                             <label for="postTitle" class="form-label small fw-bold text-muted mb-1">Название произведения</label>
                             <input type="text" class="form-control" id="postTitle" placeholder="Если пустое — возьмется первая строка">

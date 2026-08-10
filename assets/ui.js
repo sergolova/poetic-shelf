@@ -217,10 +217,13 @@ class PoemUI {
         this.authorModal.hide();
     }
 
-    openPostModal(post = null) {
+    openPostModal(post = null, currentAuthorId = null, authors = []) {
         $('#postForm')[0].reset();
         $('#postId').val('');
+        $('#postAuthorId').val('');
+        $('#postAuthorSearch').val('');
         $('#linksListContainer').empty();
+        $('#authorSearchDropdown').addClass('d-none').empty();
 
         if (post) {
             $('#postModalLabel').text('Редактировать произведение');
@@ -228,6 +231,13 @@ class PoemUI {
             $('#postTitle').val(post.title);
             $('#postYear').val(post.year || '');
             $('#postNote').val(post.note || '');
+            
+            // Заполняем автора
+            const postAuthor = authors.find(a => a.id === post.authorId);
+            if (postAuthor) {
+                $('#postAuthorId').val(postAuthor.id);
+                $('#postAuthorSearch').val(`${postAuthor.lastName} ${postAuthor.firstName}`);
+            }
 
             if (post.contentHtml) {
                 $('#useHtmlToggle').prop('checked', true);
@@ -254,9 +264,55 @@ class PoemUI {
             $('#plainTextContainer').removeClass('d-none');
             $('#htmlTextContainer').addClass('d-none');
             $('#deletePostBtn').addClass('d-none');
+            
+            // Заполняем текущим автором
+            if (currentAuthorId) {
+                const currentAuthor = authors.find(a => a.id === currentAuthorId);
+                if (currentAuthor) {
+                    $('#postAuthorId').val(currentAuthor.id);
+                    $('#postAuthorSearch').val(`${currentAuthor.lastName} ${currentAuthor.firstName}`);
+                }
+            }
         }
 
         this.postModal.show();
+    }
+
+    // Поиск авторов для выпадающего списка
+    renderAuthorSearchDropdown(authors, query) {
+        const $dropdown = $('#authorSearchDropdown');
+        $dropdown.empty();
+        
+        if (!query || query.trim().length === 0) {
+            $dropdown.addClass('d-none');
+            return;
+        }
+        
+        const q = query.toLowerCase().trim();
+        const filtered = authors.filter(author => {
+            const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.toLowerCase();
+            return fullName.includes(q);
+        });
+        
+        if (filtered.length === 0) {
+            $dropdown.html('<div class="p-2 text-muted small text-center">Ничего не найдено</div>');
+        } else {
+            filtered.forEach(author => {
+                const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
+                const html = `
+                    <div class="author-search-item" data-author-id="${author.id}">
+                        <img src="${avatar}" alt="">
+                        <div class="author-search-item-info">
+                            <div class="author-search-item-name">${this.escape(author.lastName)} ${this.escape(author.firstName)}</div>
+                            <div class="author-search-item-years">${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</div>
+                        </div>
+                    </div>
+                `;
+                $dropdown.append(html);
+            });
+        }
+        
+        $dropdown.removeClass('d-none');
     }
 
     closePostModal() {

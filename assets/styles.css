@@ -507,3 +507,68 @@ body.font-large .poem-note-content {
     background: var(--border-color);
     border-radius: 10px;
 }
+
+/* ==========================================================================
+   Выпадающий список поиска автора в модалке произведения
+   ========================================================================== */
+.author-search-wrapper {
+    position: relative;
+}
+
+.author-search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.author-search-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.author-search-item:last-child {
+    border-bottom: none;
+}
+
+.author-search-item:hover {
+    background-color: var(--highlight-bg);
+}
+
+.author-search-item img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.author-search-item-info {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.author-search-item-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.author-search-item-years {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
