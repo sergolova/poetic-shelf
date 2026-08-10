@@ -1,2 +1,4 @@
 stih_backup_*
 /node_modules
+/.idea
+
