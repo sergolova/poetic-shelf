@@ -8,13 +8,8 @@ class PoemApp {
         await this.store.init();
         this.bindEvents();
         this.toggleClearButton();
-        
-        // Установить режим сортировки
-        $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
-        
-        // Установить размер шрифта
+        this.applySort();
         this.applyFontSize();
-        
         this.refresh();
     }
 
@@ -22,6 +17,10 @@ class PoemApp {
         const fontSize = localStorage.getItem('fontSize') || 'normal';
         $('body').removeClass('font-small font-normal font-large').addClass(`font-${fontSize}`);
         $(`input[name="fontSize"][value="${fontSize}"]`).prop('checked', true);
+    }
+
+    applySort() {
+        $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
     }
 
     toggleClearButton() {
@@ -40,12 +39,10 @@ class PoemApp {
             this.store.selectedAuthorId = authors[0].id;
         }
 
-        // Если текущий выбранный автор не попал в результаты поиска, переключаемся на первого найденного
         if (searchQuery && !authors.some(a => a.id === this.store.selectedAuthorId) && authors.length > 0) {
             this.store.selectedAuthorId = authors[0].id;
         }
 
-        // При изменении поискового запроса автоматически выбираем первое найденное стихотворение
         if (searchChanged && searchQuery && searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
             let firstFoundPostId = null;

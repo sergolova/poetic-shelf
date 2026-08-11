@@ -216,4 +216,3 @@ function extractFirstLine(textOrHtml, isHtml = false) {
 
     return 'Без названия';
 }
-

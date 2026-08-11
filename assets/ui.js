@@ -151,36 +151,95 @@ class PoemUI {
         this.$mainContent.html(html);
     }
 
+    highlightText(htmlContent, query) {
+        const fuzzyReg = this.buildFuzzySearchRegExp(query);
+        if (!fuzzyReg) return htmlContent;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
+        const container = doc.body.firstChild;
+
+        const walk = doc.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const nodesToReplace = [];
+
+        let node;
+        while ((node = walk.nextNode())) {
+            if (fuzzyReg.test(node.nodeValue)) {
+                nodesToReplace.push(node);
+            }
+        }
+
+        nodesToReplace.forEach(textNode => {
+            const span = doc.createElement('span');
+            span.innerHTML = textNode.nodeValue.replace(
+                fuzzyReg,
+                '<mark class="bg-warning text-dark p-0">$1</mark>'
+            );
+            textNode.parentNode.replaceChild(span, textNode);
+        });
+
+        return container.innerHTML;
+    }
+
+    buildFuzzySearchRegExp(query) {
+        if (!query) return null;
+
+        const normalized = query.trim().normalize('NFD');
+        let pattern = '';
+
+        for (const char of normalized) {
+            if (/[\u0300-\u036f]/.test(char)) continue;
+
+            const lower = char.toLowerCase();
+
+            if (lower === 'е' || lower === 'ё') {
+                pattern += '[еёЕЁ][\\u0300-\\u036f]*';
+            } else if (lower === 'и' || lower === 'й') {
+                pattern += '[ийИЙ][\\u0300-\\u036f]*';
+            } else if (/[a-zа-яё]/i.test(char)) {
+                pattern += `${this.escapeRegExp(char)}[\\u0300-\\u036f]*`;
+            } else {
+                pattern += this.escapeRegExp(char);
+            }
+        }
+
+        return new RegExp(`(${pattern})`, 'gi');
+    }
+
     createPoemCardHtml(post, query = '') {
-        let bodyContent = post.contentHtml
-            ? post.contentHtml
+        let rawBody = post.contentHtml
+            ? `<pre class="poem-content">${post.contentHtml}</pre>`
             : `<pre class="poem-content">${this.escape(post.content)}</pre>`;
 
-        // Вспомогательная подсвечивалка совпадений <mark>
-        if (query) {
-            const reg = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
-            bodyContent = bodyContent.replace(reg, '<mark class="bg-warning text-dark p-0">$1</mark>');
-        }
+        const bodyContent = query ? this.highlightText(rawBody, query) : rawBody;
+
+        const titleHtml = query
+            ? this.highlightText(this.escape(post.title), query)
+            : this.escape(post.title);
+
+        const noteHtml = (post.note && query)
+            ? this.highlightText(this.escape(post.note), query)
+            : this.escape(post.note);
 
         const linksHtml = (post.links && post.links.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
-           <small class="text-muted fw-bold">Ссылки:</small>
-           ${post.links.map(l => `<a href="${l.url}" target="_blank" class="poem-link-badge">🔗 ${this.escape(l.title)} ↗</a>`).join('')}
-         </div>`
+            <small class="text-muted fw-bold">Ссылки:</small>
+            ${post.links.map(l => `<a href="${l.url}" target="_blank" class="poem-link-badge">🔗 ${this.escape(l.title)} ↗</a>`).join('')}
+           </div>`
             : '';
 
         return `
       <article class="poem-card card border-0 shadow-sm mb-4" data-post-id="${post.id}">
         <div class="card-body p-4">
           <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-            <h3 class="poem-title mb-0">${this.escape(post.title)}</h3>
+            <h3 class="poem-title mb-0">${titleHtml}</h3>
             <div class="d-flex align-items-center gap-2">
               ${post.year ? `<span class="poem-year-tag">${post.year} г.</span>` : ''}
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>
           <div class="poem-text-container my-4">${bodyContent}</div>
-          ${post.note ? `<div class="poem-note-box p-3 rounded-3 mb-3"><span class="note-icon">💡</span> <pre class="poem-note-content">${this.escape(post.note)}</pre></div>` : ''}
+          ${post.note ? `<div class="poem-note-box p-3 rounded-3 mb-3"><span class="note-icon">💡</span> <pre class="poem-note-content">${noteHtml}</pre></div>` : ''}
           ${linksHtml}
         </div>
       </article>

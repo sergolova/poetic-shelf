@@ -87,28 +87,6 @@
                 </div>
 
                 <div class="list-group list-group-flush custom-scrollbar" id="authorsList" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <!-- Пример статичной карточки для демонстрации верстки -->
-                    <a href="#" class="list-group-item list-group-item-action author-card active d-flex align-items-center gap-3 py-3 border-bottom">
-                        <div class="author-avatar-wrapper">
-                            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d8c8b8'/><text x='50%' y='55%' font-size='35' text-anchor='middle' dominant-baseline='middle' fill='%235c4a3e'>ТШ</text></svg>" class="author-avatar-img" alt="Тарас Шевченко">
-                        </div>
-                        <div class="author-info flex-grow-1 overflow-hidden">
-                            <h6 class="author-name mb-0 text-truncate">Тарас Шевченко</h6>
-                            <span class="author-years text-muted">1814 — 1861</span>
-                        </div>
-                        <span class="posts-count-badge">1</span>
-                    </a>
-
-                    <a href="#" class="list-group-item list-group-item-action author-card d-flex align-items-center gap-3 py-3 border-bottom">
-                        <div class="author-avatar-wrapper">
-                            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23e0d0c0'/><text x='50%' y='55%' font-size='35' text-anchor='middle' dominant-baseline='middle' fill='%235c4a3e'>ЛУ</text></svg>" class="author-avatar-img" alt="Леся Украинка">
-                        </div>
-                        <div class="author-info flex-grow-1 overflow-hidden">
-                            <h6 class="author-name mb-0 text-truncate">Леся Украинка</h6>
-                            <span class="author-years text-muted">1871 — 1913</span>
-                        </div>
-                        <span class="posts-count-badge">0</span>
-                    </a>
                 </div>
             </div>
         </aside>
@@ -116,78 +94,10 @@
         <!-- Главное поле: Профиль автора и стихи -->
         <main class="col-lg-9 col-md-8">
             <div id="mainContent">
-
-                <!-- Шапка активного автора -->
-                <div class="author-profile-hero card border-0 shadow-sm mb-4">
-                    <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
-                        <div class="d-flex align-items-center gap-4">
-                            <div class="hero-avatar-frame">
-                                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d8c8b8'/><text x='50%' y='55%' font-size='35' text-anchor='middle' dominant-baseline='middle' fill='%235c4a3e'>ТШ</text></svg>" class="hero-avatar-img" alt="Тарас Шевченко">
-                            </div>
-                            <div>
-                                <h2 class="hero-author-name mb-1">Тарас Григорьевич Шевченко</h2>
-                                <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
-                                    <span>📅 1814 — 1861 гг.</span>
-                                    <span>•</span>
-                                    <span>📖 1 произведение</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-vintage-outline btn-sm" id="editAuthorBtn">Редактировать автора</button>
-                            <button class="btn btn-accent btn-sm rounded-pill px-3" id="addPostBtn">+ Добавить стих</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Лента стихов -->
                 <div class="posts-feed space-y-4">
-
                     <!-- Карточка стиха -->
-                    <article class="poem-card card border-0 shadow-sm mb-4">
-                        <div class="card-body p-4">
-
-                            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                                <h3 class="poem-title mb-0">Заповіт</h3>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="poem-year-tag">1845 г.</span>
-                                    <button class="btn btn-link text-muted p-0 ms-2 text-decoration-none" title="Редактировать">✏️</button>
-                                </div>
-                            </div>
-
-                            <!-- Содержимое стиха -->
-                            <div class="poem-text-container my-4">
-                  <pre class="poem-content">Як умру, то поховайте
-Мене на могилі
-Серед степу широкого
-На Вкраїні милій,
-
-Щоб лани широкополі,
-І Дніпро, і кручі
-Було видно, було чути,
-Як реве ревучий.</pre>
-                            </div>
-
-                            <!-- Приметка/Заметка -->
-                            <div class="poem-note-box p-3 rounded-3 mb-3">
-                                <span class="note-icon">💡</span>
-                                <span class="note-text">Написано в Переяславе во время болезни.</span>
-                            </div>
-
-                            <!-- Внешние ссылки -->
-                            <div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2">
-                                <small class="text-muted fw-bold">Источники и ссылки:</small>
-                                <a href="https://uk.wikipedia.org/wiki/Заповіт" target="_blank" class="poem-link-badge">
-                                    🔗 Вікіпедія ↗
-                                </a>
-                            </div>
-
-                        </div>
-                    </article>
-
                 </div>
-
             </div>
         </main>
 
