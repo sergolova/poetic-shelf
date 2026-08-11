@@ -67,6 +67,8 @@ class PoemUI {
                 </div>`;
             }
 
+            const hideYears = !author.birthYear && !author.deathYear;
+
             const html = `
         <div class="author-card-wrapper">
           <a href="#" class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
@@ -75,7 +77,7 @@ class PoemUI {
             </div>
             <div class="author-info flex-grow-1 overflow-hidden">
               <h6 class="author-name mb-0 text-truncate">${this.escape(author.lastName)} ${this.escape(author.firstName)}</h6>
-              <span class="author-years text-muted">${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
+              <span class="author-years text-muted" ${hideYears ? 'style="display: none"' : ''}" >${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
             </div>
             <span class="posts-count-badge">${postsCount}</span>
           </a>
@@ -125,6 +127,8 @@ class PoemUI {
           ${searchQuery ? 'В произведениях этого автора совпадений не найдено' : 'У этого автора пока нет сохранённых стихов'}
          </div>`;
 
+        const hideYears = !author.birthYear && !author.deathYear;
+
         const html = `
       <div class="author-profile-hero card border-0 shadow-sm mb-4">
         <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
@@ -133,7 +137,7 @@ class PoemUI {
             <div>
               <h2 class="hero-author-name mb-1">${this.escape(author.lastName)} ${this.escape(author.firstName)} ${this.escape(author.surName || '')}</h2>
               <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
-                <span>📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.</span>
+                <span ${hideYears ? 'style="display: none"' : ''}">📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.</span>
                 <span>•</span>
                 <span>📖 ${author.posts ? author.posts.length : 0} произведений ${q ? `(найдено: ${posts.length})` : ''}</span>
               </div>

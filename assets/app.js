@@ -10,7 +10,11 @@ class PoemApp {
         this.toggleClearButton();
         this.applySort();
         this.applyFontSize();
-        this.refresh();
+
+        this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
+        this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
+
+        this.refresh(true);
     }
 
     applyFontSize() {
@@ -83,6 +87,9 @@ class PoemApp {
 
         const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
+
+        localStorage.setItem('selectedPostId', this.store.selectedPostId);
+        localStorage.setItem('selectedAuthorId', this.store.selectedAuthorId);
     }
     
     bindEvents() {
