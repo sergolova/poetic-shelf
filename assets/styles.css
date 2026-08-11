@@ -171,9 +171,8 @@ body.columns-2 .poem-content {
 }
 
 body.columns-2 .poem-text-container {
-    max-height: 500px;
-    overflow-y: auto;
-    border-left: 3px solid var(--highlight-bg);
+    max-height: none;
+    overflow: visible;
 }
 
 body.columns-3 .poem-content {
@@ -183,9 +182,8 @@ body.columns-3 .poem-content {
 }
 
 body.columns-3 .poem-text-container {
-    max-height: 500px;
-    overflow-y: auto;
-    border-left: 3px solid var(--highlight-bg);
+    max-height: none;
+    overflow: visible;
 }
 
 /* ==========================================================================
