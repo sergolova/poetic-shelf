@@ -532,6 +532,30 @@ class PoemApp {
             }
         });
 
+        // --- RAND (Случайное произведение) ---
+        $('#randBtn').on('click', () => {
+            // Собираем все произведения всех авторов в плоский массив для равномерного распределения
+            const allPosts = [];
+            for (const author of this.store.data.authors) {
+                if (author.posts && author.posts.length > 0) {
+                    author.posts.forEach(post => {
+                        allPosts.push({ post, authorId: author.id });
+                    });
+                }
+            }
+
+            if (allPosts.length === 0) {
+                alert('Нет ни одного произведения!');
+                return;
+            }
+
+            const random = allPosts[Math.floor(Math.random() * allPosts.length)];
+            this.store.selectedAuthorId = random.authorId;
+            this.store.selectedPostId = random.post.id;
+            this.store.markAsViewed(random.authorId);
+            this.refresh();
+        });
+
         // --- Экспорт / Импорт ---
         $('#exportBtn').on('click', () => this.store.exportJson());
         $('#importBtn').on('click', () => $('#importFileInput').click());

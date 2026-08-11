@@ -133,12 +133,12 @@ body.vintage-app {
 
 /* Размеры шрифта */
 body.font-small {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 body.font-small .poem-content,
 body.font-small .poem-note-content {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 
 body.font-normal {
@@ -146,12 +146,12 @@ body.font-normal {
 }
 
 body.font-large {
-    font-size: 18px;
+    font-size: 22px;
 }
 
 body.font-large .poem-content,
 body.font-large .poem-note-content {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
 }
 
 /* ==========================================================================
