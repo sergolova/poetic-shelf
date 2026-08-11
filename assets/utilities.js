@@ -89,7 +89,6 @@ function imageUrlToBase64(url, maxWidth = 300, maxHeight = 300, quality = 0.8) {
  */
 function cleanPastedText(text) {
     if (!text) return '';
-    console.log('cleanPastedText'); // del
     return text
         // 1. Удаляем приставки источников ("Источник: https://...", "Подробнее: http...", "Взято с: ...")
         .replace(/(?:Источник|Подробнее|Взято с|Read more)?\s*:?\s*https?:\/\/\S+/gi, '')
@@ -113,7 +112,7 @@ function parseAuthorText(rawText) {
     let text = cleanPastedText(rawText);
 
     // Удаляем знаки ударения (Unicode combining characters)
-    text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
+    text = text.normalize('NFD').replace(/[\u0300\u0301]/g, '').normalize('NFC');
 
     // Сначала находим годы (пока текст не обрезан)
     const allYears = text.match(/\b(\d{4})\b/g);
@@ -142,6 +141,22 @@ function parseAuthorText(rawText) {
     return result;
 }
 
+function scrollToAuthorInSidebar(authorId) {
+    if (!authorId) return;
+
+    const $container = $('#authorsList');
+    const $targetLink = $container.find(`.author-card[data-id="${authorId}"]`);
+
+    if (!$targetLink.length) return;
+
+    $container.find('.author-card').removeClass('active');
+    $targetLink.addClass('active');
+
+    $targetLink[0].scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+    });
+}
 /**
  * Распределяет части имени по полям в зависимости от порядка
  */

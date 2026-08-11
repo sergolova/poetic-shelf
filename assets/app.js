@@ -358,6 +358,15 @@ class PoemApp {
             }
         });
 
+        $(document).on('click', '.hero-avatar-img', (e) => {
+            e.preventDefault();
+
+            const author = this.store.getAuthorById(this.store.selectedAuthorId);
+            if (author) {
+                scrollToAuthorInSidebar(author.id);
+            }
+        });
+
 // 2. (Опционально) Двойной клик по аватарке автора в левом списке
         $(document).on('dblclick', '.author-avatar-img', (e) => {
             e.stopPropagation(); // Предотвращаем лишние срабатывания
