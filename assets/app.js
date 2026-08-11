@@ -29,11 +29,35 @@ class PoemApp {
     }
 
     applyColumns() {
-        const columns = localStorage.getItem('columns') || '1';
-        $('body').removeClass('columns-1 columns-2 columns-3').addClass(`columns-${columns}`);
-        $(`input[name="columns"][value="${columns}"]`).prop('checked', true);
-    }
+        const maxColumns = parseInt(localStorage.getItem('columns'), 10) || 1;
 
+        // We go through each card
+        $('.poem-card').each((index, card) => {
+            const $content = $(card).find('.poem-content');
+            if (!$content.length) return;
+
+            $content.removeClass('cols-1 cols-2 cols-3');
+
+            const text = $content.text().trim();
+            const lineCount = text ? text.split('\n').length : 0;
+
+            // Рассчитываем желаемое кол-во колонок по длине стиха
+            let targetCols = 1;
+            if (lineCount > 32) {
+                targetCols = 3;
+            } else if (lineCount >= 16) {
+                targetCols = 2;
+            } else {
+                targetCols = 1;
+            }
+
+            // Ограничиваем выбранным лимитом пользователя (Math.min)
+            const finalCols = Math.min(targetCols, maxColumns);
+
+            // Вешаем итоговый класс
+            $content.addClass(`cols-${finalCols}`);
+        });
+    }
     toggleClearButton() {
         const hasValue = $('#searchInput').val().trim().length > 0;
         $('#clearSearchBtn').toggleClass('d-none', !hasValue);
@@ -94,6 +118,8 @@ class PoemApp {
 
         const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
+
+        this.applyColumns();
 
         localStorage.setItem('selectedPostId', this.store.selectedPostId);
         localStorage.setItem('selectedAuthorId', this.store.selectedAuthorId);
