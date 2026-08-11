@@ -10,6 +10,7 @@ class PoemApp {
         this.toggleClearButton();
         this.applySort();
         this.applyFontSize();
+        this.applyColumns();
 
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
@@ -25,6 +26,12 @@ class PoemApp {
 
     applySort() {
         $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
+    }
+
+    applyColumns() {
+        const columns = localStorage.getItem('columns') || '1';
+        $('body').removeClass('columns-1 columns-2 columns-3').addClass(`columns-${columns}`);
+        $(`input[name="columns"][value="${columns}"]`).prop('checked', true);
     }
 
     toggleClearButton() {
@@ -115,6 +122,13 @@ class PoemApp {
             const fontSize = $(e.target).val();
             localStorage.setItem('fontSize', fontSize);
             this.applyFontSize();
+        });
+
+        // Колонки
+        $(document).on('change', 'input[name="columns"]', (e) => {
+            const columns = $(e.target).val();
+            localStorage.setItem('columns', columns);
+            this.applyColumns();
         });
 
         // Клик по списку произведений в сайдбаре
