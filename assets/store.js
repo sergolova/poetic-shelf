@@ -247,8 +247,15 @@ class PoemStore {
                     postBody = post.content
                         // 1. Разбиваем текст на строфы по двойному переносу строки
                         .split(/\n\s*\n/)
-                        // 2. Внутри каждой строфы меняем одиночные переносы на <br/>
-                        .map(stanza => `<p>${escapeXml(stanza.trim()).replace(/\n/g, "<br/>")}</p>`)
+                        .map(stanza => {
+                            const lines = stanza
+                                .trim()
+                                .split(/\n/)
+                                .map(line => `<span class="line">${escapeXml(line)}</span>`)
+                                .join("");
+
+                            return `<div class="stanza">${lines}</div>`;
+                        })
                         .join("\n");
                 }
 
@@ -260,10 +267,11 @@ class PoemStore {
   <style>
     body { font-family: serif; margin: 5%; line-height: 1.4; }
     h2 { text-align: center; margin-bottom: 0.2em; }
-    .note { text-align: left; font-size: 0.85em; color: #666; margin-bottom: 2em; }
-    .p_year { text-align: left; font-size: 0.85em; color: #666; margin-bottom: 2em; }
-    p { margin-bottom: 1em; }
-    .content p { margin-top: 0; margin-bottom: 1.2em; line-height: 1.3; }
+    .note { text-align: left; font-size: 0.85em; color: #666; margin-bottom: 2em; font-style: italic}
+    .p_year { text-align: left; font-size: 0.85em; color: #666; margin-bottom: 2em; font-style: italic}
+    .content { line-height: 1.3; }
+    .stanza { margin: 0 0 1.2em 0; font-style: normal; }
+    .line {display: block; font-style: normal; }
   </style>
 </head>
 <body>
