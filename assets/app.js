@@ -157,6 +157,10 @@ class PoemApp {
             this.applyColumns();
         });
 
+        $('#exportEpubBtn').on('click', () => {
+            this.store.exportToEpub();
+        });
+
         // Клик по списку произведений в сайдбаре
         $(document).on('click', '.author-post-item', (e) => {
             e.preventDefault();

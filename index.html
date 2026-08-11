@@ -55,11 +55,16 @@
             <button class="btn btn-vintage-outline btn-sm" id="randBtn">
                 <span>🎲</span> RAND
             </button>
+            <div> </div>
             <button class="btn btn-vintage-outline btn-sm" id="exportBtn">
                 <span>↓</span> Экспорт
             </button>
             <button class="btn btn-vintage-outline btn-sm" id="importBtn">
                 <span>↑</span> Импорт
+            </button>
+            <div> </div>
+            <button class="btn btn-vintage-outline btn-sm" id="exportEpubBtn">
+                <span>↓</span> EPUB
             </button>
             <input type="file" id="importFileInput" accept=".json" class="d-none">
         </div>
@@ -328,5 +333,7 @@
 <script src="assets/store.js"></script>
 <script src="assets/ui.js"></script>
 <script src="assets/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </body>
 </html>

@@ -147,6 +147,207 @@ class PoemStore {
         this.save();
     }
 
+     async exportToEpub() {
+        const data = JSON.parse(JSON.stringify(this.data));
+        const zip = new JSZip();
+
+        // 1. Обязательный mimetype (должен идти без сжатия)
+        zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
+
+        // 2. META-INF/container.xml
+        zip.folder("META-INF").file("container.xml",
+            `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`
+        );
+
+        const oebps = zip.folder("OEBPS");
+
+        // Массивы для генерации content.opf и toc.ncx
+        const manifestItems = [
+            '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>'
+        ];
+        const spineItems = [];
+        const navPoints = [];
+
+        let navIndex = 1;
+
+        // Функция очистки спецсимволов XML
+        const escapeXml = (str) => (str || '')
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&apos;");
+
+        // Перебираем всех авторов
+        data.authors.forEach((author, aIdx) => {
+            const authorFullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.trim();
+            const authorId = `author_${aIdx}`;
+            let imageFilename = null;
+
+            // Сохраняем фото автора, если оно есть в base64
+            if (author.photo && author.photo.includes("base64,")) {
+                const parts = author.photo.split("base64,");
+                const mimeMatch = parts[0].match(/:(.*?);/);
+                const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+                const ext = mimeType.split("/")[1] || "jpg";
+                const base64Data = parts[1];
+
+                imageFilename = `img_${authorId}.${ext}`;
+                oebps.file(`images/${imageFilename}`, base64Data, { base64: true });
+                manifestItems.push(`<item id="img_${authorId}" href="images/${imageFilename}" media-type="${mimeType}"/>`);
+            }
+
+            const hideYears = !author.birthYear && !author.deathYear;
+
+            // Страница автора
+            const authorPageHtml = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>${escapeXml(authorFullName)}</title>
+  <style>
+    body { font-family: serif; margin: 5%; text-align: center; }
+    img { max-width: 200px; height: auto; border-radius: 4px; margin-bottom: 1em; }
+    h1 { margin-bottom: 0.2em; }
+    .years { color: #555; font-style: italic; margin-bottom: 2em; }
+  </style>
+</head>
+<body>
+  ${imageFilename ? `<img src="images/${imageFilename}" alt="${escapeXml(authorFullName)}"/>` : ''}
+  <h1>${escapeXml(authorFullName)}</h1>
+  <p class="years" ${hideYears ? 'style="display: none"' : ''}>${author.birthYear || ''} — ${author.deathYear || ''}</p>
+</body>
+</html>`;
+
+            const authorFileName = `${authorId}.html`;
+            oebps.file(authorFileName, authorPageHtml);
+            manifestItems.push(`<item id="${authorId}" href="${authorFileName}" media-type="application/xhtml+xml"/>`);
+            spineItems.push(`<itemref idref="${authorId}"/>`);
+
+            const authorNavPoint = {
+                id: authorId,
+                order: navIndex++,
+                title: authorFullName,
+                src: authorFileName,
+                children: []
+            };
+
+            // Перебираем стихотворения автора
+            (author.posts || []).forEach((post, pIdx) => {
+                const postId = `post_${aIdx}_${pIdx}`;
+
+                // Форматируем контент (если есть HTML — берем его, иначе разбиваем строки на параграфы)
+                let postBody = post.contentHtml;
+                if (!postBody && post.content) {
+                    postBody = post.content
+                        // 1. Разбиваем текст на строфы по двойному переносу строки
+                        .split(/\n\s*\n/)
+                        // 2. Внутри каждой строфы меняем одиночные переносы на <br/>
+                        .map(stanza => `<p>${escapeXml(stanza.trim()).replace(/\n/g, "<br/>")}</p>`)
+                        .join("\n");
+                }
+
+                const postHtml = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>${escapeXml(post.title)}</title>
+  <style>
+    body { font-family: serif; margin: 5%; line-height: 1.4; }
+    h2 { text-align: center; margin-bottom: 0.2em; }
+    .note { text-align: left; font-size: 0.85em; color: #666; margin-bottom: 2em; }
+    .p_year { text-align: left; font-size: 0.85em; color: #666; margin-bottom: 2em; }
+    p { margin-bottom: 1em; }
+    .content p { margin-top: 0; margin-bottom: 1.2em; line-height: 1.3; }
+  </style>
+</head>
+<body>
+  <h2>${escapeXml(post.title)}</h2>
+  <div class="content">
+    ${postBody}
+  </div>
+  ${post.year ? `<p class="p_year">${post.year}</p>` : ''}
+  ${post.note ? `<p class="note">${escapeXml(post.note)}</p>` : ''}
+</body>
+</html>`;
+
+                const postFileName = `${postId}.html`;
+                oebps.file(postFileName, postHtml);
+                manifestItems.push(`<item id="${postId}" href="${postFileName}" media-type="application/xhtml+xml"/>`);
+                spineItems.push(`<itemref idref="${postId}"/>`);
+
+                authorNavPoint.children.push({
+                    id: postId,
+                    order: navIndex++,
+                    title: post.title,
+                    src: postFileName
+                });
+            });
+
+            navPoints.push(authorNavPoint);
+        });
+
+        // Генерация OEBPS/content.opf
+        const contentOpf = `<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Каталог авторов и стихотворений</dc:title>
+    <dc:language>uk</dc:language>
+    <dc:identifier id="BookId">urn:uuid:${Date.now()}</dc:identifier>
+  </metadata>
+  <manifest>
+    ${manifestItems.join("\n    ")}
+  </manifest>
+  <spine toc="ncx">
+    ${spineItems.join("\n    ")}
+  </spine>
+</package>`;
+
+        oebps.file("content.opf", contentOpf);
+
+        // Helper для генерации иерархического NCX (оглавления)
+        function renderNavPoint(np) {
+            let childrenHtml = '';
+            if (np.children && np.children.length > 0) {
+                childrenHtml = np.children.map(renderNavPoint).join("\n");
+            }
+            return `<navPoint id="${np.id}" playOrder="${np.order}">
+      <navLabel><text>${escapeXml(np.title)}</text></navLabel>
+      <content src="${np.src}"/>
+      ${childrenHtml}
+    </navPoint>`;
+        }
+
+        // Генерация OEBPS/toc.ncx
+        const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:${Date.now()}"/>
+    <meta name="dtb:depth" content="2"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle>
+    <text>Каталог авторов и стихотворений</text>
+  </docTitle>
+  <navMap>
+    ${navPoints.map(renderNavPoint).join("\n    ")}
+  </navMap>
+</ncx>`;
+
+        oebps.file("toc.ncx", tocNcx);
+
+        // 3. Генерация архива и вызов скачивания
+        const content = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
+        saveAs(content, "authors_collection.epub");
+    }
+
     exportJson() {
         // Нормализуем все текстовые данные перед экспортом
         const normalizedData = JSON.parse(JSON.stringify(this.data));
