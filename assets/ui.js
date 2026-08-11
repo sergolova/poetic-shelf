@@ -18,17 +18,21 @@ class PoemUI {
     renderAuthorsList(authors, selectedId, selectedPostId = null, searchQuery = '') {
         this.$authorsList.empty();
         this.$authorsCount.text(authors.length);
+        const $authorsSidebar = $('.authors-sidebar, .search-input-wrapper');
 
         // Подсчёт общего количества стихов
         const totalPosts = authors.reduce((sum, author) => sum + (author.posts ? author.posts.length : 0), 0);
         $('#postsCount').text(totalPosts);
 
+
+        const q = searchQuery.toLowerCase().trim();
+
+        q ? $authorsSidebar.addClass('query-selection') : $authorsSidebar.removeClass('query-selection');
+        
         if (authors.length === 0) {
             this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены</div>');
             return;
         }
-
-        const q = searchQuery.toLowerCase().trim();
 
         authors.forEach(author => {
             const isActive = author.id === selectedId;

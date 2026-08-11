@@ -601,3 +601,7 @@ body.font-large .poem-note-content {
     font-size: 0.75rem;
     color: var(--text-muted);
 }
+
+.query-selection {
+    outline: 2px solid rgba(var(--bs-warning-rgb)) !important;
+}
