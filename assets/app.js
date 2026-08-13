@@ -536,7 +536,7 @@ class PoemApp {
                 const titleLink = $(el).find('.link-title-input').val().trim();
                 const url = $(el).find('.link-url-input').val().trim();
                 if (url) {
-                    links.push({ title: titleLink || url, url: url });
+                    links.push({ title: titleLink, url: url });
                 }
             });
 

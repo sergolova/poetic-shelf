@@ -353,7 +353,7 @@ class PoemStore {
 
         // 3. Генерация архива и вызов скачивания
         const content = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
-        saveAs(content, "authors_collection.epub");
+        saveAs(content, `authors_collection_${new Date().toISOString().slice(0,10)}.epub`);
     }
 
     exportJson() {
@@ -369,6 +369,10 @@ class PoemStore {
                 } else if (typeof obj[key] === 'object') {
                     normalizeObject(obj[key]);
                 }
+            }
+
+            if (typeof obj.title === 'string' && typeof obj.url === 'string' && obj.title === obj.url) {
+                obj.title = "";
             }
         };
         

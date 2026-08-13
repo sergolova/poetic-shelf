@@ -149,7 +149,7 @@ class PoemUI {
           </div>
           <div class="d-flex align-items-center gap-2">
             <button class="btn btn-vintage-outline btn-sm" id="editAuthorBtn">Редактировать автора</button>
-            <button class="btn btn-accent btn-sm rounded-pill px-3" id="addPostBtn">+ Добавить стих</button>
+            <button class="btn btn-accent btn-sm rounded-pill px-3" id="addPostBtn"><span style="color: white; font-size: 16px;">✚ </span> Стих</button>
           </div>
         </div>
       </div>
@@ -232,7 +232,7 @@ class PoemUI {
         const linksHtml = (post.links && post.links.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
             <small class="text-muted fw-bold">Ссылки:</small>
-            ${post.links.map(l => `<a href="${l.url}" target="_blank" class="poem-link-badge">🔗 ${this.escape(l.title)} ↗</a>`).join('')}
+            ${post.links.map(l => `<a href="${l.url}" target="_blank" class="poem-link-badge">🔗 ${this.escape(l.title || l.url)} ↗</a>`).join('')}
            </div>`
             : '';
 
