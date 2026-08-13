@@ -605,3 +605,7 @@ body.font-large .poem-note-content {
 .query-selection {
     outline: 2px solid rgba(var(--bs-warning-rgb)) !important;
 }
+
+#addLinkRowBtn:hover span {
+    color: white !important;
+}
