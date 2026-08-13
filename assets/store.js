@@ -4,7 +4,7 @@ class PoemStore {
         this.data = { authors: [] };
         this.selectedAuthorId = null;
         this.selectedPostId = null;
-        this.authorSortMode = 'none'; // none, az, recent
+        this.authorSortMode = 'none'; // none, az, recent, len
         this.lastViewed = {}; // { authorId: timestamp }
     }
 
@@ -64,6 +64,16 @@ class PoemStore {
 
         // Сортировка
         switch (this.authorSortMode) {
+            case 'birthday':
+                authors.sort((a, b) => {
+                    return (a.birthYear || 9999) - (b.birthYear || 9999)
+                });
+                break;
+            case 'len':
+                authors.sort((a, b) => {
+                    return (b.posts ? b.posts.length : 0) - (a.posts ? a.posts.length : 0)
+                });
+                break;
             case 'az':
                 authors.sort((a, b) => {
                     const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();

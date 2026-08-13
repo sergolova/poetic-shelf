@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поэтическая Полка</title>
+    <title class="brand-title">Поэтическая Полка</title>
 
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -20,8 +20,8 @@
         <div class="d-flex align-items-center gap-2">
             <span class="brand-icon">🖋️</span>
             <div>
-                <h1 class="brand-title h4 mb-0">Поэтическая Полка</h1>
-                <small class="text-muted small-subtitle">Уголок шизофреника</small>
+                <h1 class="brand-title h4 mb-0">Фонд хранения авторских мучений</h1>
+                <small class="text-muted small-subtitle">Центр контроля за ямбом</small>
             </div>
         </div>
 
@@ -91,13 +91,44 @@
                         <label class="form-label small text-muted mb-0" style="font-size: 0.75rem;">Сортировка:</label>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="authorSort" id="sortNone" value="none" checked>
-                            <label class="btn btn-outline-secondary py-0 px-2" for="sortNone" style="font-size: 0.7rem;">—</label>
+                            <label
+                                    class="btn btn-outline-secondary py-0 px-2"
+                                    for="sortNone"
+                                    style="font-size: 0.7rem;"
+                                    title="Без сортировки"
+                            >—</label>
 
                             <input type="radio" class="btn-check" name="authorSort" id="sortAZ" value="az">
-                            <label class="btn btn-outline-secondary py-0 px-2" for="sortAZ" style="font-size: 0.7rem;">А-Я</label>
+                            <label
+                                    class="btn btn-outline-secondary py-0 px-2"
+                                    for="sortAZ"
+                                    style="font-size: 0.7rem;"
+                                    title="По алфавиту"
+                            >А-Я</label>
 
                             <input type="radio" class="btn-check" name="authorSort" id="sortRecent" value="recent">
-                            <label class="btn btn-outline-secondary py-0 px-2" for="sortRecent" style="font-size: 0.7rem;">🕐</label>
+                            <label
+                                    class="btn btn-outline-secondary py-0 px-2"
+                                    for="sortRecent"
+                                    style="font-size: 0.7rem;"
+                                    title="По дате последнего просмотра"
+                            >🕐</label>
+
+                            <input type="radio" class="btn-check" name="authorSort" id="sortLen" value="len">
+                            <label
+                                    class="btn btn-outline-secondary py-0 px-2"
+                                    for="sortLen"
+                                    style="font-size: 0.7rem;"
+                                    title="По количеству произведений"
+                            >📚</label>
+
+                            <input type="radio" class="btn-check" name="authorSort" id="sortBirsday" value="birthday">
+                            <label
+                                    class="btn btn-outline-secondary py-0 px-2"
+                                    for="sortBirsday"
+                                    style="font-size: 0.7rem;"
+                                    title="По дате рождения"
+                            >🎂</label>
                         </div>
                     </div>
                 </div>

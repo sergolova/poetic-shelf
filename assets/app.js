@@ -11,12 +11,38 @@ class PoemApp {
         this.applySort();
         this.applyFontSize();
         this.applyColumns();
+        this.applyRandomPoeticTitle();
 
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
 
         this.refresh(true);
     }
+
+    randomFromArray(array, storageKey) {
+        const previous = localStorage.getItem(storageKey);
+        let index;
+
+        do {
+            index = Math.floor(Math.random() * array.length);
+        } while (array.length > 1 && String(index) === previous);
+
+        localStorage.setItem(storageKey, index);
+
+        return array[index];
+    }
+
+
+    applyRandomPoeticTitle() {
+        $('.brand-title').text(
+            this.randomFromArray(window.poeticTitles || [], 'poeticTitleIndex')
+        );
+
+        $('.small-subtitle').text(
+            this.randomFromArray(window.poeticSubtitles || [], 'poeticSubtitleIndex')
+        );
+    }
+
 
     applyFontSize() {
         const fontSize = localStorage.getItem('fontSize') || 'normal';

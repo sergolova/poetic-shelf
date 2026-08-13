@@ -132,21 +132,9 @@ body.vintage-app {
 }
 
 /* Размеры шрифта */
-body.font-small {
-    font-size: 12px;
-}
-
 body.font-small .poem-content,
 body.font-small .poem-note-content {
     font-size: 0.85rem;
-}
-
-body.font-normal {
-    font-size: 16px;
-}
-
-body.font-large {
-    font-size: 22px;
 }
 
 body.font-large .poem-content,
@@ -442,6 +430,10 @@ body.font-large .poem-note-content {
     border-radius: 8px;
     border: 1px solid var(--border-color);
     transition: all 0.15s ease;
+    max-width: 380px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .poem-link-badge:hover {
