@@ -59,10 +59,10 @@ class PoemUI {
                 const isShowAll = !selectedPostId;
                 const itemsHtml = authorPosts.map(p => {
                     const isPostActive = p.id === selectedPostId;
-                    return `<a href="#" class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
+                    return `<span href="#" class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
                         <span class="author-post-title text-truncate">${this.escape(p.title)}</span>
                         ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
-                    </a>`;
+                    </span>`;
                 }).join('');
 
                 postsListHtml = `
@@ -75,7 +75,7 @@ class PoemUI {
 
             const html = `
         <div class="author-card-wrapper">
-          <a href="#" class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
+          <span href="#" class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
             <div class="author-avatar-wrapper">
               <img src="${avatar}" class="author-avatar-img" alt="${author.lastName}">
             </div>
@@ -84,7 +84,7 @@ class PoemUI {
               <span class="author-years text-muted" ${hideYears ? 'style="display: none"' : ''}" >${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
             </div>
             <span class="posts-count-badge">${postsCount}</span>
-          </a>
+          </span>
           ${postsListHtml}
         </div>
       `;

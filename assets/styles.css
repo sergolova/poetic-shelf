@@ -476,6 +476,7 @@ body.font-large .poem-note-content {
     font-size: 0.85rem;
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.15s ease;
+    cursor: pointer;
 }
 
 .author-post-item:last-child {
@@ -601,4 +602,8 @@ body.font-large .poem-note-content {
 
 #addLinkRowBtn:hover span {
     color: white !important;
+}
+
+.brand-block {
+    width: 567px;
 }

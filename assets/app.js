@@ -34,15 +34,12 @@ class PoemApp {
 
 
     applyRandomPoeticTitle() {
-        $('.brand-title').text(
-            this.randomFromArray(window.poeticTitles || [], 'poeticTitleIndex')
-        );
+        const title = this.randomFromArray(window.poeticTitles || [], 'poeticTitleIndex');
+        const subtitle = this.randomFromArray(window.poeticSubtitles || [], 'poeticSubtitleIndex');
 
-        $('.small-subtitle').text(
-            this.randomFromArray(window.poeticSubtitles || [], 'poeticSubtitleIndex')
-        );
+        this.rollText($('.brand-title'), title, 500);
+        this.rollText($('.small-subtitle'), subtitle, 500);
     }
-
 
     applyFontSize() {
         const fontSize = localStorage.getItem('fontSize') || 'normal';
@@ -50,6 +47,36 @@ class PoemApp {
         $(`input[name="fontSize"][value="${fontSize}"]`).prop('checked', true);
     }
 
+    rollText($el, targetText, duration = 500) {
+        if (!$el || !$el.length) return;
+
+        const halfDuration = duration / 2;
+
+        // Первая фаза: уводим старый текст вверх
+        $el.css({
+            transition: `transform ${halfDuration}ms ease-in, opacity ${halfDuration}ms ease-in`,
+            transform: 'translateY(-10px)',
+            opacity: 0
+        });
+
+        setTimeout(() => {
+            // Подменяем текст и сбрасываем позицию вниз без анимации
+            $el.text(targetText).css({
+                transition: 'none',
+                transform: 'translateY(10px)'
+            });
+
+            // Принудительный reflow для применения сброса
+            $el[0].offsetHeight;
+
+            // Вторая фаза: проявляем новый текст на место
+            $el.css({
+                transition: `transform ${halfDuration}ms ease-out, opacity ${halfDuration}ms ease-out`,
+                transform: 'translateY(0)',
+                opacity: 1
+            });
+        }, halfDuration);
+    }
     applySort() {
         $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
     }
@@ -152,6 +179,12 @@ class PoemApp {
     }
     
     bindEvents() {
+        setInterval(()=>{this.applyRandomPoeticTitle()}, 60000)
+
+        $('.clickable-logo').on('click', (e) => {
+            this.applyRandomPoeticTitle();
+        });
+
         // Переключение автора в списке
         $(document).on('click', '.author-card', (e) => {
             e.preventDefault();
