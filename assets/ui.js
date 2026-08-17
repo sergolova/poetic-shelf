@@ -126,12 +126,17 @@ class PoemUI {
         }
 
         const postsHtml = displayPosts.length > 0
-            ? displayPosts.map(p => this.createPoemCardHtml(p, q)).join('')
+            ? displayPosts.map(p => this.createPoemCardHtml(p, author, q)).join('')
             : `<div class="alert alert-light text-center border py-4 text-muted">
           ${searchQuery ? 'В произведениях этого автора совпадений не найдено' : 'У этого автора пока нет сохранённых стихов'}
          </div>`;
 
         const hideYears = !author.birthYear && !author.deathYear;
+
+        const currentYear = new Date().getFullYear();
+        let numYears = (author.birthYear) ? ((author.deathYear ?? currentYear) - author.birthYear) : null;
+
+        numYears = ` (${numYears} лет)`;
 
         const html = `
       <div class="author-profile-hero card border-0 shadow-sm mb-4">
@@ -141,7 +146,7 @@ class PoemUI {
             <div>
               <h2 class="hero-author-name mb-1">${this.escape(author.lastName)} ${this.escape(author.firstName)} ${this.escape(author.surName || '')}</h2>
               <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
-                <span ${hideYears ? 'style="display: none"' : ''}">📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.</span>
+                <span ${hideYears ? 'style="display: none"' : ''}">📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.${numYears}</span>
                 <span>•</span>
                 <span>📖 ${author.posts ? author.posts.length : 0} произведений ${q ? `(найдено: ${posts.length})` : ''}</span>
               </div>
@@ -214,7 +219,7 @@ class PoemUI {
         return new RegExp(`(${pattern})`, 'gi');
     }
 
-    createPoemCardHtml(post, query = '') {
+    createPoemCardHtml(post, author, query = '') {
         let rawBody = post.contentHtml
             ? `<pre class="poem-content">${post.contentHtml}</pre>`
             : `<pre class="poem-content">${this.escape(post.content)}</pre>`;
@@ -229,12 +234,23 @@ class PoemUI {
             ? this.highlightText(this.escape(post.note), query)
             : this.escape(post.note);
 
+        // Хелпер для определения иконки
+        const getLinkIcon = (url) => {
+            const isYoutube = /(youtube\.com|youtu\.be)/i.test(url);
+            return isYoutube ? '▶️' : '🔗'; // Можно заменить ▶️ на 🎬 или SVG-иконку
+        };
+
         const linksHtml = (post.links && post.links.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
             <small class="text-muted fw-bold">Ссылки:</small>
-            ${post.links.map(l => `<a href="${l.url}" target="_blank" class="poem-link-badge">🔗 ${this.escape(l.title || l.url)} ↗</a>`).join('')}
+            ${post.links.map(l => {
+                const icon = getLinkIcon(l.url);           
+                return `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="poem-link-badge">${icon} ${this.escape(l.title || l.url)} ↗</a>`;
+            }).join('')}
            </div>`
             : '';
+
+        const writtenYears = (author?.birthYear && post.year) ?  post.year - author?.birthYear : '';
 
         return `
       <article class="poem-card card border-0 shadow-sm mb-4" data-post-id="${post.id}">
@@ -242,7 +258,7 @@ class PoemUI {
           <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
             <h3 class="poem-title mb-0">${titleHtml}</h3>
             <div class="d-flex align-items-center gap-2">
-              ${post.year ? `<span class="poem-year-tag">${post.year} г.</span>` : ''}
+              ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} лет)` : ''}</span>` : ''}
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>

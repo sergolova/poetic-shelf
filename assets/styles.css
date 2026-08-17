@@ -644,3 +644,136 @@ body.font-large .poem-note-content {
     background: var(--border-color);
     border-radius: 10px;
 }
+
+/* ==========================================================================
+   Time bar
+   ========================================================================== */
+
+/* Основной контейнер тайм-бара */
+.timeline-bar-wrapper {
+    position: relative;
+    user-select: none;
+}
+
+/* Направляющая линия */
+.timeline-line {
+    position: absolute;
+    top: 50%;
+    left: 1.5rem;
+    right: 1.5rem;
+    height: 1px;
+    background-color: #dee2e6;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.timeline-dots-container {
+    position: relative;
+    height: 30px;
+    margin: 0 1.5rem;
+}
+
+/* Обертка отдельной точки */
+.timeline-dot-wrapper {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    cursor: pointer;
+}
+
+/* Сама точка (кружок) — неактивный год (у текущего автора нет стихов) */
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #ced4da;
+    border: 1px solid #ced4da;
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+/* Активный год (у текущего автора есть стихи) */
+.timeline-dot-wrapper.active .timeline-dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--accent-color);
+    border: 1px solid #fff;
+    box-shadow: 0 0 0 1px var(--accent-color);
+}
+
+.timeline-dot-wrapper:hover .timeline-dot {
+    transform: scale(1.3);
+}
+
+.timeline-dot-wrapper.active:hover .timeline-dot {
+    background-color: var(--accent-hover);
+    box-shadow: 0 0 0 2px var(--accent-hover);
+}
+
+/* Счётчик — внутри основного кружка */
+.timeline-dot-count {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Подпись года под точкой */
+.timeline-year-label {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 400;
+    color: #6c757d;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Выпадающее меню со стихами при наведении */
+.timeline-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    min-width: 180px;
+    max-width: 260px;
+    z-index: 1000;
+    padding: 6px 0;
+}
+
+.timeline-dropdown-header {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #a1a1a1;
+    border-bottom: 1px solid #f1f1f1;
+    text-transform: uppercase;
+}
+
+.timeline-post-link {
+    font-size: 13px;
+    padding: 6px 12px;
+    color: #212529;
+}
+
+.timeline-post-link:hover {
+    background-color: #f8f9fa;
+    color: #0d6efd;
+}
+
+/* Показываем меню при наведении на точку */
+.timeline-dot-wrapper:hover .timeline-dropdown-menu {
+    display: block;
+}

@@ -19,6 +19,13 @@ class PoemApp {
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
 
+        this.timeline = new TimelineBar('timeline-bar', {
+            onPostClick: (postId) => {
+                console.log('Скролл или открытие стиха с ID:', postId);
+                // Например: document.getElementById(postId).scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
         this.refresh(true);
     }
 
@@ -202,6 +209,18 @@ class PoemApp {
         $('.author-posts-list').slideDown(250);
 
         const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
+
+        // Тайм-бар: все посты всех авторов, подсветка — текущий автор
+        const allPosts = [];
+        for (const author of this.store.data.authors) {
+            if (author.posts) {
+                for (const post of author.posts) {
+                    allPosts.push({ ...post, authorId: author.id });
+                }
+            }
+        }
+        this.timeline.render(allPosts, this.store.selectedAuthorId);
+
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
 
         this.applyColumns();
