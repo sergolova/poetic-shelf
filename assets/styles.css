@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Локальные шрифты
+   1. Локальные шрифты
    ========================================================================== */
 
 /* Merriweather */
@@ -77,34 +77,43 @@
     src: url('fonts/plus-jakarta-sans-v12-cyrillic-ext_latin-800.woff2') format('woff2');
 }
 
-/* Переменные шрифтов */
-:root {
-    --font-serif: 'Merriweather', Georgia, serif;
-    --font-display: 'Playfair Display', Georgia, serif;
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-}
-
 /* ==========================================================================
-   Переменные и общие стили (Винтажный книжный стиль)
+   2. Переменные и общие стили (Винтажный книжный стиль)
    ========================================================================== */
+
+/* Светлая тема (По умолчанию) */
 :root {
     --bg-main: #f7f4ef;            /* Цвет бумаги / слоновой кости */
     --bg-card: #ffffff;
-    --text-main: #2b2621;          /* Глубокий темно-коричневый вместо мертвого черного */
+    --text-main: #2b2621;          /* Глубокий темно-коричневый */
     --text-muted: #706860;
     --accent-color: #8c4227;       /* Терракотовый акцент */
     --accent-hover: #70331d;
     --border-color: #e8e1d7;
     --highlight-bg: #f2ebd9;
+    --shadow-color: rgba(60, 45, 30, 0.06);
 
     --font-serif: 'Merriweather', Georgia, serif;
     --font-display: 'Playfair Display', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
+/* Тёмная тема */
+[data-theme="dark"] {
+    --bg-main: #141414;            /* Тёмно-угольный фон */
+    --bg-card: #1e1e1e;            /* Карточки */
+    --text-main: #e6e1da;          /* Мягкий светлый текст */
+    --text-muted: #9e958c;
+    --accent-color: #d96b43;       /* Приглушенный терракот для тёмного фона */
+    --accent-hover: #f0835b;
+    --border-color: #332f2b;
+    --highlight-bg: #2a2520;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
 body.vintage-app {
-    background-color: var(--bg-main);
-    color: var(--text-main);
+    background-color: var(--bg-main) !important;
+    color: var(--text-main) !important;
     font-family: var(--font-sans);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
@@ -150,14 +159,14 @@ body.font-large .poem-note-content {
 .poem-content.cols-2 {
     column-count: 2;
     column-gap: 1.5rem;
-    column-rule: 1px solid var(--border-color, #e9ecef);
+    column-rule: 1px solid var(--border-color);
 }
 
 /* 3 колонки */
 .poem-content.cols-3 {
     column-count: 3;
     column-gap: 1rem;
-    column-rule: 1px solid var(--border-color, #e9ecef);
+    column-rule: 1px solid var(--border-color);
 }
 
 /* Адаптивность: на мобилках всегда сбрасываем в 1 колонку */
@@ -170,11 +179,15 @@ body.font-large .poem-note-content {
 }
 
 /* ==========================================================================
-   Шапка (Header)
+   3. Шапка (Header)
    ========================================================================== */
 .app-header {
     background-color: var(--bg-card);
     border-color: var(--border-color) !important;
+}
+
+.brand-block {
+    width: 567px;
 }
 
 .brand-icon {
@@ -207,10 +220,12 @@ body.font-large .poem-note-content {
 .header-search-box input {
     background: transparent;
     font-size: 0.875rem;
+    color: var(--text-main) !important;
 }
 
 .btn-clear-search {
     color: var(--text-muted);
+    background: transparent !important;
     font-size: 0.85rem;
     padding: 0 6px;
     transition: color 0.15s ease;
@@ -223,7 +238,7 @@ body.font-large .poem-note-content {
 /* Кнопки в стиле винтажа */
 .btn-accent {
     background-color: var(--accent-color);
-    color: #fff;
+    color: #fff !important;
     border: none;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -231,7 +246,7 @@ body.font-large .poem-note-content {
 
 .btn-accent:hover {
     background-color: var(--accent-hover);
-    color: #fff;
+    color: #fff !important;
     transform: translateY(-1px);
 }
 
@@ -245,12 +260,12 @@ body.font-large .poem-note-content {
 
 .btn-vintage-outline:hover {
     background-color: var(--highlight-bg);
-    border-color: #d1c5b4;
+    border-color: var(--border-color);
     color: var(--text-main);
 }
 
 /* ==========================================================================
-   Сайдбар Авторов
+   4. Сайдбар Авторов
    ========================================================================== */
 .authors-sidebar {
     background-color: var(--bg-card);
@@ -267,7 +282,7 @@ body.font-large .poem-note-content {
 }
 
 .bg-accent {
-    background-color: var(--accent-color);
+    background-color: var(--accent-color) !important;
 }
 
 .author-card {
@@ -303,6 +318,7 @@ body.font-large .poem-note-content {
 
 .author-years {
     font-size: 0.78rem;
+    color: var(--text-muted);
 }
 
 .posts-count-badge {
@@ -314,23 +330,11 @@ body.font-large .poem-note-content {
     border: 1px solid var(--border-color);
 }
 
-/* Кастомный скроллбар */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 10px;
-}
-
 /* ==========================================================================
-   Главная область: Профиль и Карточки Стихов
+   5. Главная область: Профиль и Карточки Стихов
    ========================================================================== */
 .author-profile-hero {
-    background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 100%);
+    background: var(--bg-card);
     border: 1px solid var(--border-color) !important;
     border-radius: 16px;
 }
@@ -341,7 +345,7 @@ body.font-large .poem-note-content {
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--border-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .hero-author-name {
@@ -353,6 +357,7 @@ body.font-large .poem-note-content {
 
 .hero-author-meta {
     font-size: 0.875rem;
+    color: var(--text-muted);
 }
 
 /* Карточка стиха */
@@ -364,7 +369,7 @@ body.font-large .poem-note-content {
 }
 
 .poem-card:hover {
-    box-shadow: 0 8px 24px rgba(60, 45, 30, 0.06) !important;
+    box-shadow: 0 8px 24px var(--shadow-color) !important;
 }
 
 .poem-title {
@@ -399,7 +404,7 @@ body.font-large .poem-note-content {
     border: none;
     margin: 0;
     word-break: break-word;
-    column-fill: balance; /* Равномерно балансирует высоту колонок */
+    column-fill: balance;
 }
 
 .poem-note-box {
@@ -449,11 +454,11 @@ body.font-large .poem-note-content {
 
 .hero-avatar-img:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 /* ==========================================================================
-   Раскрывающийся список произведений в сайдбаре
+   6. Раскрывающийся список произведений в сайдбаре
    ========================================================================== */
 .author-card-wrapper {
     border-bottom: 1px solid var(--border-color);
@@ -509,6 +514,7 @@ body.font-large .poem-note-content {
 
 .author-post-year {
     font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .author-post-count {
@@ -519,20 +525,8 @@ body.font-large .poem-note-content {
     border: 1px solid var(--border-color);
 }
 
-/* Кастомный скроллбар для списка произведений */
-.author-posts-list::-webkit-scrollbar {
-    width: 4px;
-}
-.author-posts-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-.author-posts-list::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 10px;
-}
-
 /* ==========================================================================
-   Выпадающий список поиска автора в модалке произведения
+   7. Выпадающий список поиска автора и модалки
    ========================================================================== */
 .author-search-wrapper {
     position: relative;
@@ -547,7 +541,7 @@ body.font-large .poem-note-content {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px var(--shadow-color);
     max-height: 200px;
     overflow-y: auto;
     margin-top: 4px;
@@ -586,6 +580,7 @@ body.font-large .poem-note-content {
 .author-search-item-name {
     font-size: 0.875rem;
     font-weight: 500;
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -604,6 +599,48 @@ body.font-large .poem-note-content {
     color: white !important;
 }
 
-.brand-block {
-    width: 567px;
+/* Подгонка Bootstrap-компонентов под темы */
+.modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.modal-header, .modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+.modal-footer.bg-light {
+    background-color: var(--bg-main) !important;
+}
+
+.form-control, .form-select {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--accent-color) !important;
+}
+
+/* ==========================================================================
+   8. Кастомные скроллбары
+   ========================================================================== */
+.custom-scrollbar::-webkit-scrollbar,
+.author-posts-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.author-posts-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.author-posts-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
 }

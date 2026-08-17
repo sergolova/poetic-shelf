@@ -12,6 +12,7 @@ class PoemApp {
         this.applyFontSize();
         this.applyColumns();
         this.applyRandomPoeticTitle();
+        this.updateTheme();
 
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
@@ -32,6 +33,35 @@ class PoemApp {
         return array[index];
     }
 
+    updateTheme() {
+        const $themeBtn = $('#themeToggleBtn');
+        const $themeIcon = $('#themeIcon');
+
+        // Функция установки темы
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                $('body').attr('data-theme', 'dark');
+                $themeIcon.text('☀️');
+                localStorage.setItem('appTheme', 'dark');
+            } else {
+                $('body').removeAttr('data-theme');
+                $themeIcon.text('🌙');
+                localStorage.setItem('appTheme', 'light');
+            }
+        }
+
+        // Инициализация темы при загрузке страницы
+        const savedTheme = localStorage.getItem('appTheme') ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+        setTheme(savedTheme);
+
+        // Обработчик клика по кнопке
+        $themeBtn.on('click', function() {
+            const currentTheme = $('body').attr('data-theme') === 'dark' ? 'dark' : 'light';
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+    }
 
     applyRandomPoeticTitle() {
         const title = this.randomFromArray(window.poeticTitles || [], 'poeticTitleIndex');

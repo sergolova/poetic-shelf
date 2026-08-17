@@ -1,0 +1,99 @@
+/* ==========================================================================
+   assets/theme-dark.css
+   Стили и переопределения переменных для тёмной темы.
+   Активируется при наличии атрибута [data-theme="dark"] на теге <body>
+   ========================================================================== */
+
+[data-theme="dark"] {
+    /* Переопределение палитры под тёмный винтаж */
+    --bg-main: #141414;            /* Тёмно-угольный основной фон */
+    --bg-card: #1e1e1e;            /* Карточки и блоки */
+    --text-main: #e6e1da;          /* Светлый кремовый текст */
+    --text-muted: #9e958c;         /* Приглушенный текст */
+    --accent-color: #d96b43;       /* Тёплый терракот */
+    --accent-hover: #f0835b;
+    --border-color: #332f2b;       /* Тёмные границы */
+    --highlight-bg: #2a2520;       /* Выделение и активные элементы */
+    --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Принудительные переопределения для специфичных Bootstrap-компонентов */
+
+/* Модальные окна */
+[data-theme="dark"] .modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-footer.bg-light {
+    background-color: var(--bg-main) !important;
+}
+
+/* Формы и поля ввода */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #2b2724 !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #2b2724 !important;
+    color: var(--text-main) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(217, 107, 67, 0.25) !important;
+}
+
+/* Таблицы и списки */
+[data-theme="dark"] .list-group-item {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .table {
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Выпадающие меню */
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background-color: var(--highlight-bg) !important;
+}
+
+[data-theme="dark"] .bg-light,
+[data-theme="dark"] .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Переопределение светлого алерта */
+[data-theme="dark"] .alert-light {
+    background-color: var(--bg-main) !important;
+    color: var(--text-muted) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Общее правило для всех алертов в тёмной теме */
+[data-theme="dark"] .alert {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
