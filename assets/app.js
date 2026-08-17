@@ -2,6 +2,7 @@ class PoemApp {
     constructor() {
         this.store = new PoemStore();
         this.ui = new PoemUI();
+        this.titleChangeInterval = null;
     }
 
     async init() {
@@ -13,6 +14,7 @@ class PoemApp {
         this.applyColumns();
         this.applyRandomPoeticTitle();
         this.updateTheme();
+        this.resetTitleChangeTimer();
 
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
@@ -207,12 +209,19 @@ class PoemApp {
         localStorage.setItem('selectedPostId', this.store.selectedPostId);
         localStorage.setItem('selectedAuthorId', this.store.selectedAuthorId);
     }
-    
-    bindEvents() {
-        setInterval(()=>{this.applyRandomPoeticTitle()}, 60000)
 
+    resetTitleChangeTimer() {
+        clearInterval(this.titleChangeInterval);
+
+        this.titleChangeInterval = setInterval(() => {
+            this.applyRandomPoeticTitle();
+        }, 30000);
+    }
+
+    bindEvents() {
         $('.clickable-logo').on('click', (e) => {
             this.applyRandomPoeticTitle();
+            this.resetTitleChangeTimer();
         });
 
         // Переключение автора в списке
@@ -683,6 +692,7 @@ class PoemApp {
 
         // --- RAND (Случайное произведение) ---
         $('#randBtn').on('click', () => {
+            $('#searchInput').val('');
             // Собираем все произведения всех авторов в плоский массив для равномерного распределения
             const allPosts = [];
             for (const author of this.store.data.authors) {
