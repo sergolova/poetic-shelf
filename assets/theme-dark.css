@@ -277,3 +277,81 @@
 [data-theme="dark"] .form-check-input:not(:checked):hover {
     border-color: #7c8997;
 }
+
+/* ==========================================================================
+   Time bar — dark theme
+   ========================================================================== */
+
+[data-theme="dark"] .timeline-line {
+    background-color: var(--border-color);
+}
+
+/* Неактивная точка */
+[data-theme="dark"] .timeline-dot {
+    background-color: #3a4653;
+    border-color: #5a6673;
+}
+
+/* Активная точка */
+[data-theme="dark"] .timeline-dot-wrapper.active .timeline-dot {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Счётчик внутри точки */
+[data-theme="dark"] .timeline-dot-count {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .timeline-dot-wrapper.active .timeline-dot-count {
+    color: #151a20;
+}
+
+/* Год под точкой */
+[data-theme="dark"] .timeline-year-label {
+    color: var(--text-muted);
+}
+
+/* Выпадающее меню */
+[data-theme="dark"] .timeline-dropdown-menu {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 20px var(--shadow-color);
+}
+
+/* Заголовок выпадающего меню */
+[data-theme="dark"] .timeline-dropdown-header {
+    color: var(--text-muted);
+    border-bottom-color: var(--border-color);
+}
+
+/* Ссылки на стихи */
+[data-theme="dark"] .timeline-post-link {
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .timeline-post-link:hover {
+    background-color: var(--highlight-bg);
+    color: var(--accent-color);
+}
+
+/* Совпавший автор */
+[data-theme="dark"] .matched-author {
+    background-color: var(--accent-color) !important;
+    color: #151a20 !important;
+}
+
+/* Профиль автора */
+[data-theme="dark"] .author-profile-hero h2 {
+    color: var(--text-main);
+}
+
+/* Ссылка "Все" */
+[data-theme="dark"] a.view-all {
+    color: var(--accent-color) !important;
+}
+
+/* Элементы временной шкалы автора */
+[data-theme="dark"] .author-time-item {
+    color: var(--text-main);
+}

@@ -19,10 +19,19 @@ class PoemApp {
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
 
-        this.timeline = new TimelineBar('timeline-bar', {
+        this.timeline = new TimelineBar('timeline-bar', this.store,{
             onPostClick: (postId) => {
-                console.log('Скролл или открытие стиха с ID:', postId);
-                // Например: document.getElementById(postId).scrollIntoView({ behavior: 'smooth' });
+                // Ищем автора этого стиха
+                for (const author of this.store.data.authors) {
+                    const found = author.posts?.find(p => p.id === postId);
+                    if (found) {
+                        this.store.selectedAuthorId = author.id;
+                        this.store.markAsViewed(author.id);
+                        break;
+                    }
+                }
+                this.store.selectedPostId = postId;
+                this.refresh();
             }
         });
 
@@ -176,13 +185,7 @@ class PoemApp {
             
             for (const author of authors) {
                 if (author.posts && author.posts.length > 0) {
-                    const foundPost = author.posts.find(post => {
-                        const title = (post.title || '').toLowerCase();
-                        const content = (post.content || '').toLowerCase();
-                        const contentHtml = (post.contentHtml || '').toLowerCase();
-                        const note = (post.note || '').toLowerCase();
-                        return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
-                    });
+                    const foundPost = author.posts.find(post => isPostMatch(post, q));
                     if (foundPost) {
                         firstFoundPostId = foundPost.id;
                         this.store.selectedAuthorId = author.id;
@@ -219,7 +222,7 @@ class PoemApp {
                 }
             }
         }
-        this.timeline.render(allPosts, this.store.selectedAuthorId);
+        this.timeline.render(allPosts, this.store.selectedAuthorId, authors);
 
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
 
@@ -479,8 +482,13 @@ class PoemApp {
             }
         });
 
-        $(document).on('click', '.hero-avatar-img', (e) => {
+        $(document).on('click', '.hero-avatar-img, a.view-all', (e) => {
             e.preventDefault();
+
+            if ($('#searchInput').val()) {
+                $('#searchInput').val('');
+                this.refresh();
+            }
 
             const author = this.store.getAuthorById(this.store.selectedAuthorId);
             if (author) {

@@ -41,16 +41,13 @@ class PoemUI {
             // Фильтрация постов по поисковому запросу
             let authorPosts = author.posts || [];
             if (q && authorPosts.length > 0) {
-                authorPosts = authorPosts.filter(post => {
-                    const title = (post.title || '').toLowerCase();
-                    const content = (post.content || '').toLowerCase();
-                    const contentHtml = (post.contentHtml || '').toLowerCase();
-                    const note = (post.note || '').toLowerCase();
-                    return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
-                });
+                authorPosts = authorPosts.filter(post => isPostMatch(post, q));
             }
             
-            const postsCount = authorPosts.length;
+            const isMatchedAuthor = q && isAuthorMatch(author, q);
+            const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
+
+            const postsCount = isMatchedAuthor && authorPosts.length === 0 ? author.posts.length : authorPosts.length;
 
             // Список произведений для выбранного автора (или для всех с найденными стихами при поиске)
             let postsListHtml = '';
@@ -59,7 +56,7 @@ class PoemUI {
                 const isShowAll = !selectedPostId;
                 const itemsHtml = authorPosts.map(p => {
                     const isPostActive = p.id === selectedPostId;
-                    return `<span href="#" class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
+                    return `<span class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
                         <span class="author-post-title text-truncate">${this.escape(p.title)}</span>
                         ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
                     </span>`;
@@ -80,7 +77,7 @@ class PoemUI {
               <img src="${avatar}" class="author-avatar-img" alt="${author.lastName}">
             </div>
             <div class="author-info flex-grow-1 overflow-hidden">
-              <h6 class="author-name mb-0 text-truncate">${this.escape(author.lastName)} ${this.escape(author.firstName)}</h6>
+              <h6 class="author-name mb-0 text-truncate ${matchedAuthorClass}">${this.escape(author.lastName)} ${this.escape(author.firstName)}</h6>
               <span class="author-years text-muted" ${hideYears ? 'style="display: none"' : ''}" >${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
             </div>
             <span class="posts-count-badge">${postsCount}</span>
@@ -109,14 +106,7 @@ class PoemUI {
         // Если есть поисковый запрос — фильтруем стихи
         const q = searchQuery.toLowerCase().trim();
         if (q) {
-            posts = posts.filter(post => {
-                const title = (post.title || '').toLowerCase();
-                const content = (post.content || '').toLowerCase();
-                const contentHtml = (post.contentHtml || '').toLowerCase();
-                const note = (post.note || '').toLowerCase();
-
-                return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
-            });
+            posts = posts.filter(post => isPostMatch(post, q));
         }
 
         // Фильтрация постов по выбранному
@@ -128,7 +118,7 @@ class PoemUI {
         const postsHtml = displayPosts.length > 0
             ? displayPosts.map(p => this.createPoemCardHtml(p, author, q)).join('')
             : `<div class="alert alert-light text-center border py-4 text-muted">
-          ${searchQuery ? 'В произведениях этого автора совпадений не найдено' : 'У этого автора пока нет сохранённых стихов'}
+          ${searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых стихов'}
          </div>`;
 
         const hideYears = !author.birthYear && !author.deathYear;
@@ -138,17 +128,20 @@ class PoemUI {
 
         numYears = ` (${numYears} лет)`;
 
+        const isMatchedAuthor = q && isAuthorMatch(author, q);
+        const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
+
         const html = `
       <div class="author-profile-hero card border-0 shadow-sm mb-4">
         <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
           <div class="d-flex align-items-center gap-4">
             <img src="${avatar}" class="hero-avatar-img" alt="${author.lastName}">
             <div>
-              <h2 class="hero-author-name mb-1">${this.escape(author.lastName)} ${this.escape(author.firstName)} ${this.escape(author.surName || '')}</h2>
+              <h2 class="hero-author-name mb-1 ${matchedAuthorClass}">${this.escape(author.lastName || '')} ${this.escape(author.firstName || '')} ${this.escape(author.surName || '')}</h2>
               <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
                 <span ${hideYears ? 'style="display: none"' : ''}">📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.${numYears}</span>
-                <span>•</span>
-                <span>📖 ${author.posts ? author.posts.length : 0} произведений ${q ? `(найдено: ${posts.length})` : ''}</span>
+                <span>•</span>📖
+                <a class="view-all" href="#">${author.posts ? author.posts.length : 0} произведений</a> <span>${q ? `(найдено: ${posts.length})` : ''}</span>
               </div>
             </div>
           </div>
@@ -387,11 +380,7 @@ class PoemUI {
             return;
         }
         
-        const q = query.toLowerCase().trim();
-        const filtered = authors.filter(author => {
-            const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.toLowerCase();
-            return fullName.includes(q);
-        });
+        const filtered = authors.filter(author => isAuthorMatch(author, query.toLowerCase().trim()));
         
         if (filtered.length === 0) {
             $dropdown.html('<div class="p-2 text-muted small text-center">Ничего не найдено</div>');

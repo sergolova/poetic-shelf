@@ -47,16 +47,11 @@ class PoemStore {
         let authors = searchQuery && searchQuery.trim()
             ? this.data.authors.filter(author => {
                 const q = searchQuery.toLowerCase().trim();
-                const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.toLowerCase();
-                if (fullName.includes(q)) return true;
+                if (isAuthorMatch(author, q)) {
+                    return true;
+                }
                 if (author.posts && author.posts.length > 0) {
-                    return author.posts.some(post => {
-                        const title = (post.title || '').toLowerCase();
-                        const content = (post.content || '').toLowerCase();
-                        const contentHtml = (post.contentHtml || '').toLowerCase();
-                        const note = (post.note || '').toLowerCase();
-                        return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
-                    });
+                    return author.posts.some(post => isPostMatch(post, q));
                 }
                 return false;
             })

@@ -40,6 +40,21 @@ function compressImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
     });
 }
 
+function isAuthorMatch(author, q) {
+    const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.toLowerCase();
+
+    return fullName.includes(q);
+}
+
+function isPostMatch(post, q) {
+    const title = (post.title || '').toLowerCase();
+    const content = (post.content || '').toLowerCase();
+    const contentHtml = (post.contentHtml || '').toLowerCase();
+    const note = ''; // (post.note || '').toLowerCase();
+
+    return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
+}
+
 /**
  * Утилита: Загрузка изображения по URL и конвертация в сжатый Base64
  */
