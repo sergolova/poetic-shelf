@@ -169,7 +169,7 @@ class PoemApp {
         $('#clearSearchBtn').toggleClass('d-none', !hasValue);
     }
 
-    refresh() {
+    refresh(animate = true) {
         const searchQuery = $('#searchInput').val();
         const authors = this.store.getAuthors(searchQuery);
         const prevSearchQuery = this._prevSearchQuery || '';
@@ -213,8 +213,11 @@ class PoemApp {
 
         this.ui.renderAuthorsList(authors, this.store.selectedAuthorId, this.store.selectedPostId, searchQuery);
 
-        // Плавное раскрытие списка произведений
-        $('.author-posts-list').slideDown(250);
+        if (animate) {
+            $('.author-posts-list').slideDown(250);
+        } else {
+            $('.author-posts-list').show();
+        }
 
         const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
 
@@ -328,7 +331,7 @@ class PoemApp {
             }
             
             this.store.selectedPostId = postId || null;
-            this.refresh();
+            this.refresh(false);
         });
 
         // Поиск
@@ -512,13 +515,26 @@ class PoemApp {
             }
         });
 
-        $(document).on('click', '.hero-avatar-img, a.view-all', (e) => {
+        $(document).on('click', '.hero-avatar-img', (e) => {
             e.preventDefault();
 
             if ($('#searchInput').val()) {
                 $('#searchInput').val('');
                 this.refresh();
             }
+
+            const author = this.store.getAuthorById(this.store.selectedAuthorId);
+            if (author) {
+                scrollToAuthorInSidebar(author.id);
+            }
+        });
+
+        $(document).on('click', 'a.view-all', (e) => {
+            e.preventDefault();
+
+            $('#searchInput').val('');
+            this.store.selectedPostId = null;
+            this.refresh();
 
             const author = this.store.getAuthorById(this.store.selectedAuthorId);
             if (author) {

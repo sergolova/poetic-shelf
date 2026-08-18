@@ -89,6 +89,10 @@ class PoemUI {
         });
     }
 
+    getWikiLink(authorName) {
+        return authorName ? `https://ru.wikipedia.org/w/index.php?search=${encodeURIComponent(authorName.trim())}` : '#';
+    }
+
     renderAuthorMain(author, searchQuery = '', selectedPostId = null) {
         if (!author) {
             this.$mainContent.html(`
@@ -132,6 +136,8 @@ class PoemUI {
 
         const isMatchedAuthor = q && isAuthorMatch(author, q);
         const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
+        const authorName = `${this.escape(author.lastName || '')} ${this.escape(author.firstName || '')} ${this.escape(author.surName || '')}`;
+        let initialWiki = this.getWikiLink(authorName);
 
         const html = `
       <div class="author-profile-hero border-0">
@@ -140,7 +146,7 @@ class PoemUI {
             <img src="${avatar}" class="hero-avatar-img avatar-style" alt="${author.lastName}">
             <div>
             <div class="hero-author-wrapper">
-              <h2 class="hero-author-name mb-1 ${matchedAuthorClass}">${this.escape(author.lastName || '')} ${this.escape(author.firstName || '')} ${this.escape(author.surName || '')}</h2>
+              <h2 class="hero-author-name mb-1 ${matchedAuthorClass}"><a class="author-wiki-link" href="${initialWiki}">${authorName}</a></h2>
               <div>
                 <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="editAuthorBtn" title="Редактировать">✏️</button>
                 <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="addPostBtn" title="Добавить стих">
