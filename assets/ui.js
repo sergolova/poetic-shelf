@@ -132,22 +132,28 @@ class PoemUI {
         const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
 
         const html = `
-      <div class="author-profile-hero card border-0 shadow-sm mb-4">
-        <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
+      <div class="author-profile-hero border-0">
+        <div class="card-body pb-4 pt-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
           <div class="d-flex align-items-center gap-4">
             <img src="${avatar}" class="hero-avatar-img" alt="${author.lastName}">
             <div>
+            <div class="hero-author-wrapper">
               <h2 class="hero-author-name mb-1 ${matchedAuthorClass}">${this.escape(author.lastName || '')} ${this.escape(author.firstName || '')} ${this.escape(author.surName || '')}</h2>
+              <div>
+                <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="editAuthorBtn" title="Редактировать">✏️</button>
+                <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="addPostBtn" title="Добавить стих">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                     <circle cx="12" cy="12" r="10"></circle> <line x1="12" y1="8" x2="12" y2="16"></line> <line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
               <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
                 <span ${hideYears ? 'style="display: none"' : ''}">📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.${numYears}</span>
                 <span>•</span>📖
                 <a class="view-all" href="#">${author.posts ? author.posts.length : 0} произведений</a> <span>${q ? `(найдено: ${posts.length})` : ''}</span>
               </div>
-            </div>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-vintage-outline btn-sm" id="editAuthorBtn">Редактировать автора</button>
-            <button class="btn btn-accent btn-sm rounded-pill px-3" id="addPostBtn"><span style="color: white; font-size: 16px;">✚ </span> Стих</button>
+              </div>
           </div>
         </div>
       </div>
@@ -252,7 +258,7 @@ class PoemUI {
             <h3 class="poem-title mb-0">${titleHtml}</h3>
             <div class="d-flex align-items-center gap-2">
               ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} лет)` : ''}</span>` : ''}
-              <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn" data-post-id="${post.id}" title="Редактировать">✏️</button>
+              <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>
           <div class="poem-text-container my-4">${bodyContent}</div>

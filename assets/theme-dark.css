@@ -343,7 +343,6 @@
 
 /* Профиль автора */
 [data-theme="dark"] .author-profile-hero h2 {
-    color: var(--text-main);
 }
 
 /* Ссылка "Все" */

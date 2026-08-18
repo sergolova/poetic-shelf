@@ -335,9 +335,6 @@ body.font-large .poem-note-content {
    5. Главная область: Профиль и Карточки Стихов
    ========================================================================== */
 .author-profile-hero {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color) !important;
-    border-radius: 16px;
 }
 
 .hero-avatar-img {
@@ -354,6 +351,14 @@ body.font-large .poem-note-content {
     font-weight: 700;
     font-size: 1.6rem;
     color: var(--text-main);
+}
+
+.hero-author-wrapper {
+    display: flex;
+    gap: 1rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
 }
 
 .hero-author-meta {
@@ -655,6 +660,13 @@ body.font-large .poem-note-content {
     position: relative;
     user-select: none;
     height: 40px;
+    opacity: 0.5;
+    transition: opacity 3s ease-out;
+}
+
+.timeline-bar-wrapper:hover {
+    opacity: 1;
+    transition: opacity 0.2s ease-in;
 }
 
 /* Направляющая линия — совмещена с нижней границей header */
@@ -785,4 +797,24 @@ a.view-all {
 
 .author-time-item {
     font-weight: bold;
+}
+
+.svg-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease-in-out, transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
+    opacity: 0.7;
+}
+
+/* Состояние при наведении */
+.svg-button:hover {
+    color: var(--accent-color) !important; /* bootstrap primary цвет */
+    opacity: 1;
+    transform: scale(1.1); /* Легкое увеличение для интерактивности */
+}
+
+/* Состояние при нажатии */
+.svg-button:active {
+    transform: scale(0.95);
 }

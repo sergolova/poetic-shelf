@@ -21,10 +21,12 @@ class PoemApp {
 
         this.timeline = new TimelineBar('timeline-bar', this.store,{
             onPostClick: (postId) => {
+                let a;
                 // Ищем автора этого стиха
                 for (const author of this.store.data.authors) {
                     const found = author.posts?.find(p => p.id === postId);
                     if (found) {
+                        a = author;
                         this.store.selectedAuthorId = author.id;
                         this.store.markAsViewed(author.id);
                         break;
@@ -32,6 +34,7 @@ class PoemApp {
                 }
                 this.store.selectedPostId = postId;
                 this.refresh();
+                scrollPostToView(a?.id, postId);
             }
         });
 

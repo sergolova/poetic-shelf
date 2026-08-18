@@ -63,11 +63,11 @@
             <button class="btn btn-vintage-outline btn-sm" id="importBtn">
                 <span>↑</span> Импорт
             </button>
-            <div> </div>
             <button class="btn btn-vintage-outline btn-sm" id="exportEpubBtn">
                 <span>↓</span> EPUB
             </button>
             <input type="file" id="importFileInput" accept=".json" class="d-none">
+            <div></div>
             <button class="btn btn-vintage-outline btn-sm" id="themeToggleBtn" title="Сменить тему">
                 <span id="themeIcon">🌙</span>
             </button>
@@ -91,7 +91,11 @@
                             <span class="sidebar-heading">•</span>
                             <span class="sidebar-heading">Стихов <span class="badge rounded-pill bg-secondary ms-1" id="postsCount">0</span></span>
                         </div>
-                        <button class="btn btn-accent btn-sm rounded-pill px-3" id="addAuthorBtn"><span style="color: white; font-size: 16px;">✚ </span> Автор</button>
+                        <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="addAuthorBtn" title="Добавить автора">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle> <line x1="12" y1="8" x2="12" y2="16"></line> <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                        </button>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <label class="form-label small text-muted mb-0" style="font-size: 0.75rem;">Сортировка:</label>

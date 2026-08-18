@@ -131,7 +131,7 @@ function parseAuthorText(rawText) {
 
     // Сначала находим годы (пока текст не обрезан)
     const allYears = text.match(/\b(\d{4})\b/g);
-    
+
     if (allYears && allYears.length >= 2) {
         result.birthYear = parseInt(allYears[0], 10);
         result.deathYear = parseInt(allYears[1], 10);
@@ -172,14 +172,39 @@ function scrollToAuthorInSidebar(authorId) {
         block: 'nearest'
     });
 }
+
+function scrollPostToView(authorId, postId) {
+    if (!authorId) return;
+    if (!postId) return;
+
+    const $container = $('#authorsList');
+    const $authorLink = $container.find(`.author-card[data-id="${authorId}"]`);
+
+    if (!$authorLink.length) return;
+
+    $container.find('.author-card').removeClass('active');
+    $authorLink.addClass('active');
+
+    $container.find('.author-post-item').removeClass('active');
+    const $postLink = $authorLink.siblings('.author-posts-list').find(`.author-post-item[data-post-id="${postId}"]`);
+
+    if ($postLink.length) {
+        $postLink.addClass('active');
+        $postLink[0].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+}
+
 /**
  * Распределяет части имени по полям в зависимости от порядка
  */
 function distributeNameParts(parts, order) {
-    const result = { lastName: '', firstName: '', surName: '' };
-    
+    const result = {lastName: '', firstName: '', surName: ''};
+
     if (!parts || parts.length === 0) return result;
-    
+
     switch (order) {
         case 'FIO': // Фамилия Имя Отчество
             result.lastName = parts[0] || '';
@@ -197,7 +222,7 @@ function distributeNameParts(parts, order) {
             result.lastName = parts[2] || '';
             break;
     }
-    
+
     return result;
 }
 
