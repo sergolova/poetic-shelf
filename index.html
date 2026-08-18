@@ -236,7 +236,7 @@
 
                             <div class="d-flex align-items-center gap-3 mt-2">
                                 <div class="position-relative flex-shrink-0">
-                                    <img id="authorPhotoPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d8c8b8'/><text x='50%' y='55%' font-size='35' text-anchor='middle' dominant-baseline='middle' fill='%235c4a3e'>📷</text></svg>" class="hero-avatar-img" style="width: 70px; height: 70px;" alt="Preview">
+                                    <img id="authorPhotoPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d8c8b8'/><text x='50%' y='55%' font-size='35' text-anchor='middle' dominant-baseline='middle' fill='%235c4a3e'>📷</text></svg>" class="hero-avatar-img avatar-style" style="width: 70px; height: 70px;" alt="Preview">
                                 </div>
 
                                 <div class="flex-grow-1 overflow-hidden">
@@ -313,7 +313,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="postYear" class="form-label small fw-bold text-muted mb-1">Год написания</label>
-                            <input type="number" class="form-control" id="postYear" placeholder="1845">
+                            <input type="number" class="form-control" id="postYear" placeholder="хххх">
                         </div>
 
                         <!-- Переключатель режима ввода текста -->
@@ -328,19 +328,19 @@
 
                             <!-- Простой текст -->
                             <div id="plainTextContainer">
-                                <textarea class="form-control font-serif" id="postContent" rows="10" placeholder="Як умру, то поховайте..."></textarea>
+                                <textarea class="form-control font-serif" id="postContent" rows="10" placeholder="Я помню чудное мгновенье…"></textarea>
                             </div>
 
                             <!-- HTML разметка -->
                             <div id="htmlTextContainer" class="d-none">
-                                <textarea class="form-control font-monospace text-muted" id="postContentHtml" rows="10" style="font-size: 0.85rem;" placeholder="<p>Як умру, то поховайте...<br>Мене на могилі...</p>"></textarea>
+                                <textarea class="form-control font-monospace text-muted" id="postContentHtml" rows="10" style="font-size: 0.85rem;" placeholder="<p>Я помню чудное мгновенье…</p>"></textarea>
                             </div>
                         </div>
 
                         <!-- Заметка / Исторический контекст -->
                         <div class="col-12 mt-3">
-                            <label for="postNote" class="form-label small fw-bold text-muted mb-1">Заметка / Контекст (💡)</label>
-                            <textarea class="form-control" id="postNote" rows="2" placeholder="Написано во время болезни в Переяславе..."></textarea>
+                            <label for="postNote" class="form-label small fw-bold text-muted mb-1">💡 Заметка / Контекст</label>
+                            <textarea class="form-control" id="postNote" rows="2" placeholder="История создания или скрытый смысл…"></textarea>
                         </div>
 
                         <!-- Динамические внешние ссылки -->

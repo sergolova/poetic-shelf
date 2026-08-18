@@ -337,6 +337,11 @@ body.font-large .poem-note-content {
 .author-profile-hero {
 }
 
+.avatar-style {
+    filter: grayscale(100%) hue-rotate(-15deg) saturate(0.7) contrast(0.95);
+    opacity: 0.95;
+}
+
 .hero-avatar-img {
     width: 80px;
     height: 80px;
@@ -414,8 +419,6 @@ body.font-large .poem-note-content {
 }
 
 .poem-note-box {
-    background-color: var(--bg-main);
-    border: 1px dashed var(--border-color);
     font-size: 0.875rem;
     color: var(--text-muted);
     font-style: italic;

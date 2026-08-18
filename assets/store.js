@@ -259,6 +259,7 @@ class PoemStore {
   <style>
     body { font-family: serif; margin: 5%; text-align: center; }
     .author-photo { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; margin: 0 auto 1em auto; display: block; }
+    .avatar-style { filter: grayscale(100%) hue-rotate(-15deg) saturate(0.7) contrast(0.95); opacity: 0.95; }
     h1 { margin-bottom: 0.2em; text-align: center; }
     .years { color: #555; font-style: italic; margin: 0 auto 2em auto; text-align: center; display: block; width: 100%; }
     .author-photo-wrapper { width: 180px; height: 180px; margin: 0 auto 1em auto; display: block; text-align: center; }
@@ -271,7 +272,7 @@ class PoemStore {
   <img
     src="images/${imageFilename}"
     alt="${escapeXml(authorFullName)}"
-    class="author-photo"
+    class="author-photo avatar-style"
   >
 </div>
 ` : ''}
@@ -338,7 +339,7 @@ class PoemStore {
   <div class="content">
     ${postBody}
   </div>
-  ${post.year ? `<p class="p_year">${post.year}</p>` : ''}
+  ${(post.year && (!post.note || !post.note.includes(String(post.year)))) ? `<p class="p_year">${post.year}</p>` : ''}
   ${post.note ? `<p class="note">${escapeXml(post.note)}</p>` : ''}
 </body>
 </html>`;

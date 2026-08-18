@@ -74,7 +74,7 @@ class PoemUI {
         <div class="author-card-wrapper">
           <span href="#" class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
             <div class="author-avatar-wrapper">
-              <img src="${avatar}" class="author-avatar-img" alt="${author.lastName}">
+              <img src="${avatar}" class="author-avatar-img avatar-style" alt="${author.lastName}">
             </div>
             <div class="author-info flex-grow-1 overflow-hidden">
               <h6 class="author-name mb-0 text-truncate ${matchedAuthorClass}">${this.escape(author.lastName)} ${this.escape(author.firstName)}</h6>
@@ -137,7 +137,7 @@ class PoemUI {
       <div class="author-profile-hero border-0">
         <div class="card-body pb-4 pt-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
           <div class="d-flex align-items-center gap-4">
-            <img src="${avatar}" class="hero-avatar-img" alt="${author.lastName}">
+            <img src="${avatar}" class="hero-avatar-img avatar-style" alt="${author.lastName}">
             <div>
             <div class="hero-author-wrapper">
               <h2 class="hero-author-name mb-1 ${matchedAuthorClass}">${this.escape(author.lastName || '')} ${this.escape(author.firstName || '')} ${this.escape(author.surName || '')}</h2>
@@ -258,15 +258,15 @@ class PoemUI {
         return `
       <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-post-id="${post.id}">
         <div class="card-body p-4">
-          <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+          <div class="d-flex align-items-center justify-content-between pb-2 border-bottom">
             <h3 class="poem-title mb-0">${titleHtml}</h3>
             <div class="d-flex align-items-center gap-2">
               ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} лет)` : ''}</span>` : ''}
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>
-          <div class="poem-text-container my-4">${bodyContent}</div>
-          ${post.note ? `<div class="poem-note-box p-3 rounded-3 mb-3"><span class="note-icon">💡</span> <pre class="poem-note-content">${noteHtml}</pre></div>` : ''}
+          <div class="poem-text-container mt-4">${bodyContent}</div>
+          ${post.note ? `<div class="poem-note-box mt-4"><span class="note-icon">💡</span> <pre class="poem-note-content">${noteHtml}</pre></div>` : ''}
           ${linksHtml}
         </div>
       </article>
@@ -420,9 +420,9 @@ class PoemUI {
     addLinkRow(title = '', url = '', focusUrl = false) {
         const rowHtml = `
       <div class="link-row d-flex gap-2 align-items-center">
-        <input type="text" class="form-control form-control-sm link-title-input" placeholder="Название (напр. Википедия)" value="${this.escape(title)}">
+        <input type="text" class="form-control form-control-sm link-title-input" placeholder="Название (опционально)" value="${this.escape(title)}">
         <input type="url" class="form-control form-control-sm link-url-input" placeholder="https://..." value="${this.escape(url)}">
-        <button type="button" class="btn btn-outline-danger btn-sm remove-link-btn py-0 px-2">✕</button>
+        <button type="button" class="btn btn-outline-danger btn-sm remove-link-btn">✕</button>
       </div>
     `;
         $('#linksListContainer').append(rowHtml);

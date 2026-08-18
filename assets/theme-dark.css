@@ -368,3 +368,10 @@
 [data-theme="dark"] .poem-link-badge {
     filter: saturate(0.55)
 }
+
+[data-theme="dark"] .timeline-life-range {
+    background-color: #253040;
+    border: 1px solid #324157;
+    border-bottom: none;
+    border-top: none;
+}
