@@ -259,6 +259,23 @@ class PoemApp {
             this.resetTitleChangeTimer();
         });
 
+        $(document).on('click', '.poem-line', function(e) {
+            const $line = $(this);
+            const $container = $line.closest('.poem-content');
+
+            // Если кликнули по той же строке — снимаем выделение
+            if ($line.hasClass('active-bookmark')) {
+                $line.removeClass('active-bookmark');
+                return;
+            }
+
+            // Убираем закладку с других строк в этой карточке
+            $container.find('.poem-line.active-bookmark').removeClass('active-bookmark');
+
+            // Ставим закладку на выбранную строку
+            $line.addClass('active-bookmark');
+        });
+
         // Переключение автора в списке
         $(document).on('click', '.author-card', (e) => {
             e.preventDefault();

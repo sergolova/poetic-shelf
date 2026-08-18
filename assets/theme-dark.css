@@ -375,3 +375,12 @@
     border-bottom: none;
     border-top: none;
 }
+
+[data-theme="dark"] .poem-content .poem-line:hover {
+    background-color: #293545;
+}
+
+[data-theme="dark"] .poem-content .poem-line.active-bookmark {
+    background-color: #38475c;
+    border-left: 3px solid #5d6f87;
+}

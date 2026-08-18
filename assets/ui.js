@@ -220,12 +220,41 @@ class PoemUI {
         return new RegExp(`(${pattern})`, 'gi');
     }
 
-    createPoemCardHtml(post, author, query = '') {
-        let rawBody = post.contentHtml
-            ? `<pre class="poem-content">${post.contentHtml}</pre>`
-            : `<pre class="poem-content">${this.escape(post.content)}</pre>`;
+    getYouTubeId(url) {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
 
-        const bodyContent = query ? this.highlightText(rawBody, query) : rawBody;
+    createPoemCardHtml(post, author, query = '') {
+        // Хелпер для оборачивания строк в интерактивные <span class="poem-line">
+        const formatPoemLines = (text) => {
+            if (!text) return '';
+
+            // Если текст содержит HTML-теги (например, <mark>), разбиваем с сохранением разметки
+            const lines = text.split('\n');
+
+            return lines.map((line, index) => {
+                // Если строка пустая (между строфами) — оставляем пустой перенос
+                if (!line.trim()) return '';
+                return `<span class="poem-line" data-line-index="${index}">${line}</span>`;
+            }).join('\n');
+        };
+
+        // Подготавливаем базовый текст (HTML или escaped)
+        let rawContent = post.contentHtml
+            ? post.contentHtml
+            : this.escape(post.content);
+
+        // 1. Применяем подсветку поиска, если есть query
+        if (query) {
+            rawContent = this.highlightText(rawContent, query);
+        }
+
+        // 2. Форматируем строки стиха в <span class="poem-line">
+        const formattedLines = formatPoemLines(rawContent);
+        const bodyContent = `<pre class="poem-content">${formattedLines}</pre>`;
 
         const titleHtml = query
             ? this.highlightText(this.escape(post.title), query)
@@ -238,22 +267,36 @@ class PoemUI {
         // Хелпер для определения иконки
         const getLinkIcon = (url) => {
             const isYoutube = /(youtube\.com|youtu\.be)/i.test(url);
-            return isYoutube ? '▶️' : '🔗'; // Можно заменить ▶️ на 🎬 или SVG-иконку
+            return isYoutube ? '▶️' : '🔗';
         };
 
         const postMatch = query && isPostMatch(post, query);
 
         const linksHtml = (post.links && post.links.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
-            <small class="text-muted fw-bold">Ссылки:</small>
-            ${post.links.map(l => {
-                const icon = getLinkIcon(l.url);           
-                return `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="poem-link-badge">${icon} ${this.escape(l.title || l.url)} ↗</a>`;
+         <small class="text-muted fw-bold">Ссылки:</small>
+         ${post.links.map(l => {
+                const icon = getLinkIcon(l.url);
+                const ytId = this.getYouTubeId(l.url);
+
+                // Если это YouTube — формируем ссылку с картинкой-тултипом
+                const tooltipHtml = ytId
+                    ? `<span class="link-yt-tooltip">
+                      <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="thumbnail">
+                    </span>`
+                    : '';
+
+                return `
+               <span class="link-tooltip-container position-relative d-inline-block">
+                 <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="poem-link-badge">${icon} ${this.escape(l.title || l.url)} ↗</a>
+                 ${tooltipHtml}
+               </span>
+             `;
             }).join('')}
-           </div>`
+       </div>`
             : '';
 
-        const writtenYears = (author?.birthYear && post.year) ?  post.year - author?.birthYear : '';
+        const writtenYears = (author?.birthYear && post.year) ? post.year - author?.birthYear : '';
 
         return `
       <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-post-id="${post.id}">
@@ -272,7 +315,7 @@ class PoemUI {
       </article>
     `;
     }
-
+    
     escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }

@@ -862,3 +862,71 @@ a.view-all {
     pointer-events: none; 
     transition: all 0.3s ease;
 }
+
+/* Контейнер для точного позиционирования */
+.link-tooltip-container {
+    position: relative;
+}
+
+/* Всплывающий тултип */
+.link-yt-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 125%; /* Оповещение появится над ссылкой */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 100px;
+    padding: 1px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    pointer-events: none; /* Чтобы тултип не мешал кликам */
+}
+
+/* Настройки самой картинки превью */
+.link-yt-tooltip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Заполняет 100x50 без искажений пропорций */
+    border-radius: 4px;
+    display: block;
+}
+
+/* Маленькая стрелочка внизу тултипа */
+.link-yt-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #ffffff transparent transparent transparent;
+}
+
+/* Показ при наведении на обертку ссылки */
+.link-tooltip-container:hover .link-yt-tooltip {
+    display: block;
+    animation: fadeIn 0.15s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, 5px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.poem-content .poem-line {
+    transition: background-color 0.2s ease, border-left 0.2s ease;
+}
+
+.poem-content .poem-line:hover {
+    background-color: #fff3cd;
+}
+
+.poem-content .poem-line.active-bookmark {
+    background-color: #fff3cd;
+    border-left: 3px solid #c8a12c;
+}
