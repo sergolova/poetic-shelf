@@ -244,7 +244,11 @@ class PoemUI {
             return lines.map((line, index) => {
                 // Если строка пустая (между строфами) — оставляем пустой перенос
                 if (!line.trim()) return '';
-                return `<span class="poem-line" data-line-index="${index}">${line}</span>`;
+
+                // Если есть поисковый запрос — подсвечиваем его ВНУТРИ конкретной строки
+                const processedLine = query ? this.highlightText(line, query) : line;
+
+                return `<span class="poem-line" data-line-index="${index}">${processedLine}</span>`;
             }).join('\n');
         };
 
@@ -253,12 +257,7 @@ class PoemUI {
             ? post.contentHtml
             : this.escape(post.content);
 
-        // 1. Применяем подсветку поиска, если есть query
-        if (query) {
-            rawContent = this.highlightText(rawContent, query);
-        }
-
-        // 2. Форматируем строки стиха в <span class="poem-line">
+        // Сначала форматируем строки стиха в <span class="poem-line"> (подсветка применится внутри)
         const formattedLines = formatPoemLines(rawContent);
         const bodyContent = `<pre class="poem-content">${formattedLines}</pre>`;
 
