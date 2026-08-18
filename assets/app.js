@@ -21,6 +21,8 @@ class PoemApp {
 
         this.timeline = new TimelineBar('timeline-bar', this.store,{
             onPostClick: (postId) => {
+                $('#searchInput').val('');
+                
                 let a;
                 // Ищем автора этого стиха
                 for (const author of this.store.data.authors) {
@@ -231,8 +233,16 @@ class PoemApp {
 
         this.applyColumns();
 
-        localStorage.setItem('selectedPostId', this.store.selectedPostId);
-        localStorage.setItem('selectedAuthorId', this.store.selectedAuthorId);
+        if (this.store.selectedPostId) {
+            localStorage.setItem('selectedPostId', this.store.selectedPostId);
+        } else {
+            localStorage.removeItem('selectedPostId');
+        }
+        if (this.store.selectedAuthorId) {
+            localStorage.setItem('selectedAuthorId', this.store.selectedAuthorId);
+        } else {
+            localStorage.removeItem('selectedAuthorId');
+        }
     }
 
     resetTitleChangeTimer() {

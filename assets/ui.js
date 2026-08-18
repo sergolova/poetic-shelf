@@ -30,7 +30,7 @@ class PoemUI {
         q ? $authorsSidebar.addClass('query-selection') : $authorsSidebar.removeClass('query-selection');
         
         if (authors.length === 0) {
-            this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены</div>');
+            this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены&nbsp;&nbsp;&nbsp;<a class="view-all" href="#">Сбросить поиск</a></div>');
             return;
         }
 
@@ -109,9 +109,11 @@ class PoemUI {
             posts = posts.filter(post => isPostMatch(post, q));
         }
 
-        // Фильтрация постов по выбранному
-        let displayPosts = posts;
-        if (selectedPostId) {
+        let displayPosts;
+
+        if (q === '' && selectedPostId === null) {
+            displayPosts = posts;
+        } else {
             displayPosts = posts.filter(p => p.id === selectedPostId);
         }
 

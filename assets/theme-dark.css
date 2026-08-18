@@ -8,7 +8,7 @@
     /* Глубокий сине-графитовый фон + холодный бумажный текст */
     --bg-main: #10151c;
     --bg-card: #18202a;
-    --text-main: #e5e9ee;
+    --text-main: #b1b3b6;
     --text-muted: #8e9aa8;
 
     /* Акцент — приглушённое старое золото */
@@ -88,7 +88,7 @@
     background-color: #202a35 !important;
     color: var(--text-main) !important;
     border-color: var(--accent-color) !important;
-    box-shadow: 0 0 0 0.25rem rgba(199, 169, 107, 0.20) !important;
+    /*box-shadow: 0 0 0 0.25rem rgba(199, 169, 107, 0.20) !important;*/
 }
 
 [data-theme="dark"] .input-group-text,
@@ -353,4 +353,18 @@
 /* Элементы временной шкалы автора */
 [data-theme="dark"] .author-time-item {
     color: var(--text-main);
+}
+
+[data-theme="dark"] .search-input-wrapper span,
+[data-theme="dark"] .search-input-wrapper button,
+[data-theme="dark"] .search-input-wrapper input {
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .search-input-wrapper .form-control:focus {
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .poem-link-badge {
+    filter: saturate(0.55)
 }

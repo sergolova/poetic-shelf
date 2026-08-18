@@ -85,7 +85,7 @@
 :root {
     --bg-main: #f7f4ef;            /* Цвет бумаги / слоновой кости */
     --bg-card: #ffffff;
-    --text-main: #2b2621;          /* Глубокий темно-коричневый */
+    --text-main: #4c4641;          /* Глубокий темно-коричневый */
     --text-muted: #706860;
     --accent-color: #8c4227;       /* Терракотовый акцент */
     --accent-hover: #70331d;
@@ -818,3 +818,14 @@ a.view-all {
 .svg-button:active {
     transform: scale(0.95);
 }
+
+.search-input-wrapper span,
+.search-input-wrapper button,
+.search-input-wrapper input {
+    background-color: transparent !important;
+}
+
+.search-input-wrapper .form-control:focus {
+    background-color: transparent !important;
+}
+
