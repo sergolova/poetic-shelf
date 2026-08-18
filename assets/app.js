@@ -334,6 +334,15 @@ class PoemApp {
             this.refresh(false);
         });
 
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.app-header');
+            if (window.scrollY > 10) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
         // Поиск
         $('#searchInput').on('input', () => {
             clearTimeout(this.searchTimer);
@@ -771,6 +780,7 @@ class PoemApp {
         // --- RAND (Случайное произведение) ---
         $('#randBtn').on('click', () => {
             $('#searchInput').val('');
+
             // Собираем все произведения всех авторов в плоский массив для равномерного распределения
             const allPosts = [];
             for (const author of this.store.data.authors) {
@@ -791,6 +801,25 @@ class PoemApp {
             this.store.selectedPostId = random.post.id;
             this.store.markAsViewed(random.authorId);
             this.refresh();
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollTopBtn.classList.remove('d-none');
+            } else {
+                scrollTopBtn.classList.add('d-none');
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         });
 
         // --- Экспорт / Импорт ---

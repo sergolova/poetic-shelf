@@ -184,6 +184,15 @@ body.font-large .poem-note-content {
 .app-header {
     background-color: var(--bg-card);
     border-color: var(--border-color) !important;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+.app-header.scrolled {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Легкая тень для отделения от контента */
 }
 
 .brand-block {
@@ -939,4 +948,23 @@ a.view-all {
 .poem-content .poem-line.active-bookmark {
     background-color: #fff3cd;
     border-left: 3px solid #c8a12c;
+}
+
+.btn-scroll-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 48px;
+    height: 48px;
+    z-index: 1040;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.btn-scroll-top:hover {
+    transform: translateY(-3px);
 }

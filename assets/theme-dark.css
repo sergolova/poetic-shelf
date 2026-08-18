@@ -384,3 +384,8 @@
     background-color: #38475c;
     border-left: 3px solid #5d6f87;
 }
+
+[data-theme="dark"] .btn-scroll-top {
+    background-color: var(--accent-color) !important;
+    opacity: 0.3;
+}
