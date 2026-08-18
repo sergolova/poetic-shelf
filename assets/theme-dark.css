@@ -389,3 +389,9 @@
     background-color: var(--accent-color) !important;
     opacity: 0.3;
 }
+
+[data-theme="dark"] .btn-check:checked + .btn-vintage-outline {
+    background-color: #8e7b52;
+    border-color: #8e7b52;
+    color: var(--bg-main) !important;
+}

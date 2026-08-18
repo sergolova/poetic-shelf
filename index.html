@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title class="brand-title">Поэтическая Полка</title>
 
-    <script src="node_modules/jquery/dist/jquery.min.js"></script>
-    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/styles.css">
     <link rel="stylesheet" href="assets/theme-dark.css">
@@ -35,39 +32,57 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <div class="btn-group btn-group-lg" role="group" id="fontSizeToggle">
+            <!-- Выбор размера шрифта -->
+            <div class="btn-group btn-group-sm" role="group" id="fontSizeToggle">
                 <input type="radio" class="btn-check" name="fontSize" id="fontSmall" value="small">
-                <label class="btn btn-outline-secondary py-0 px-2" for="fontSmall" style="font-size: 0.7rem;">A</label>
+                <label class="btn btn-vintage-outline" for="fontSmall" style="font-size: 0.7rem;">A</label>
 
                 <input type="radio" class="btn-check" name="fontSize" id="fontNormal" value="normal" checked>
-                <label class="btn btn-outline-secondary py-0 px-2" for="fontNormal" style="font-size: 0.85rem;">A</label>
+                <label class="btn btn-vintage-outline" for="fontNormal" style="font-size: 0.85rem;">A</label>
 
                 <input type="radio" class="btn-check" name="fontSize" id="fontLarge" value="large">
-                <label class="btn btn-outline-secondary py-0 px-2" for="fontLarge" style="font-size: 1rem;">A</label>
+                <label class="btn btn-vintage-outline" for="fontLarge" style="font-size: 1rem;">A</label>
             </div>
-            <div class="btn-group btn-group-lg" role="group" id="columnsToggle">
+
+            <!-- Выбор колонок -->
+            <div class="btn-group btn-group-sm" role="group" id="columnsToggle">
                 <input type="radio" class="btn-check" name="columns" id="col1" value="1" checked>
-                <label class="btn btn-outline-secondary py-0 px-2" for="col1" style="font-size: 0.75rem;">1</label>
+                <label class="btn btn-vintage-outline" for="col1">1</label>
+
                 <input type="radio" class="btn-check" name="columns" id="col2" value="2">
-                <label class="btn btn-outline-secondary py-0 px-2" for="col2" style="font-size: 0.75rem;">2</label>
+                <label class="btn btn-vintage-outline" for="col2">2</label>
+
                 <input type="radio" class="btn-check" name="columns" id="col3" value="3">
-                <label class="btn btn-outline-secondary py-0 px-2" for="col3" style="font-size: 0.75rem;">3</label>
+                <label class="btn btn-vintage-outline" for="col3">3</label>
             </div>
             <button class="btn btn-vintage-outline btn-sm" id="randBtn">
                 <span>🎲</span> RAND
             </button>
-            <div> </div>
-            <button class="btn btn-vintage-outline btn-sm" id="exportBtn">
-                <span>↓</span> Экспорт
-            </button>
-            <button class="btn btn-vintage-outline btn-sm" id="importBtn">
-                <span>↑</span> Импорт
-            </button>
-            <button class="btn btn-vintage-outline btn-sm" id="exportEpubBtn">
-                <span>↓</span> EPUB
-            </button>
+            <!-- Выпадающее меню: Данные / Действия -->
+            <div class="dropdown">
+                <button class="btn btn-vintage-outline btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" id="dataActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span>⚙️</span> Данные
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="dataActionsDropdown" style="font-size: 0.85rem;">
+                    <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="exportBtn">
+                            <span>↓</span> Экспорт JSON
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="importBtn">
+                            <span>↑</span> Импорт JSON
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="exportEpubBtn">
+                            <span>📖</span> Скачать EPUB
+                        </button>
+                    </li>
+                </ul>
+            </div>
             <input type="file" id="importFileInput" accept=".json" class="d-none">
-            <div></div>
             <button class="btn btn-vintage-outline btn-sm" id="themeToggleBtn" title="Сменить тему">
                 <span id="themeIcon">🌙</span>
             </button>

@@ -969,3 +969,24 @@ a.view-all {
 .btn-scroll-top:hover {
     transform: translateY(-3px);
 }
+
+.app-header .btn-sm,
+.app-header .btn-group-sm > .btn {
+    height: 31px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+}
+
+.btn-check:checked + .btn-vintage-outline {
+    background-color: var(--text-muted);
+    border-color: var(--text-muted);
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.btn-group .btn-vintage-outline {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
