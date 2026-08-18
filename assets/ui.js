@@ -24,7 +24,6 @@ class PoemUI {
         const totalPosts = authors.reduce((sum, author) => sum + (author.posts ? author.posts.length : 0), 0);
         $('#postsCount').text(totalPosts);
 
-
         const q = searchQuery.toLowerCase().trim();
 
         q ? $authorsSidebar.addClass('query-selection') : $authorsSidebar.removeClass('query-selection');
@@ -43,6 +42,10 @@ class PoemUI {
             if (q && authorPosts.length > 0) {
                 authorPosts = authorPosts.filter(post => isPostMatch(post, q));
             }
+
+            authorPosts.sort((a, b) => {
+                return - (b.year ? b.year : 0) + (a.year ? a.year : 0)
+            });
             
             const isMatchedAuthor = q && isAuthorMatch(author, q);
             const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
@@ -112,6 +115,10 @@ class PoemUI {
         if (q) {
             posts = posts.filter(post => isPostMatch(post, q));
         }
+
+        posts.sort((a, b) => {
+            return - (b.year ? b.year : 0) + (a.year ? a.year : 0)
+        });
 
         let displayPosts;
 
