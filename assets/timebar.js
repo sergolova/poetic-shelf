@@ -10,7 +10,7 @@ class TimelineBar {
      * @param {Array} allPosts - Все стихотворения всех авторов (каждый с authorId)
      * @param {string|null} activeAuthorId - ID текущего выбранного автора
      */
-    render(allPosts, activeAuthorId, authors) {
+    render(allPosts, activeAuthorId, authors, activePostId = null) {
         if (!this.container) return;
 
         // Отбираем только посты с валидным годом
@@ -40,27 +40,62 @@ class TimelineBar {
         const endYear = minYear === maxYear ? maxYear + 1 : maxYear;
         const totalRange = endYear - startYear;
 
+        // --- РАСЧЁТ ПЛАШКИ ЖИЗНИ АВТОРА ---
+        let lifeRangeHtml = '';
+        if (activeAuthorId) {
+            const activeAuthor = this.store ? this.store.getAuthorById(activeAuthorId) : null;
+
+            if (activeAuthor && activeAuthor.birthYear) {
+                const birth = Number(activeAuthor.birthYear);
+                // Если автор ещё жив, подсвечиваем до текущего года или макс. года таймлайна
+                const death = activeAuthor.deathYear ? Number(activeAuthor.deathYear) : new Date().getFullYear();
+
+                // Ограничиваем рамками текущего таймлайна
+                const clampedStart = Math.max(birth, startYear);
+                const clampedEnd = Math.min(death, endYear);
+
+                if (clampedStart <= endYear && clampedEnd >= startYear) {
+                    const leftPercent = Math.max(0, ((clampedStart - startYear) / totalRange) * 100);
+                    const rightPercent = Math.min(100, ((clampedEnd - startYear) / totalRange) * 100);
+                    const widthPercent = rightPercent - leftPercent;
+
+                    lifeRangeHtml = `
+                      <div class="timeline-life-range" 
+                           style="left: ${leftPercent}%; width: ${widthPercent}%;"
+                           title="${activeAuthor.lastName}: ${birth} — ${activeAuthor.deathYear || 'н.в.'}">
+                      </div>
+                    `;
+                }
+            }
+        }
+
+        let currentPostYear = null;
+
         // Точки + выпадающие меню
         const dotsHtml = years.map(year => {
             const {posts, authorIds} = postsByYear[year];
             const leftPercent = ((year - startYear) / totalRange) * 100;
             const isActive = activeAuthorId && authorIds.has(activeAuthorId);
             const menuItemsHtml = posts.map(post => {
-
+                if (activePostId && String(post.id) === String(activePostId)) {
+                    currentPostYear = year;
+                }
                 const author = this.store.getAuthorById(post.authorId);
                 return `
         <li>
           <span class="dropdown-item timeline-post-link text-truncate" data-post-id="${post.id}">
-            <span class="author-time-item">${author.lastName}: </span>
+            <span class="author-time-item">${author ? author.lastName : ''}: </span>
             <span>${this.escapeHtml(post.title)}</span>
           </span>
         </li>
-      `
+      `;
             }).join('');
+
+            const isCurrentPostYear = year === currentPostYear;
 
             return `
         <div class="timeline-dot-wrapper${isActive ? ' active' : ''}" style="left: ${leftPercent}%;">
-          <div class="timeline-dot">
+          <div class="timeline-dot ${isCurrentPostYear ? 'is-current-post' : ''}">
             ${posts.length > 1 ? `<span class="timeline-dot-count">${posts.length}</span>` : ''}
           </div>
           <div class="timeline-dropdown-menu shadow-sm">
@@ -73,8 +108,7 @@ class TimelineBar {
       `;
         }).join('');
 
-        // Подписи годов — отдельно от wrapper'ов, чтобы layoutLabels
-        // мог позиционировать их в координатах контейнера
+        // Подписи годов
         const labelsHtml = years.map(year => {
             const leftPercent = ((year - startYear) / totalRange) * 100;
             return `<div class="timeline-year-label" style="left: ${leftPercent}%;">${year}</div>`;
@@ -85,6 +119,7 @@ class TimelineBar {
         <div class="container-fluid position-relative px-4">
           <div class="timeline-line"></div>
           <div class="timeline-dots-container">
+            ${lifeRangeHtml}
             ${dotsHtml}
             ${labelsHtml}
           </div>
@@ -95,7 +130,6 @@ class TimelineBar {
         this.bindEvents();
         this.layoutLabels();
     }
-
     /**
      * Скрывает подписи годов, которые накладываются друг на друга.
      * Показываются только те, что не перекрываются с предыдущей видимой.

@@ -227,7 +227,7 @@ class PoemApp {
                 }
             }
         }
-        this.timeline.render(allPosts, this.store.selectedAuthorId, authors);
+        this.timeline.render(allPosts, this.store.selectedAuthorId, authors, this.store.selectedPostId);
 
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
 
