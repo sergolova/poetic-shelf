@@ -187,6 +187,7 @@ body.font-large .poem-note-content {
     position: sticky;
     top: 0;
     z-index: 1030;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); /* Легкая тень для отделения от контента */
 }
 
 .app-header.scrolled {
