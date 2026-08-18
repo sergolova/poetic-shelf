@@ -336,7 +336,12 @@ class PoemApp {
 
         // Поиск
         $('#searchInput').on('input', () => {
-            this.refresh();
+            clearTimeout(this.searchTimer);
+
+            this.searchTimer = setTimeout(() => {
+                this.refresh();
+            }, 400);
+
             this.toggleClearButton();
         });
 
