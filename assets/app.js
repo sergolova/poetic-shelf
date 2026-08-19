@@ -15,14 +15,15 @@ class PoemApp {
         this.applyRandomPoeticTitle();
         this.updateTheme();
         this.resetTitleChangeTimer();
+        this.store.updateExportWarningStatus();
 
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
 
-        this.timeline = new TimelineBar('timeline-bar', this.store,{
+        this.timeline = new TimelineBar('timeline-bar', this.store, {
             onPostClick: (postId) => {
-                $('#searchInput').val('');
-                
+                this.resetSearchQuery();
+
                 let a;
                 // Ищем автора этого стиха
                 for (const author of this.store.data.authors) {
@@ -80,7 +81,7 @@ class PoemApp {
         setTheme(savedTheme);
 
         // Обработчик клика по кнопке
-        $themeBtn.on('click', function() {
+        $themeBtn.on('click', function () {
             const currentTheme = $('body').attr('data-theme') === 'dark' ? 'dark' : 'light';
             setTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
@@ -130,6 +131,7 @@ class PoemApp {
             });
         }, halfDuration);
     }
+
     applySort() {
         $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
     }
@@ -164,13 +166,16 @@ class PoemApp {
             $content.addClass(`cols-${finalCols}`);
         });
     }
+
     toggleClearButton() {
         const hasValue = $('#searchInput').val().trim().length > 0;
         $('#clearSearchBtn').toggleClass('d-none', !hasValue);
     }
 
     refresh(animate = true) {
-        const searchQuery = $('#searchInput').val();
+        let searchQuery = $('#searchInput').val();
+        searchQuery = window.convertEngToRus(searchQuery);
+
         const authors = this.store.getAuthors(searchQuery);
         const prevSearchQuery = this._prevSearchQuery || '';
         const searchChanged = searchQuery !== prevSearchQuery;
@@ -187,7 +192,7 @@ class PoemApp {
         if (searchChanged && searchQuery && searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
             let firstFoundPostId = null;
-            
+
             for (const author of authors) {
                 if (author.posts && author.posts.length > 0) {
                     const foundPost = author.posts.find(post => isPostMatch(post, q));
@@ -198,7 +203,7 @@ class PoemApp {
                     }
                 }
             }
-            
+
             if (firstFoundPostId) {
                 this.store.selectedPostId = firstFoundPostId;
             } else {
@@ -226,7 +231,7 @@ class PoemApp {
         for (const author of this.store.data.authors) {
             if (author.posts) {
                 for (const post of author.posts) {
-                    allPosts.push({ ...post, authorId: author.id });
+                    allPosts.push({...post, authorId: author.id});
                 }
             }
         }
@@ -256,17 +261,47 @@ class PoemApp {
         }, 30000);
     }
 
+    resetSearchQuery() {
+        $('#searchInput').val('');
+        $('.btn-clear-search').addClass('d-none');
+        this._prevSearchQuery = '';
+    }
+
     bindEvents() {
         $('.clickable-logo').on('click', (e) => {
             this.applyRandomPoeticTitle();
             this.resetTitleChangeTimer();
         });
 
-        $(document).on('click', '.poem-line', function(e) {
-            const $line = $(this);
-            const $container = $line.closest('.poem-content');
+        // Перехват клавиши Esc для сброса поиска
+        $(document).on('keydown', (e) => {
+            if (e.key === 'Escape' || e.keyCode === 27) {
 
-            // Если кликнули по той же строке — снимаем выделение
+                // Проверяем, есть ли что сбрасывать
+                if ($('#searchInput').val() !== '') {
+                    e.preventDefault();
+                    this.resetSearchQuery();
+
+                    this.refresh(true);
+                }
+            }
+        });
+
+        $(document).on('click', '.poem-line', (e) => {
+            const $line = $(e.target);
+            const $container = $line.closest('.poem-content');
+            const $card = $line.closest('.poem-card');
+            const $searchInput = $('#searchInput');
+            const postId = $card.data('post-id');
+            const authorId = $card.data('author-id');
+
+            if (authorId && postId && $searchInput.length && $searchInput.val()) {
+                this.store.selectedPostId = postId;
+                this.store.selectedAuthorId = authorId;
+                this.resetSearchQuery();
+                this.refresh(false);
+            }
+
             if ($line.hasClass('active-bookmark')) {
                 $line.removeClass('active-bookmark');
                 return;
@@ -292,7 +327,7 @@ class PoemApp {
         // Сортировка авторов
         $(document).on('change', 'input[name="authorSort"]', (e) => {
             this.store.authorSortMode = $(e.target).val();
-            this.store.save();
+            this.store.saveSettings();
             this.refresh();
         });
 
@@ -319,17 +354,17 @@ class PoemApp {
             e.preventDefault();
             e.stopPropagation();
             const postId = $(e.currentTarget).data('post-id');
-            
+
             // Получаем автора, которому принадлежит этот стих
             const $authorCard = $(e.currentTarget).closest('.author-card-wrapper').find('.author-card');
             const authorId = $authorCard.data('id');
-            
+
             // Переключаемся на этого автора
             if (authorId) {
                 this.store.selectedAuthorId = authorId;
                 this.store.markAsViewed(authorId);
             }
-            
+
             this.store.selectedPostId = postId || null;
             this.refresh(false);
         });
@@ -355,13 +390,14 @@ class PoemApp {
         });
 
         // Выделение всего текста при фокусе на поле поиска
-        $('#searchInput').on('focus', function() {
+        $('#searchInput').on('focus', function () {
             $(this).select();
         });
 
         // Очистка поиска
         $('#clearSearchBtn').on('click', () => {
-            $('#searchInput').val('').trigger('input').focus();
+            this.resetSearchQuery();
+            $('#searchInput').trigger('input').focus();
         });
 
         // --- События Автора ---
@@ -387,10 +423,10 @@ class PoemApp {
                 text = normalizeUnicode(text);
 
                 const parsed = parseAuthorText(text);
-                
+
                 // Сохраняем исходные части для перераспределения
                 $('#authorForm').data('parsedParts', parsed.parts);
-                
+
                 const order = $('input[name="nameOrder"]:checked').val();
                 const distributed = distributeNameParts(parsed.parts, order);
 
@@ -409,10 +445,10 @@ class PoemApp {
         $(document).on('change', 'input[name="nameOrder"]', () => {
             const parts = $('#authorForm').data('parsedParts');
             if (!parts || parts.length === 0) return;
-            
+
             const order = $('input[name="nameOrder"]:checked').val();
             const distributed = distributeNameParts(parts, order);
-            
+
             $('#authorLastName').val(distributed.lastName);
             $('#authorFirstName').val(distributed.firstName);
             $('#authorSurName').val(distributed.surName);
@@ -443,7 +479,7 @@ class PoemApp {
                     const imageType = item.types.find(type => type.startsWith('image/'));
                     if (imageType) {
                         const blob = await item.getType(imageType);
-                        imageFile = new File([blob], 'clipboard_image.png', { type: imageType });
+                        imageFile = new File([blob], 'clipboard_image.png', {type: imageType});
                         break;
                     }
                 }
@@ -533,7 +569,7 @@ class PoemApp {
             e.preventDefault();
 
             if ($('#searchInput').val()) {
-                $('#searchInput').val('');
+                this.resetSearchQuery();
                 this.refresh();
             }
 
@@ -546,7 +582,7 @@ class PoemApp {
         $(document).on('click', 'a.view-all', (e) => {
             e.preventDefault();
 
-            $('#searchInput').val('');
+            this.resetSearchQuery();
             this.store.selectedPostId = null;
             this.refresh();
 
@@ -592,10 +628,12 @@ class PoemApp {
                 photo: $('#authorPhotoBase64').val() || ''
             };
 
-            const newId = this.store.saveAuthor(authorData);
+            const {id: newId, isModified} = this.store.saveAuthor(authorData);
             this.store.selectedAuthorId = newId;
             this.ui.closeAuthorModal();
-            this.refresh();
+            if (isModified) {
+                this.refresh();
+            }
         });
 
         // Удаление автора
@@ -645,7 +683,7 @@ class PoemApp {
         });
 
         // Выделение всего текста при фокусе на поле автора
-        $(document).on('focus', '#postAuthorSearch', function() {
+        $(document).on('focus', '#postAuthorSearch', function () {
             $(this).select();
         });
 
@@ -721,7 +759,7 @@ class PoemApp {
                 const titleLink = $(el).find('.link-title-input').val().trim();
                 const url = $(el).find('.link-url-input').val().trim();
                 if (url) {
-                    links.push({ title: titleLink, url: url });
+                    links.push({title: titleLink, url: url});
                 }
             });
 
@@ -741,27 +779,36 @@ class PoemApp {
                 postData.contentHtml = '';
             }
 
-            // Сохраняем пост к выбранному автору
-            this.store.savePost(authorId, postData);
-            
-            // Если автор изменился, удаляем пост у старого автора
+            // 1. Сохраняем пост у выбранного автора
+            let {id: postId, isModified} = this.store.savePost(authorId, postData);
+
+            // 2. Если пост существовал ранее, проверяем, не сменился ли автор
             const originalPostId = $('#postId').val();
+            let authorChanged = false;
+
             if (originalPostId) {
-                // Ищем пост у других авторов и удаляем
                 for (const author of this.store.data.authors) {
                     if (author.id !== authorId && author.posts) {
                         const postIdx = author.posts.findIndex(p => p.id === originalPostId);
                         if (postIdx !== -1) {
                             author.posts.splice(postIdx, 1);
-                            this.store.save();
+                            authorChanged = true;
                             break;
                         }
                     }
                 }
             }
-            
+
+            // 3. Закрываем модалку
             this.ui.closePostModal();
-            this.refresh();
+
+            // 4. Если сменился автор или изменились данные стиха — фиксируем изменения и перерисовываем UI
+            if (isModified || authorChanged) {
+                if (authorChanged) {
+                    this.store.save();
+                }
+                this.refresh();
+            }
         });
 
         // Удаление стиха
@@ -779,14 +826,14 @@ class PoemApp {
 
         // --- RAND (Случайное произведение) ---
         $('#randBtn').on('click', () => {
-            $('#searchInput').val('');
+            this.resetSearchQuery();
 
             // Собираем все произведения всех авторов в плоский массив для равномерного распределения
             const allPosts = [];
             for (const author of this.store.data.authors) {
                 if (author.posts && author.posts.length > 0) {
                     author.posts.forEach(post => {
-                        allPosts.push({ post, authorId: author.id });
+                        allPosts.push({post, authorId: author.id});
                     });
                 }
             }
@@ -801,8 +848,8 @@ class PoemApp {
             this.store.selectedPostId = random.post.id;
             this.store.markAsViewed(random.authorId);
             this.refresh();
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            window.scrollTo({top: 0, behavior: 'smooth'});
         });
 
         const scrollTopBtn = document.getElementById('scrollTopBtn');
@@ -823,7 +870,11 @@ class PoemApp {
         });
 
         // --- Экспорт / Импорт ---
-        $('#exportBtn').on('click', () => this.store.exportJson());
+        $('#exportBtn').on('click', () => {
+            this.store.exportJson();
+            this.store.markAsExported();
+        });
+
         $('#importBtn').on('click', () => $('#importFileInput').click());
 
         $('#importFileInput').on('change', (e) => {
@@ -847,7 +898,7 @@ class PoemApp {
         const $modalFields = $('#authorModal input[type="text"], #authorModal textarea, #postModal input[type="text"], #postModal textarea');
 
         // Перехват прямой вставки из буфера (Ctrl+V или правый клик -> Вставить)
-        $modalFields.on('paste', function(e) {
+        $modalFields.on('paste', function (e) {
             const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
             if (!clipboardData) return;
 

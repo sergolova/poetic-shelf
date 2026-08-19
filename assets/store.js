@@ -1,6 +1,5 @@
 class PoemStore {
-    constructor(storageKey = 'stih_app_data') {
-        this.storageKey = storageKey;
+    constructor() {
         this.data = { authors: [] };
         this.selectedAuthorId = null;
         this.selectedPostId = null;
@@ -9,15 +8,27 @@ class PoemStore {
     }
 
     async init() {
-        const local = localStorage.getItem(this.storageKey);
+        this.authorSortMode = localStorage.getItem('authorSortMode') || 'none';
+
+        // Безопасный парсинг lastViewed
+        try {
+            const parsedViewed = JSON.parse(localStorage.getItem('lastViewed'));
+            this.lastViewed = (parsedViewed && typeof parsedViewed === 'object') ? parsedViewed : {};
+        } catch (e) {
+            this.lastViewed = {};
+        }
+
+        const local = localStorage.getItem('stih_app_data');
         if (local) {
             try {
                 const parsed = JSON.parse(local);
+                // Поддержка обеих структур (с оберткой { data: ... } и без)
                 this.data = parsed.data || parsed;
-                this.lastViewed = parsed.lastViewed || {};
-                this.authorSortMode = parsed.authorSortMode || 'none';
+                if (!this.data.authors) {
+                    this.data.authors = [];
+                }
             } catch (e) {
-                console.error('Ошибка чтения из localStorage', e);
+                console.error('Ошибка чтения из localStorage:', e);
                 await this.loadDefaultJson();
             }
         } else {
@@ -29,18 +40,74 @@ class PoemStore {
         try {
             const res = await fetch('data.json');
             this.data = await res.json();
-            this.save();
+            this.saveData();
         } catch (err) {
             this.data = { authors: [] };
         }
     }
 
+    saveData() {
+        localStorage.setItem('stih_app_data', JSON.stringify({data: this.data}));
+        this.markAsChanged();
+        this.updateExportWarningStatus();
+    }
+
     save() {
-        localStorage.setItem(this.storageKey, JSON.stringify({
-            data: this.data,
-            lastViewed: this.lastViewed,
-            authorSortMode: this.authorSortMode
-        }));
+        this.saveData();
+        this.saveSettings();
+    }
+
+    saveSettings() {
+        localStorage.setItem('lastViewed', JSON.stringify(this.lastViewed));
+        localStorage.setItem('authorSortMode', this.authorSortMode);
+    }
+
+    markAsChanged() {
+        // Увеличиваем счетчик изменений
+        const currentCount = parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
+        localStorage.setItem('unsavedChangesCount', currentCount + 1);
+
+        localStorage.setItem('lastChangeTimestamp', Date.now());
+        this.updateExportWarningStatus();
+    }
+
+    markAsExported() {
+        // При экспорте сбрасываем счетчик
+        localStorage.setItem('unsavedChangesCount', '0');
+        localStorage.setItem('lastExportTimestamp', Date.now());
+        this.updateExportWarningStatus();
+    }
+
+    hasUnsavedChanges() {
+        const count = parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
+        return count > 0;
+    }
+
+    getUnsavedChangesCount() {
+        return parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
+    }
+
+    updateExportWarningStatus() {
+        const $dataBtn = $('#dataActionsDropdown');
+        const count = this.getUnsavedChangesCount();
+
+        if (count > 0) {
+            // Форматируем текст: если больше 99, пишем 99+
+            const badgeText = count > 99 ? '99+' : count;
+
+            let $badge = $dataBtn.find('.unsaved-badge');
+
+            if (!$badge.length) {
+                $badge = $('<span class="unsaved-badge badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle"></span>');
+                $dataBtn.append($badge);
+            }
+
+            $badge
+                .text(badgeText)
+                .attr('title', `Несохранённых изменений: ${count}`);
+        } else {
+            $dataBtn.find('.unsaved-badge').remove();
+        }
     }
 
     getAuthors(searchQuery = '') {
@@ -90,27 +157,49 @@ class PoemStore {
 
     markAsViewed(authorId) {
         this.lastViewed[authorId] = Date.now();
-        this.save();
+        this.saveSettings();
     }
     getAuthorById(id) {
         return this.data.authors.find(a => a.id === id);
     }
 
     saveAuthor(authorData) {
+    let isModified = false;
+
         if (authorData.id) {
             const idx = this.data.authors.findIndex(a => a.id === authorData.id);
             if (idx !== -1) {
-                this.data.authors[idx] = { ...this.data.authors[idx], ...authorData };
+            const current = this.data.authors[idx];
+
+            // Проверяем, изменились ли поля (игнорируя массив posts при сравнении)
+            const hasChanges = Object.keys(authorData).some(key => {
+                if (key === 'posts') return false; // стихи сравниваются отдельно
+                return JSON.stringify(current[key]) !== JSON.stringify(authorData[key]);
+            });
+
+            if (hasChanges) {
+                this.data.authors[idx] = { ...current, ...authorData };
+                isModified = true;
+            }
             }
         } else {
+        // Новый автор — это всегда новое изменение
             authorData.id = 'author_' + Date.now();
-            authorData.posts = [];
+        authorData.posts = authorData.posts || [];
             this.data.authors.push(authorData);
+        isModified = true;
         }
+
+    // Сохраняем и фиксируем изменения ТОЛЬКО если они реально были
+    if (isModified) {
         this.save();
-        return authorData.id;
     }
 
+    return {
+        id: authorData.id,
+        isModified // флаг, чтобы в UI понять — была ли реальная правка
+    };
+}
     deleteAuthor(id) {
         this.data.authors = this.data.authors.filter(a => a.id !== id);
         if (this.selectedAuthorId === id) {
@@ -127,23 +216,42 @@ class PoemStore {
 
     savePost(authorId, postData) {
         const author = this.getAuthorById(authorId);
-        if (!author) return;
+        if (!author) return { id: null, isModified: false };
 
         if (!author.posts) author.posts = [];
+
+        let isModified = false;
 
         if (postData.id) {
             const idx = author.posts.findIndex(p => p.id === postData.id);
             if (idx !== -1) {
-                author.posts[idx] = { ...author.posts[idx], ...postData };
+                const currentPost = author.posts[idx];
+
+                // Сравниваем свойства текущего стиха с пришедшими данными
+                const hasChanges = Object.keys(postData).some(key => {
+                    return JSON.stringify(currentPost[key]) !== JSON.stringify(postData[key]);
+                });
+
+                if (hasChanges) {
+                    author.posts[idx] = { ...currentPost, ...postData };
+                    isModified = true;
+                }
             }
         } else {
             postData.id = 'post_' + Date.now();
             author.posts.unshift(postData);
+            isModified = true;
         }
 
-        this.save();
-    }
+        if (isModified) {
+            this.save();
+        }
 
+        return {
+            id: postData.id,
+            isModified
+        };
+    }
     deletePost(authorId, postId) {
         const author = this.getAuthorById(authorId);
         if (!author || !author.posts) return;

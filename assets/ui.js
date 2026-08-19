@@ -311,7 +311,7 @@ class PoemUI {
         const writtenYears = (author?.birthYear && post.year) ? post.year - author?.birthYear : '';
 
         return `
-      <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-post-id="${post.id}">
+      <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
         <div class="card-body p-4">
           <div class="d-flex align-items-center justify-content-between pb-2 border-bottom">
             <h3 class="poem-title mb-0">${titleHtml}</h3>
