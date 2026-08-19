@@ -59,8 +59,10 @@ class PoemUI {
                 const isShowAll = !selectedPostId;
                 const itemsHtml = authorPosts.map(p => {
                     const isPostActive = p.id === selectedPostId;
+                    const bookmarkIcon = this.renderBookmarkIcon(p.id, app.store.getPostBookmark(p.id));
+
                     return `<span class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
-                        <span class="author-post-title text-truncate">${this.escape(p.title)}</span>
+                        <span class="author-post-title text-truncate">${this.escape(p.title)} ${bookmarkIcon}</span>
                         ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
                     </span>`;
                 }).join('');
@@ -310,11 +312,18 @@ class PoemUI {
 
         const writtenYears = (author?.birthYear && post.year) ? post.year - author?.birthYear : '';
 
+        console.log(post.id); // del
+        console.log(app.store.getPostBookmark(post.id)); // del
+        const bookmarkBtn = this.renderBookmarkButton(post.id, app.store.getPostBookmark(post.id));
+
         return `
       <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
         <div class="card-body p-4">
           <div class="d-flex align-items-center justify-content-between pb-2 border-bottom">
-            <h3 class="poem-title mb-0">${titleHtml}</h3>
+            <div class="post-header-wrapper">
+              <h3 class="poem-title mb-0">${titleHtml}</h3>
+              <div class="post-bookmark-wrapper">${bookmarkBtn}</div>
+            </div>
             <div class="d-flex align-items-center gap-2">
               ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} лет)` : ''}</span>` : ''}
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" data-post-id="${post.id}" title="Редактировать">✏️</button>
@@ -496,6 +505,30 @@ class PoemUI {
     escape(str) {
         if (!str) return '';
         return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    renderBookmarkButton(postId, state) {
+        const isBookmarked = Boolean(state);
+        const activeClass = isBookmarked ? 'active' : '';
+        const title = isBookmarked ? 'Убрать закладку' : 'Поставить закладку';
+
+        return `
+      <button class="btn btn-link text-muted p-0 ms-2 bookmark-btn svg-button ${activeClass}" title="${title}" data-post-id="${postId}">
+        <svg class="bookmark-icon bookmark-empty ${isBookmarked ? 'd-none' : ''}" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <svg class="bookmark-icon bookmark-filled ${!isBookmarked ? 'd-none' : ''}" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </button>`;
+    }
+
+    renderBookmarkIcon(postId, state) {
+        if (!state) return '';
+        return `
+      <svg class="bookmark-icon bookmark-filled" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>`
     }
 }
 

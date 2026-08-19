@@ -9,7 +9,7 @@ class PoemApp {
         await this.store.init();
         this.bindEvents();
         this.toggleClearButton();
-        this.applySort();
+        this.applyAuthorsSort();
         this.applyFontSize();
         this.applyColumns();
         this.applyRandomPoeticTitle();
@@ -132,7 +132,7 @@ class PoemApp {
         }, halfDuration);
     }
 
-    applySort() {
+    applyAuthorsSort() {
         $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
     }
 
@@ -170,6 +170,18 @@ class PoemApp {
     toggleClearButton() {
         const hasValue = $('#searchInput').val().trim().length > 0;
         $('#clearSearchBtn').toggleClass('d-none', !hasValue);
+    }
+
+    updateSidebarBookmarkIcon(postId, isBookmarked) {
+        const $postItem = $(`.author-post-item[data-post-id="${postId}"]`);
+        if (!$postItem.length) return;
+
+        const $titleSpan = $postItem.find('.author-post-title');
+        $titleSpan.find('.bookmark-icon').remove();
+
+        if (isBookmarked) {
+            $titleSpan.append(this.ui.renderBookmarkIcon(postId, true));
+        }
     }
 
     refresh(animate = true) {
@@ -271,6 +283,24 @@ class PoemApp {
         $('.clickable-logo').on('click', (e) => {
             this.applyRandomPoeticTitle();
             this.resetTitleChangeTimer();
+        });
+
+        $(document).on('click', '.bookmark-btn', (e) => {
+            e.stopPropagation();
+
+            const $btn = $(e.currentTarget);
+            const postId = $btn.data('post-id');
+
+            if (postId) {
+                const isBookmarked = $btn.toggleClass('active').hasClass('active');
+
+                $btn.attr('title', isBookmarked ? 'Убрать закладку' : 'Поставить закладку');
+                $btn.find('.bookmark-empty').toggleClass('d-none', isBookmarked);
+                $btn.find('.bookmark-filled').toggleClass('d-none', !isBookmarked);
+
+                this.store.toggleBookmark(postId, isBookmarked);
+                this.updateSidebarBookmarkIcon(postId, isBookmarked);
+            }
         });
 
         // Перехват клавиши Esc для сброса поиска

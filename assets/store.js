@@ -5,6 +5,7 @@ class PoemStore {
         this.selectedPostId = null;
         this.authorSortMode = 'none'; // none, az, recent, len
         this.lastViewed = {}; // { authorId: timestamp }
+        this.postBookmarks = {}; // { postId: timestamp }
     }
 
     async init() {
@@ -16,6 +17,13 @@ class PoemStore {
             this.lastViewed = (parsedViewed && typeof parsedViewed === 'object') ? parsedViewed : {};
         } catch (e) {
             this.lastViewed = {};
+        }
+
+        try {
+            const parsedPostBookmarks = JSON.parse(localStorage.getItem('postBookmarks'));
+            this.postBookmarks = (parsedPostBookmarks && typeof parsedPostBookmarks === 'object') ? parsedPostBookmarks : {};
+        } catch (e) {
+            this.postBookmarks = {};
         }
 
         const local = localStorage.getItem('stih_app_data');
@@ -58,6 +66,7 @@ class PoemStore {
     }
 
     saveSettings() {
+        localStorage.setItem('postBookmarks', JSON.stringify(this.postBookmarks));
         localStorage.setItem('lastViewed', JSON.stringify(this.lastViewed));
         localStorage.setItem('authorSortMode', this.authorSortMode);
     }
@@ -110,6 +119,15 @@ class PoemStore {
         }
     }
 
+    toggleBookmark(postId, state = true) {
+        this.postBookmarks[postId] = state;
+        this.saveSettings();
+    }
+
+    getPostBookmark(postId) {
+        return Boolean(this.postBookmarks[postId]);
+    }
+
     getAuthors(searchQuery = '') {
         let authors = searchQuery && searchQuery.trim()
             ? this.data.authors.filter(author => {
@@ -128,11 +146,21 @@ class PoemStore {
         switch (this.authorSortMode) {
             case 'birthday':
                 authors.sort((a, b) => {
+                    if (!a.birthYear && !b.birthYear) {
+                        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
+                        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
+                        return nameA.localeCompare(nameB, 'ru');
+                    }
                     return (a.birthYear || 9999) - (b.birthYear || 9999)
                 });
                 break;
             case 'len':
                 authors.sort((a, b) => {
+                    if (!a.posts && !b.posts) {
+                        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
+                        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
+                        return nameA.localeCompare(nameB, 'ru');
+                    }
                     return (b.posts ? b.posts.length : 0) - (a.posts ? a.posts.length : 0)
                 });
                 break;
@@ -147,6 +175,13 @@ class PoemStore {
                 authors.sort((a, b) => {
                     const timeA = this.lastViewed[a.id] || 0;
                     const timeB = this.lastViewed[b.id] || 0;
+
+                    if (!timeA && !timeB) {
+                        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
+                        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
+                        return nameA.localeCompare(nameB, 'ru');
+                    }
+
                     return timeB - timeA;
                 });
                 break;

@@ -994,3 +994,43 @@ a.view-all {
 .unsaved-badge {
     font-size: 0.6em;
 }
+
+/* Кнопка закладки */
+.bookmark-btn {
+    text-decoration: none;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.bookmark-btn:hover {
+    transform: scale(1.15);
+}
+
+/* Цвет активной закладки (например, золотистый/винтажный) */
+.bookmark-btn.active {
+    color: #d97706 !important; /* или ваш акцентный цвет */
+}
+
+/* Переключение видимости через CSS */
+.bookmark-btn .bookmark-filled {
+    display: none;
+}
+
+.bookmark-btn.active .bookmark-empty {
+    display: none;
+}
+
+.bookmark-btn.active .bookmark-filled {
+    display: inline-block !important;
+}
+
+.post-bookmark-wrapper {
+    padding: 2px 4px;
+    display: inline-block;
+}
+
+.post-header-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: left;
+}
