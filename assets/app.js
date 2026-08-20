@@ -285,6 +285,39 @@ class PoemApp {
             this.resetTitleChangeTimer();
         });
 
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-toggle-bookmarks');
+            const wrapper = e.target.closest('.bookmark-dropdown-wrapper');
+            const postLink = e.target.closest('.timeline-post-link');
+
+            if (btn) {
+                app.ui.toggleBookmarksMenu(wrapper);
+            } else if (postLink) {
+                // Клик по пункту в списке закладок — переходим к стиху
+                const postId = postLink.dataset.postId;
+                if (postId) {
+                    // Закрываем меню
+                    document.querySelectorAll('.bookmarks-dropdown-container').forEach(el => el.innerHTML = '');
+
+                    // Ищем автора и переходим
+                    for (const author of app.store.data.authors) {
+                        const found = author.posts?.find(p => p.id === postId);
+                        if (found) {
+                            app.store.selectedAuthorId = author.id;
+                            app.store.selectedPostId = postId;
+                            app.store.markAsViewed(author.id);
+                            app.refresh();
+                            scrollPostToView(author.id, postId);
+                            break;
+                        }
+                    }
+                }
+            } else if (!e.target.closest('.bookmarks-dropdown-container')) {
+                // Закрываем меню при клике снаружи
+                document.querySelectorAll('.bookmarks-dropdown-container').forEach(el => el.innerHTML = '');
+            }
+        });
+
         $(document).on('click', '.bookmark-btn', (e) => {
             e.stopPropagation();
 
@@ -834,9 +867,10 @@ class PoemApp {
 
             // 4. Если сменился автор или изменились данные стиха — фиксируем изменения и перерисовываем UI
             if (isModified || authorChanged) {
-                if (authorChanged) {
-                    this.store.save();
-                }
+                this.store.save();
+                
+                this.store.selectedPostId = postId;
+                this.store.selectedAuthorId = authorId;
                 this.refresh();
             }
         });

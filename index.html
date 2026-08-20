@@ -32,6 +32,16 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+            <div class="bookmark-dropdown-wrapper position-relative">
+                <button type="button" class="btn p-0 border-0 bg-transparent js-toggle-bookmarks" title="Закладки">
+                    <svg class="bookmark-icon bookmark-empty" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </button>
+
+                <!-- Сюда сгенерируем выпадающий список -->
+                <div class="bookmarks-dropdown-container"></div>
+            </div>
             <!-- Выбор размера шрифта -->
             <div class="btn-group btn-group-sm" role="group" id="fontSizeToggle">
                 <input type="radio" class="btn-check" name="fontSize" id="fontSmall" value="small">

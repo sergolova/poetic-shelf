@@ -142,33 +142,48 @@ class PoemStore {
             })
             : [...this.data.authors];
 
+        const sortAuthorsAZ = (a,b) => {
+            const nameA = `${a.lastName || ''} ${a.firstName || ''}`.toLowerCase();
+            const nameB = `${b.lastName || ''} ${b.firstName || ''}`.toLowerCase();
+            return nameA.localeCompare(nameB, 'ru');
+        }
+
         // Сортировка
         switch (this.authorSortMode) {
             case 'birthday':
                 authors.sort((a, b) => {
                     if (!a.birthYear && !b.birthYear) {
-                        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
-                        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
-                        return nameA.localeCompare(nameB, 'ru');
+                        return sortAuthorsAZ(a,b)
                     }
-                    return (a.birthYear || 9999) - (b.birthYear || 9999)
+
+                    const lA = a.birthYear || 9999;
+                    const lB = b.birthYear || 9999;
+
+                    if (lA === lB) {
+                        return sortAuthorsAZ(a,b)
+                    }
+
+                    return lA - lB;
                 });
                 break;
             case 'len':
                 authors.sort((a, b) => {
-                    if (!a.posts && !b.posts) {
-                        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
-                        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
-                        return nameA.localeCompare(nameB, 'ru');
+                    if ((!a.posts && !b.posts) ) {
+                        return sortAuthorsAZ(a,b)
                     }
-                    return (b.posts ? b.posts.length : 0) - (a.posts ? a.posts.length : 0)
+                    const lA = a.posts ? a.posts.length : 0;
+                    const lB = b.posts ? b.posts.length : 0;
+
+                    if (lA === lB) {
+                        return sortAuthorsAZ(a,b)
+                    }
+
+                    return lB - lA;
                 });
                 break;
             case 'az':
                 authors.sort((a, b) => {
-                    const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
-                    const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
-                    return nameA.localeCompare(nameB, 'ru');
+                    return sortAuthorsAZ(a,b)
                 });
                 break;
             case 'recent':
@@ -177,9 +192,7 @@ class PoemStore {
                     const timeB = this.lastViewed[b.id] || 0;
 
                     if (!timeA && !timeB) {
-                        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
-                        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
-                        return nameA.localeCompare(nameB, 'ru');
+                        return sortAuthorsAZ(a,b)
                     }
 
                     return timeB - timeA;

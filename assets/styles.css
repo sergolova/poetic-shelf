@@ -870,6 +870,39 @@ a.view-all {
     background-color: #d10000 !important;
 }
 
+/* ==========================================================================
+   Bookmarks dropdown
+   ========================================================================== */
+.bookmark-dropdown-wrapper {
+    position: relative;
+    top: -1px;
+}
+
+.bookmarks-dropdown-container {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1050;
+    margin-top: 8px;
+}
+
+.bookmarks-dropdown-container .timeline-dropdown-menu {
+    display: none;
+}
+
+.bookmarks-dropdown-container .timeline-dropdown-menu.show {
+    display: block;
+    min-width: 280px;
+    max-width: 420px;
+    max-height: 60vh;
+    overflow-y: auto;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
 .timeline-life-range {
     position: absolute;
     top: 0;

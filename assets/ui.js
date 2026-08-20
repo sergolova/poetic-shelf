@@ -15,6 +15,17 @@ class PoemUI {
         });
     }
 
+    sortPostsDefault(posts) {
+        posts.sort((a, b) => {
+            const aY = a.year ? a.year : 0;
+            const bY = b.year ? b.year : 0;
+
+            if (aY === bY) return ((a,b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase(), 'ru'))(a,b)
+
+            return aY - bY
+        });
+    }
+
     renderAuthorsList(authors, selectedId, selectedPostId = null, searchQuery = '') {
         this.$authorsList.empty();
         this.$authorsCount.text(authors.length);
@@ -43,9 +54,7 @@ class PoemUI {
                 authorPosts = authorPosts.filter(post => isPostMatch(post, q));
             }
 
-            authorPosts.sort((a, b) => {
-                return - (b.year ? b.year : 0) + (a.year ? a.year : 0)
-            });
+            this.sortPostsDefault(authorPosts);
             
             const isMatchedAuthor = q && isAuthorMatch(author, q);
             const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
@@ -118,10 +127,6 @@ class PoemUI {
             posts = posts.filter(post => isPostMatch(post, q));
         }
 
-        posts.sort((a, b) => {
-            return - (b.year ? b.year : 0) + (a.year ? a.year : 0)
-        });
-
         let displayPosts;
 
         if (q === '' && selectedPostId === null) {
@@ -129,6 +134,7 @@ class PoemUI {
         } else {
             displayPosts = posts.filter(p => p.id === selectedPostId);
         }
+        this.sortPostsDefault(displayPosts);
 
         const postsHtml = displayPosts.length > 0
             ? displayPosts.map(p => this.createPoemCardHtml(p, author, q)).join('')
@@ -312,8 +318,6 @@ class PoemUI {
 
         const writtenYears = (author?.birthYear && post.year) ? post.year - author?.birthYear : '';
 
-        console.log(post.id); // del
-        console.log(app.store.getPostBookmark(post.id)); // del
         const bookmarkBtn = this.renderBookmarkButton(post.id, app.store.getPostBookmark(post.id));
 
         return `
@@ -529,6 +533,90 @@ class PoemUI {
       <svg class="bookmark-icon bookmark-filled" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
       </svg>`
+    }
+
+    escapeHtml(str) {
+        return (str || '').replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        })[m]);
+    }
+
+    renderPostsDropdown(posts, title = '', customClass = '') {
+        if (!posts || !posts.length) return '';
+
+        const menuItemsHtml = posts.map(post => {
+            const author = app.store.getAuthorById(post.authorId);
+            const authorName = author ? `${author.lastName}: ` : '';
+
+            return `
+            <li>
+                <span class="dropdown-item timeline-post-link text-truncate" data-post-id="${post.id}">
+                    <span class="author-time-item">${this.escapeHtml(authorName)}</span>
+                    <span>${this.escapeHtml(post.title)}</span>
+                </span>
+            </li>
+        `;
+        }).join('');
+
+        const headerHtml = title
+            ? `<div class="timeline-dropdown-header">${this.escapeHtml(String(title))}</div>`
+            : '';
+
+        return `
+        <div class="timeline-dropdown-menu shadow-sm ${customClass}">
+            ${headerHtml}
+            <ul class="list-unstyled mb-0">
+                ${menuItemsHtml}
+            </ul>
+        </div>
+    `;
+    }
+
+    renderBookmarksDropdown() {
+        // 1. Извлекаем ID стихов из стора
+        const bookmarkedIds = Object.keys(app.store.postBookmarks || {});
+
+        if (bookmarkedIds.length === 0) {
+            return `
+            <div class="timeline-dropdown-menu shadow-sm show">
+                <div class="timeline-dropdown-header">Закладки</div>
+                <div class="p-3 text-muted text-center style-sm">Нет закладок</div>
+            </div>
+        `;
+        }
+
+        // 2. Находим объекты постов с authorId
+        const bookmarkedPosts = [];
+
+        app.store.data.authors.forEach(author => {
+            if (author.posts) {
+                author.posts.forEach(post => {
+                    if (app.store.postBookmarks[post.id]) {
+                        bookmarkedPosts.push({...post, authorId: author.id});
+                    }
+                });
+            }
+        });
+
+        // 3. Сортируем: новые закладки вверху
+        bookmarkedPosts.sort((a, b) => {
+            const timeA = app.store.postBookmarks[a.id] || 0;
+            const timeB = app.store.postBookmarks[b.id] || 0;
+            return timeB - timeA;
+        });
+
+        // 4. Рендерим через созданный ранее универсальный метод
+        return this.renderPostsDropdown(bookmarkedPosts, 'Закладки', 'show');
+    }
+
+    toggleBookmarksMenu(container) {
+        const dropdownContainer = container.querySelector('.bookmarks-dropdown-container');
+
+        if (dropdownContainer.innerHTML.trim() !== '') {
+            dropdownContainer.innerHTML = ''; // Закрываем, если открыто
+        } else {
+            dropdownContainer.innerHTML = this.renderBookmarksDropdown(); // Открываем и рендерим
+        }
     }
 }
 
