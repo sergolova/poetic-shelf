@@ -294,8 +294,8 @@
 
 /* Активная точка */
 [data-theme="dark"] .timeline-dot-wrapper.active .timeline-dot {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
+    background-color: color-mix(in srgb, var(--accent-color), #000 15%);
+    border: 1px solid color-mix(in srgb, var(--accent-color), #fff 20%);
 }
 
 /* Счётчик внутри точки */

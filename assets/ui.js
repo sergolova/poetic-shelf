@@ -550,11 +550,13 @@ class PoemUI {
 
             return `
             <li>
-                <span class="dropdown-item timeline-post-link text-truncate" data-post-id="${post.id}">
-                    <span class="author-time-item">${this.escapeHtml(authorName)}</span>
-                    <span>${this.escapeHtml(post.title)}</span>
-                </span>
-            </li>
+  <div class="dropdown-item timeline-post-link" data-post-id="${post.id}">
+    <div class="author-time-item-left">
+      <span class="author-time-item">${author ? this.escapeHtml(author.lastName) + ':' : ''}</span>
+      <span class="text-truncate">${this.escapeHtml(post.title)}</span>
+    </div>
+  </div>
+</li>
         `;
         }).join('');
 

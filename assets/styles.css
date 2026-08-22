@@ -222,8 +222,8 @@ body.font-large .poem-note-content {
 
 .header-search-box .input-group {
     background-color: var(--bg-main);
-    border-radius: 20px;
-    padding: 2px 8px;
+    border-radius: 0.25rem;
+    padding: 2px 4px;
     border: 1px solid var(--border-color);
 }
 
@@ -732,8 +732,8 @@ body.font-large .poem-note-content {
 .timeline-dot-wrapper.active .timeline-dot {
     width: 12px;
     height: 12px;
-    background-color: var(--accent-color);
-    border: 1px solid var(--accent-color);
+    background-color: color-mix(in srgb, var(--accent-color), #fff 20%);
+    border: 1px solid color-mix(in srgb, var(--accent-color), #000 15%);
     z-index: 999999;
 }
 
@@ -798,8 +798,36 @@ body.font-large .poem-note-content {
 
 .timeline-post-link {
     font-size: 13px;
-    padding: 6px 12px;
+    padding: 6px 6px 6px 12px;
     color: #212529;
+    display: flex;
+    gap: 4px; /* Немного уменьшим отступ для экономии места */
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+/* Левый блок занимает всё доступное место */
+.author-time-item-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0; /* КРИТИЧНО: позволяет text-truncate внутри flex-блока сжиматься */
+}
+
+.author-time-item {
+    white-space: nowrap;
+    flex-shrink: 0; /* Фамилия автора не сжимается */
+}
+
+/* Блок иконки зажимаем, чтобы он не плющился */
+.author-time-item-bookmark {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .timeline-post-link:hover {
@@ -836,6 +864,10 @@ a.view-all {
     font-weight: bold;
 }
 
+.author-time-item-bookmark {
+    
+}
+
 .svg-button {
     display: inline-flex;
     align-items: center;
@@ -867,7 +899,8 @@ a.view-all {
 }
 
 .is-current-post {
-    background-color: #d10000 !important;
+    background-color: color-mix(in srgb, var(--accent-color), red 60%) !important;
+    border: 1px solid color-mix(in srgb, var(--accent-color), red 70%) !important;
 }
 
 /* ==========================================================================
@@ -875,7 +908,6 @@ a.view-all {
    ========================================================================== */
 .bookmark-dropdown-wrapper {
     position: relative;
-    top: -1px;
 }
 
 .bookmarks-dropdown-container {

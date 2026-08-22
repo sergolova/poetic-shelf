@@ -81,14 +81,27 @@ class TimelineBar {
                     currentPostYear = year;
                 }
                 const author = this.store.getAuthorById(post.authorId);
+                const isBookmarked = this.store.getPostBookmark(post.id);
+
+                const bookmarkHtml = isBookmarked ? `
+    <div class="author-time-item-bookmark">
+      <svg class="bookmark-icon bookmark-filled" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#e5a051" stroke="#e5a051" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>
+    </div>
+` : '';
+
                 return `
-        <li>
-          <span class="dropdown-item timeline-post-link text-truncate" data-post-id="${post.id}">
-            <span class="author-time-item">${author ? author.lastName : ''}: </span>
-            <span>${this.escapeHtml(post.title)}</span>
-          </span>
-        </li>
-      `;
+<li>
+  <div class="dropdown-item timeline-post-link" data-post-id="${post.id}">
+    <div class="author-time-item-left">
+      <span class="author-time-item">${author ? this.escapeHtml(author.lastName) + ':' : ''}</span>
+      <span class="text-truncate">${this.escapeHtml(post.title)}</span>
+    </div>
+    ${bookmarkHtml}
+  </div>
+</li>
+`;
             }).join('');
 
             const isCurrentPostYear = year === currentPostYear;
@@ -130,6 +143,7 @@ class TimelineBar {
         this.bindEvents();
         this.layoutLabels();
     }
+
     /**
      * Скрывает подписи годов, которые накладываются друг на друга.
      * Показываются только те, что не перекрываются с предыдущей видимой.
