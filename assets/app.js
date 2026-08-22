@@ -144,14 +144,17 @@ class PoemApp {
             const $content = $(card).find('.poem-content');
             if (!$content.length) return;
 
-            $content.removeClass('cols-1 cols-2 cols-3');
+            $content.removeClass('cols-1 cols-2 cols-3 cols-4');
 
             const text = $content.text().trim();
             const lineCount = text ? text.split('\n').length : 0;
 
             // Рассчитываем желаемое кол-во колонок по длине стиха
             let targetCols = 1;
-            if (lineCount > 32) {
+
+            if (lineCount > 50) {
+                targetCols = 4;
+            } else if (lineCount > 32) {
                 targetCols = 3;
             } else if (lineCount >= 16) {
                 targetCols = 2;
