@@ -111,6 +111,22 @@ class PoemApp {
         }
     }
 
+    updateSidebarHeight() {
+        const $sidebar = $('.authors-sidebar');
+        const $resizer = $('.sidebar-resizer');
+        const $layout = $('.content-layout');
+
+        if (!$layout.length || !$sidebar.length) return;
+
+        const layoutTop = $layout[0].getBoundingClientRect().top;
+        const stickyTop = 20; /* совпадает с top: 20px в CSS */
+        const offset = Math.max(stickyTop, layoutTop);
+        const height = window.innerHeight - offset;
+
+        $sidebar.css('height', height + 'px');
+        $resizer.css('height', height + 'px');
+    }
+
     rollText($el, targetText, duration = 500) {
         if (!$el || !$el.length) return;
 
@@ -591,6 +607,7 @@ class PoemApp {
             this.refresh(false);
         });
 
+        this.updateSidebarHeight();
         window.addEventListener('scroll', () => {
             const header = document.querySelector('.app-header');
             if (window.scrollY > 100) {
@@ -598,7 +615,9 @@ class PoemApp {
             } else {
                 header.classList.remove('scrolled');
             }
+            this.updateSidebarHeight();
         });
+        window.addEventListener('resize', () => this.updateSidebarHeight());
 
         // Поиск
         $('#searchInput').on('input', () => {
