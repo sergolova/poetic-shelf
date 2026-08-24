@@ -180,35 +180,31 @@ class PoemApp {
 
             if (rects.length === 0) return;
 
-            // 2. Группируем rect'ы по визульной строке (по координате top)
+            // Группируем rect'ы строго в DOM-порядке с учетом колонок
             const visualLines = [];
-            const EPSILON = 4; // Погрешность в пикселях для слияния элементов на одной строке
+            const EPSILON = 4; // Погрешность по высоте
 
             rects.forEach(rect => {
-                // Ищем, есть ли уже визуальная строка с похожим top
-                let lineGroup = visualLines.find(group => Math.abs(group.top - rect.top) < EPSILON);
+                const currentGroup = visualLines[visualLines.length - 1];
 
-                if (!lineGroup) {
-                    lineGroup = {
+                // Если это первый rect ИЛИ изменилась строка/колонка (top ушел вверх/вниз или left резко сдвинулся)
+                if (!currentGroup || Math.abs(currentGroup.top - rect.top) > EPSILON) {
+                    visualLines.push({
                         top: rect.top,
                         bottom: rect.bottom,
                         right: rect.right
-                    };
-                    visualLines.push(lineGroup);
+                    });
                 } else {
-                    // Если элемент на той же строке — обновляем крайнюю правую и нижнюю точки
-                    lineGroup.right = Math.max(lineGroup.right, rect.right);
-                    lineGroup.bottom = Math.max(lineGroup.bottom, rect.bottom);
+                    // Если элемент находится на той же самой визуальной строчке в той же колонке
+                    currentGroup.right = Math.max(currentGroup.right, rect.right);
+                    currentGroup.bottom = Math.max(currentGroup.bottom, rect.bottom);
                 }
             });
 
-            // 3. Если визуальная строка только 1 — реального переноса не было
+            // Если физическая строка поместилась целиком — маркеры не нужны
             if (visualLines.length < 2) return;
 
-            // Сортируем визуальные строки сверху вниз
-            visualLines.sort((a, b) => a.top - b.top);
-
-            // 4. Ставим маркеры в конце каждой визуальной строки, КРОМЕ последней
+            // Ставим маркеры в конце каждого визуального отрезка, КРОМЕ самого последнего
             for (let i = 0; i < visualLines.length - 1; i++) {
                 const lineGroup = visualLines[i];
                 const marker = document.createElement('span');
@@ -216,7 +212,7 @@ class PoemApp {
                 marker.className = 'poem-line-break-marker';
                 marker.setAttribute('aria-hidden', 'true');
 
-                // Позиционируем маркер по правому краю всей визуальной строки
+                // Позиционируем строго по правому краю конца строки в текущей колонке
                 marker.style.left = `${lineGroup.right - parentRect.left}px`;
                 marker.style.top = `${lineGroup.bottom - parentRect.top}px`;
 
@@ -224,7 +220,7 @@ class PoemApp {
             }
         });
     }
-    
+
     updatePoemLineBreakMarkers() {
         $('.poem-content').each((index, element) => {
             this.markPoemLineBreaks($(element));
