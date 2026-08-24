@@ -116,11 +116,11 @@
 <div id="timeline-bar"></div>
 
 <!-- Основной контент -->
-<div class="container-fluid px-4">
-    <div class="row g-4">
+<div class="container-fluid px-3">
+    <div class="content-layout">
 
         <!-- Левый сайдбар: Список авторов -->
-        <aside class="col-lg-3 col-md-4">
+        <aside class="authors-sidebar">
             <div class="authors-sidebar card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-bottom py-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -186,8 +186,10 @@
             </div>
         </aside>
 
+        <div class="sidebar-resizer"></div>
+        
         <!-- Главное поле: Профиль автора и стихи -->
-        <main class="col-lg-9 col-md-8">
+        <main class="main-content">
             <div id="mainContent">
                 <!-- Лента стихов -->
                 <div class="posts-feed space-y-4">

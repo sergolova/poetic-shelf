@@ -71,6 +71,14 @@ class PoemStore {
         localStorage.setItem('authorSortMode', this.authorSortMode);
     }
 
+    saveSidebar(width) {
+        localStorage.setItem('authorsSidebarWidth', width);
+    }
+
+    loadSidebar() {
+        return parseInt(localStorage.getItem('authorsSidebarWidth'), 10);
+    }
+
     markAsChanged() {
         // Увеличиваем счетчик изменений
         const currentCount = parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);

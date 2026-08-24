@@ -381,8 +381,8 @@
 }
 
 [data-theme="dark"] .poem-content .poem-line.active-bookmark {
-    background-color: #38475c;
-    border-left: 3px solid #5d6f87;
+    background-color: #303c4e;
+    box-shadow: inset 0 0 3px #5d6f87;
 }
 
 [data-theme="dark"] .btn-scroll-top {

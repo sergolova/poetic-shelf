@@ -15,6 +15,7 @@ class PoemApp {
         this.applyRandomPoeticTitle();
         this.updateTheme();
         this.resetTitleChangeTimer();
+        this.applySidebarWidth();
         this.store.updateExportWarningStatus();
 
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
@@ -99,6 +100,15 @@ class PoemApp {
         const fontSize = localStorage.getItem('fontSize') || 'normal';
         $('body').removeClass('font-small font-normal font-large').addClass(`font-${fontSize}`);
         $(`input[name="fontSize"][value="${fontSize}"]`).prop('checked', true);
+    }
+
+    applySidebarWidth() {
+        const $sidebar = $('.authors-sidebar');
+        const savedWidth = this.store.loadSidebar();
+
+        if (Number.isFinite(savedWidth)) {
+            $sidebar.css('flex-basis', `${savedWidth}px`);
+        }
     }
 
     rollText($el, targetText, duration = 500) {
@@ -282,11 +292,53 @@ class PoemApp {
         this._prevSearchQuery = '';
     }
 
+    bindResizer() {
+        const $layout = $('.content-layout');
+        const $sidebar = $('.authors-sidebar');
+        const $resizer = $('.sidebar-resizer');
+
+        let isResizing = false;
+
+        $resizer.on('mousedown', function (e) {
+            e.preventDefault();
+
+            isResizing = true;
+
+            $('body').addClass('is-resizing');
+
+            $(document).on('mousemove.sidebarResize', function (e) {
+                if (!isResizing) return;
+
+                const layoutLeft = $layout.offset().left;
+                const newWidth = e.clientX - layoutLeft;
+
+                const minWidth = 220;
+                const maxWidth = 600;
+
+                const width = Math.max(
+                    minWidth,
+                    Math.min(maxWidth, newWidth)
+                );
+
+                $sidebar.css('flex-basis', `${width}px`);
+            });
+
+            $(document).on('mouseup.sidebarResize', function () {
+                isResizing = false;
+                $('body').removeClass('is-resizing');
+                $(document).off('.sidebarResize');
+                app.store.saveSidebar(Math.round($sidebar.outerWidth()));
+            });
+        });
+    }
+
     bindEvents() {
         $('.clickable-logo').on('click', (e) => {
             this.applyRandomPoeticTitle();
             this.resetTitleChangeTimer();
         });
+
+        this.bindResizer();
 
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.js-toggle-bookmarks');
