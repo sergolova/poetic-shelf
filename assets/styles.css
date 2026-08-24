@@ -479,11 +479,13 @@ body.is-resizing {
 
 /* Вывод текста стиха */
 .poem-text-container {
+    position: relative;
     padding-left: 1rem;
     border-left: 3px solid var(--highlight-bg);
 }
 
 .poem-content {
+    position: relative;
     font-family: var(--font-serif);
     font-size: 1.1rem;
     line-height: 1.75;
@@ -1061,8 +1063,19 @@ a.view-all {
     to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-.poem-content .poem-line {
-    transition: background-color 0.2s ease, border-left 0.2s ease;
+.poem-line-break-marker {
+    position: absolute;
+    color: #8a8f98;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    transform: translate(-50%, -140%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.poem-line-break-marker::before {
+    content: '↵';
 }
 
 .poem-content .poem-line:hover {

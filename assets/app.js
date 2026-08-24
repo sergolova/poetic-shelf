@@ -146,6 +146,113 @@ class PoemApp {
         $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
     }
 
+    markPoemLineBreaks($poemContent) {
+        const container = $poemContent[0];
+        if (!container) return;
+
+        const markersParent = container.closest('.poem-text-container') || container.parentElement;
+        if (!markersParent) return;
+
+        // 1. Удаляем старые маркеры
+        markersParent.querySelectorAll('.poem-line-break-marker').forEach(marker => marker.remove());
+
+        const parentRect = markersParent.getBoundingClientRect();
+
+        container.querySelectorAll('.poem-line').forEach(line => {
+            const rects = [];
+            const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT, null, false);
+
+            let textNode;
+            while ((textNode = walker.nextNode())) {
+                // Пропускаем пустые узлы (пробелы/переносы)
+                if (!textNode.textContent.trim()) continue;
+
+                const range = document.createRange();
+                range.selectNode(textNode);
+                const nodeRects = range.getClientRects();
+                for (let r = 0; r < nodeRects.length; r++) {
+                    // Игнорируем узлы без реальной ширины
+                    if (nodeRects[r].width > 0) {
+                        rects.push(nodeRects[r]);
+                    }
+                }
+            }
+
+            if (rects.length === 0) return;
+
+            // 2. Группируем rect'ы по визульной строке (по координате top)
+            const visualLines = [];
+            const EPSILON = 4; // Погрешность в пикселях для слияния элементов на одной строке
+
+            rects.forEach(rect => {
+                // Ищем, есть ли уже визуальная строка с похожим top
+                let lineGroup = visualLines.find(group => Math.abs(group.top - rect.top) < EPSILON);
+
+                if (!lineGroup) {
+                    lineGroup = {
+                        top: rect.top,
+                        bottom: rect.bottom,
+                        right: rect.right
+                    };
+                    visualLines.push(lineGroup);
+                } else {
+                    // Если элемент на той же строке — обновляем крайнюю правую и нижнюю точки
+                    lineGroup.right = Math.max(lineGroup.right, rect.right);
+                    lineGroup.bottom = Math.max(lineGroup.bottom, rect.bottom);
+                }
+            });
+
+            // 3. Если визуальная строка только 1 — реального переноса не было
+            if (visualLines.length < 2) return;
+
+            // Сортируем визуальные строки сверху вниз
+            visualLines.sort((a, b) => a.top - b.top);
+
+            // 4. Ставим маркеры в конце каждой визуальной строки, КРОМЕ последней
+            for (let i = 0; i < visualLines.length - 1; i++) {
+                const lineGroup = visualLines[i];
+                const marker = document.createElement('span');
+
+                marker.className = 'poem-line-break-marker';
+                marker.setAttribute('aria-hidden', 'true');
+
+                // Позиционируем маркер по правому краю всей визуальной строки
+                marker.style.left = `${lineGroup.right - parentRect.left}px`;
+                marker.style.top = `${lineGroup.bottom - parentRect.top}px`;
+
+                markersParent.appendChild(marker);
+            }
+        });
+    }
+    
+    updatePoemLineBreakMarkers() {
+        $('.poem-content').each((index, element) => {
+            this.markPoemLineBreaks($(element));
+        });
+    }
+    
+    initPoemLineBreakMarkers() {
+        this.poemResizeObserver?.disconnect();
+
+        const mainContent = document.querySelector('#mainContent');
+
+        if (!mainContent) {
+            return;
+        }
+
+        this.poemResizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(() => {
+                this.updatePoemLineBreakMarkers();
+            });
+        });
+
+        this.poemResizeObserver.observe(mainContent);
+
+        // Ждём следующего кадра, чтобы layout был полностью вычислен
+        requestAnimationFrame(() => {
+            this.updatePoemLineBreakMarkers();
+        });
+    }
     applyColumns() {
         const maxColumns = parseInt(localStorage.getItem('columns'), 10) || 1;
 
@@ -265,6 +372,7 @@ class PoemApp {
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
 
         this.applyColumns();
+        this.initPoemLineBreakMarkers();
 
         if (this.store.selectedPostId) {
             localStorage.setItem('selectedPostId', this.store.selectedPostId);
