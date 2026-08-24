@@ -1,9 +1,12 @@
 /* ==========================================================================
-   assets/theme-dark-2.css
+   assets/theme-dark.css
    Альтернативная тёмная тема — «Ночная библиотека».
    Активируется при наличии атрибута [data-theme="dark"] на теге <body>.
    ========================================================================== */
 
+/* ==========================================================================
+   1. Переменные тёмной темы / Dark Theme Variables
+   ========================================================================== */
 [data-theme="dark"] {
     /* Глубокий сине-графитовый фон + холодный бумажный текст */
     --bg-main: #10151c;
@@ -20,10 +23,10 @@
     --shadow-color: rgba(0, 0, 0, 0.55);
 }
 
-/* --------------------------------------------------------------------------
-   Основные элементы
-   -------------------------------------------------------------------------- */
 
+/* ==========================================================================
+   2. Базовые элементы интерфейса / Base Layout Overrides
+   ========================================================================== */
 [data-theme="dark"] body {
     background-color: var(--bg-main);
     color: var(--text-main);
@@ -39,69 +42,40 @@
     border-color: var(--border-color) !important;
 }
 
-/* --------------------------------------------------------------------------
-   Модальные окна
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] .modal-content {
+[data-theme="dark"] .bg-light,
+[data-theme="dark"] .bg-white {
     background-color: var(--bg-card) !important;
-    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-bottom,
+[data-theme="dark"] .border-top {
     border-color: var(--border-color) !important;
 }
 
-[data-theme="dark"] .modal-header,
-[data-theme="dark"] .modal-footer {
-    border-color: var(--border-color) !important;
-}
-
-[data-theme="dark"] .modal-footer.bg-light {
-    background-color: var(--bg-main) !important;
-}
-
-[data-theme="dark"] .btn-close {
-    filter: invert(1) grayscale(1);
-    opacity: 0.7;
-}
-
-[data-theme="dark"] .btn-close:hover {
+[data-theme="dark"] hr {
+    border-color: var(--border-color);
     opacity: 1;
 }
 
-/* --------------------------------------------------------------------------
-   Формы и поля ввода
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] .form-control,
-[data-theme="dark"] .form-select {
-    background-color: #202a35 !important;
-    color: var(--text-main) !important;
-    border-color: var(--border-color) !important;
+/* Фильтры для фотографий в тёмной теме */
+[data-theme="dark"] .author-avatar-wrapper img,
+[data-theme="dark"] .hero-avatar-img {
+    filter:
+            brightness(0.78)
+            contrast(1.08)
+            saturate(0.55)
+            sepia(0.42);
 }
 
-[data-theme="dark"] .form-control::placeholder {
-    color: #687584 !important;
-    opacity: 1;
-}
 
-[data-theme="dark"] .form-control:focus,
-[data-theme="dark"] .form-select:focus {
-    background-color: #202a35 !important;
-    color: var(--text-main) !important;
-    border-color: var(--accent-color) !important;
-    /*box-shadow: 0 0 0 0.25rem rgba(199, 169, 107, 0.20) !important;*/
-}
-
-[data-theme="dark"] .input-group-text,
-[data-theme="dark"] .btn-clear-search {
-    background-color: #202a35 !important;
-    color: var(--text-main) !important;
-    border-color: var(--border-color) !important;
-}
-
-/* --------------------------------------------------------------------------
-   Кнопки
-   -------------------------------------------------------------------------- */
-
+/* ==========================================================================
+   3. Кнопки / Buttons Overrides
+   ========================================================================== */
 [data-theme="dark"] .btn-outline-secondary {
     color: #b7c0ca;
     border-color: #43505e;
@@ -146,10 +120,16 @@
     border-color: var(--accent-color);
 }
 
-/* --------------------------------------------------------------------------
-   Списки и таблицы
-   -------------------------------------------------------------------------- */
+[data-theme="dark"] .btn-check:checked + .btn-vintage-outline {
+    background-color: #8e7b52;
+    border-color: #8e7b52;
+    color: var(--bg-main) !important;
+}
 
+
+/* ==========================================================================
+   4. Списки и таблицы / Lists & Tables Overrides
+   ========================================================================== */
 [data-theme="dark"] .list-group-item {
     background-color: var(--bg-card) !important;
     color: var(--text-main) !important;
@@ -173,115 +153,41 @@
     border-color: var(--border-color);
 }
 
-/* --------------------------------------------------------------------------
-   Выпадающие меню
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] .dropdown-menu {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-    box-shadow: 0 8px 24px var(--shadow-color);
+/* Совпавший автор и временные элементы авторов */
+[data-theme="dark"] .matched-author {
+    background-color: var(--accent-color) !important;
+    color: #151a20 !important;
 }
 
-[data-theme="dark"] .dropdown-item {
-    color: var(--text-main) !important;
+[data-theme="dark"] .author-time-item {
+    color: var(--text-main);
 }
 
-[data-theme="dark"] .dropdown-item:hover,
-[data-theme="dark"] .dropdown-item:focus {
-    background-color: var(--highlight-bg) !important;
-    color: var(--text-main) !important;
-}
-
-/* --------------------------------------------------------------------------
-   Bootstrap utility-классы
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] .bg-light,
-[data-theme="dark"] .bg-white {
-    background-color: var(--bg-card) !important;
-}
-
-[data-theme="dark"] .text-muted {
-    color: var(--text-muted) !important;
-}
-
-[data-theme="dark"] .border,
-[data-theme="dark"] .border-bottom,
-[data-theme="dark"] .border-top {
-    border-color: var(--border-color) !important;
-}
-
-/* --------------------------------------------------------------------------
-   Алерты
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] .alert-light {
-    background-color: var(--bg-main) !important;
-    color: var(--text-muted) !important;
-    border-color: var(--border-color) !important;
-}
-
-[data-theme="dark"] .alert {
-    box-shadow: 0 2px 8px var(--shadow-color);
-}
-
-/* --------------------------------------------------------------------------
-   Дополнительные элементы интерфейса
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] .badge.bg-secondary {
-    background-color: #465362 !important;
-}
-
-[data-theme="dark"] .author-search-dropdown {
-    background-color: var(--bg-card) !important;
-    color: var(--text-main) !important;
-    border-color: var(--border-color) !important;
-    box-shadow: 0 8px 24px var(--shadow-color);
-}
-
-[data-theme="dark"] .author-search-dropdown > *:hover {
-    background-color: var(--highlight-bg);
-}
-
-[data-theme="dark"] hr {
-    border-color: var(--border-color);
-    opacity: 1;
-}
-
-[data-theme="dark"] .author-avatar-wrapper img,
-[data-theme="dark"] .hero-avatar-img {
-    filter:
-            brightness(0.78)
-            contrast(1.08)
-            saturate(0.55)
-            sepia(0.42);
-}
-
-[data-theme="dark"] .form-check-input {
-    background-color: #202a35;
-    border-color: #536171;
-}
-
-[data-theme="dark"] .form-check-input:checked {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
-}
-
-[data-theme="dark"] .form-check-input:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 0.25rem rgba(199, 169, 107, 0.20);
-}
-
-[data-theme="dark"] .form-check-input:not(:checked):hover {
-    border-color: #7c8997;
-}
 
 /* ==========================================================================
-   Time bar — dark theme
+   5. Карточки произведений и Закладки / Poem Cards & Bookmarks Overrides
    ========================================================================== */
+[data-theme="dark"] .poem-link-badge {
+    filter: saturate(0.55);
+}
 
+[data-theme="dark"] .poem-content .poem-line:hover {
+    background-color: #293545;
+}
+
+[data-theme="dark"] .poem-content .poem-line.active-bookmark {
+    background-color: #303c4e;
+    box-shadow: inset 0 0 3px #5d6f87;
+}
+
+[data-theme="dark"] a.view-all {
+    color: var(--accent-color) !important;
+}
+
+
+/* ==========================================================================
+   6. Временная шкала / Timeline Bar Overrides
+   ========================================================================== */
 [data-theme="dark"] .timeline-line {
     background-color: var(--border-color);
 }
@@ -312,7 +218,15 @@
     color: var(--text-muted);
 }
 
-/* Выпадающее меню */
+/* Период жизни автора на таймлайне */
+[data-theme="dark"] .timeline-life-range {
+    background-color: #253040;
+    border: 1px solid #324157;
+    border-bottom: none;
+    border-top: none;
+}
+
+/* Выпадающее меню временной шкалы */
 [data-theme="dark"] .timeline-dropdown-menu {
     background-color: var(--bg-card);
     border-color: var(--border-color);
@@ -325,7 +239,7 @@
     border-bottom-color: var(--border-color);
 }
 
-/* Ссылки на стихи */
+/* Ссылки на стихи во временной шкале */
 [data-theme="dark"] .timeline-post-link {
     color: var(--text-main);
 }
@@ -335,24 +249,127 @@
     color: var(--accent-color);
 }
 
-/* Совпавший автор */
-[data-theme="dark"] .matched-author {
+
+/* ==========================================================================
+   7. Формы, Выпадающие меню и Модальные окна / Forms, Dropdowns & Modals Overrides
+   ========================================================================== */
+[data-theme="dark"] .modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-footer.bg-light {
+    background-color: var(--bg-main) !important;
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(1);
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .btn-close:hover {
+    opacity: 1;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #202a35 !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #687584 !important;
+    opacity: 1;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #202a35 !important;
+    color: var(--text-main) !important;
+    border-color: var(--accent-color) !important;
+}
+
+[data-theme="dark"] .input-group-text,
+[data-theme="dark"] .btn-clear-search {
+    background-color: #202a35 !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background-color: var(--highlight-bg) !important;
+    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .author-search-dropdown {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+[data-theme="dark"] .author-search-dropdown > *:hover {
+    background-color: var(--highlight-bg);
+}
+
+[data-theme="dark"] .form-check-input {
+    background-color: #202a35;
+    border-color: #536171;
+}
+
+[data-theme="dark"] .form-check-input:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+[data-theme="dark"] .form-check-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem rgba(199, 169, 107, 0.20);
+}
+
+[data-theme="dark"] .form-check-input:not(:checked):hover {
+    border-color: #7c8997;
+}
+
+
+/* ==========================================================================
+   8. Алерты и Вспомогательные элементы / Alerts & Utilities Overrides
+   ========================================================================== */
+[data-theme="dark"] .alert-light {
+    background-color: var(--bg-main) !important;
+    color: var(--text-muted) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .alert {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #465362 !important;
+}
+
+[data-theme="dark"] .btn-scroll-top {
     background-color: var(--accent-color) !important;
-    color: #151a20 !important;
-}
-
-/* Профиль автора */
-[data-theme="dark"] .author-profile-hero h2 {
-}
-
-/* Ссылка "Все" */
-[data-theme="dark"] a.view-all {
-    color: var(--accent-color) !important;
-}
-
-/* Элементы временной шкалы автора */
-[data-theme="dark"] .author-time-item {
-    color: var(--text-main);
+    opacity: 0.3;
 }
 
 [data-theme="dark"] .search-input-wrapper span,
@@ -363,35 +380,4 @@
 
 [data-theme="dark"] .search-input-wrapper .form-control:focus {
     background-color: transparent !important;
-}
-
-[data-theme="dark"] .poem-link-badge {
-    filter: saturate(0.55)
-}
-
-[data-theme="dark"] .timeline-life-range {
-    background-color: #253040;
-    border: 1px solid #324157;
-    border-bottom: none;
-    border-top: none;
-}
-
-[data-theme="dark"] .poem-content .poem-line:hover {
-    background-color: #293545;
-}
-
-[data-theme="dark"] .poem-content .poem-line.active-bookmark {
-    background-color: #303c4e;
-    box-shadow: inset 0 0 3px #5d6f87;
-}
-
-[data-theme="dark"] .btn-scroll-top {
-    background-color: var(--accent-color) !important;
-    opacity: 0.3;
-}
-
-[data-theme="dark"] .btn-check:checked + .btn-vintage-outline {
-    background-color: #8e7b52;
-    border-color: #8e7b52;
-    color: var(--bg-main) !important;
 }

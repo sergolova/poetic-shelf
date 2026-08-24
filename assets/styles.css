@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. Локальные шрифты
+   1. Локальные шрифты / Local Fonts
    ========================================================================== */
 
 /* Merriweather */
@@ -77,8 +77,9 @@
     src: url('fonts/plus-jakarta-sans-v12-cyrillic-ext_latin-800.woff2') format('woff2');
 }
 
+
 /* ==========================================================================
-   2. Переменные и общие стили (Винтажный книжный стиль)
+   2. Переменные тем / Theme Variables
    ========================================================================== */
 
 /* Светлая тема (По умолчанию) */
@@ -98,7 +99,7 @@
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* Тёмная тема */
+/* Тёмная тема (Базовая) */
 [data-theme="dark"] {
     --bg-main: #141414;            /* Тёмно-угольный фон */
     --bg-card: #1e1e1e;            /* Карточки */
@@ -110,6 +111,11 @@
     --highlight-bg: #2a2520;
     --shadow-color: rgba(0, 0, 0, 0.4);
 }
+
+
+/* ==========================================================================
+   3. Общие стили приложения / Reset & Global Styles
+   ========================================================================== */
 
 body.vintage-app {
     background-color: var(--bg-main) !important;
@@ -140,7 +146,12 @@ body.vintage-app {
     opacity: 0.5 !important;
 }
 
-/* Размеры шрифта */
+
+/* ==========================================================================
+   4. Типографика и Колонки стихов / Typography & Verse Column System
+   ========================================================================== */
+
+/* Динамические размеры шрифта */
 body.font-small .poem-content,
 body.font-small .poem-note-content {
     font-size: 0.85rem;
@@ -151,6 +162,7 @@ body.font-large .poem-note-content {
     font-size: 1.4rem;
 }
 
+/* Колонки */
 .poem-content.cols-1 {
     column-count: 1;
 }
@@ -170,13 +182,13 @@ body.font-large .poem-note-content {
 }
 
 /* 4 колонки */
-.poem-content.cols-4{
+.poem-content.cols-4 {
     column-count: 4;
     column-gap: 1rem;
     column-rule: 1px solid var(--border-color);
 }
 
-/* Адаптивность: на мобилках всегда сбрасываем в 1 колонку */
+/* Адаптивность: на мобильных устройствах всегда сбрасываем в 1 колонку */
 @media (max-width: 768px) {
     .poem-content.cols-2,
     .poem-content.cols-3 {
@@ -185,37 +197,23 @@ body.font-large .poem-note-content {
     }
 }
 
+
+/* ==========================================================================
+   5. Макет и Сетка / Layout Structure
+   ========================================================================== */
+
 .content-layout {
     display: flex;
     width: 100%;
     min-width: 0;
 }
 
-.authors-sidebar {
-    flex: 0 0 380px;
-    width: 380px;
-    min-width: 220px;
-    max-width: 600px;
-    position: sticky;
-    top: 20px;  /* прокрутить не выше */
-    align-self: flex-start;
-    /* высота управляется из JS через style.height */
+.main-content {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
-.authors-sidebar > .authors-sidebar {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-#authorsList {
-    flex: 1;
-    overflow-y: auto;
-}
-
-/* Вертикальный разделитель */
+/* Вертикальный разделитель (Resizer) сайдбара */
 .sidebar-resizer {
     flex: 0 0 16px;
     width: 16px;
@@ -227,7 +225,7 @@ body.font-large .poem-note-content {
     /* высота управляется из JS через style.height */
 }
 
-/* Сама видимая линия */
+/* Видимая линия внутри разделителя */
 .sidebar-resizer::after {
     content: '';
     position: absolute;
@@ -242,19 +240,17 @@ body.font-large .poem-note-content {
     background-color: var(--border-color);
 }
 
-.main-content {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
+/* Класс, добавляемый при изменении размера */
 body.is-resizing {
     cursor: col-resize;
     user-select: none;
 }
 
+
 /* ==========================================================================
-   3. Шапка (Header)
+   6. Шапка приложения / Header & Navigation
    ========================================================================== */
+
 .app-header {
     background-color: var(--bg-card);
     border-color: var(--border-color) !important;
@@ -290,6 +286,7 @@ body.is-resizing {
     color: var(--text-muted);
 }
 
+/* Поиск в шапке */
 .header-search-box {
     min-width: 280px;
 }
@@ -307,6 +304,16 @@ body.is-resizing {
     color: var(--text-main) !important;
 }
 
+.search-input-wrapper span,
+.search-input-wrapper button,
+.search-input-wrapper input {
+    background-color: transparent !important;
+}
+
+.search-input-wrapper .form-control:focus {
+    background-color: transparent !important;
+}
+
 .btn-clear-search {
     color: var(--text-muted);
     background: transparent !important;
@@ -319,7 +326,16 @@ body.is-resizing {
     color: var(--accent-color);
 }
 
-/* Кнопки в стиле винтажа */
+/* Индикатор несохраненных данных */
+.unsaved-badge {
+    font-size: 0.6em;
+}
+
+
+/* ==========================================================================
+   7. Кнопки / Buttons
+   ========================================================================== */
+
 .btn-accent {
     background-color: var(--accent-color);
     color: #fff !important;
@@ -348,14 +364,79 @@ body.is-resizing {
     color: var(--text-main);
 }
 
+/* Высота и выравнивание кнопок в Header */
+.app-header .btn-sm,
+.app-header .btn-group-sm > .btn {
+    height: 31px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+}
+
+/* Активные кнопки переключения настроек в Header */
+.btn-check:checked + .btn-vintage-outline {
+    background-color: var(--text-muted);
+    border-color: var(--text-muted);
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.btn-group .btn-vintage-outline {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Интерактивные SVG кнопки */
+.svg-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease-in-out, transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
+    opacity: 0.7;
+}
+
+.svg-button:hover {
+    color: var(--accent-color) !important;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.svg-button:active {
+    transform: scale(0.95);
+}
+
+
 /* ==========================================================================
-   4. Сайдбар Авторов
+   8. Сайдбар авторов / Authors Sidebar
    ========================================================================== */
+
+/* Слияние двух прошлых определений .authors-sidebar в одно */
 .authors-sidebar {
+    flex: 0 0 380px;
+    width: 380px;
+    min-width: 220px;
+    max-width: 600px;
+    position: sticky;
+    top: 20px;
+    align-self: flex-start;
     background-color: var(--bg-card);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
     border: 1px solid var(--border-color);
+}
+
+.authors-sidebar > .authors-sidebar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#authorsList {
+    flex: 1;
+    overflow-y: auto;
 }
 
 .sidebar-heading {
@@ -370,6 +451,7 @@ body.is-resizing {
     background-color: var(--accent-color) !important;
 }
 
+/* Карточка автора */
 .author-card {
     background-color: transparent;
     border-color: var(--border-color) !important;
@@ -416,156 +498,15 @@ body.is-resizing {
     border: 1px solid var(--border-color);
 }
 
-/* ==========================================================================
-   5. Главная область: Профиль и Карточки Стихов
-   ========================================================================== */
-.author-profile-hero {
+.matched-author {
+    background-color: var(--accent-color) !important;
 }
 
-.avatar-style {
-    filter: grayscale(100%) hue-rotate(-15deg) saturate(0.7) contrast(0.95);
-    opacity: 0.95;
-}
-
-.hero-avatar-img {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--border-color);
-    box-shadow: 0 4px 12px var(--shadow-color);
-}
-
-.hero-author-name {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.6rem;
-    color: var(--text-main);
-}
-
-.author-wiki-link {
-    cursor: pointer;
-    color: inherit;
-    text-decoration: none;
-}
-
-.author-wiki-link:hover {
-    text-decoration: underline;
-}
-
-.hero-author-wrapper {
-    display: flex;
-    gap: 1rem;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-}
-
-.hero-author-meta {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-}
-
-/* Карточка стиха */
-.poem-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color) !important;
-    border-radius: 16px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.poem-card:hover {
-    box-shadow: 0 8px 24px var(--shadow-color) !important;
-}
-
-.poem-title {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.35rem;
-    color: var(--text-main);
-}
-
-.poem-year-tag {
-    font-size: 0.75rem;
-    background-color: var(--bg-main);
-    color: var(--text-muted);
-    padding: 3px 10px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-}
-
-/* Вывод текста стиха */
-.poem-text-container {
-    position: relative;
-    padding-left: 1rem;
-    border-left: 3px solid var(--highlight-bg);
-}
-
-.poem-content {
-    position: relative;
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
-    line-height: 1.75;
-    color: var(--text-main);
-    white-space: pre-wrap;
-    background: transparent;
-    border: none;
-    margin: 0;
-    word-break: break-word;
-    column-fill: balance;
-}
-
-.poem-note-box {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
-.poem-note-content {
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--text-muted);
-    white-space: pre-wrap;
-    margin: 0;
-    background: transparent;
-    border: none;
-    display: inline;
-}
-
-.poem-link-badge {
-    font-size: 0.8rem;
-    text-decoration: none;
-    color: var(--accent-color);
-    background-color: var(--bg-main);
-    padding: 4px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    transition: all 0.15s ease;
-    max-width: 380px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.poem-link-badge:hover {
-    background-color: var(--highlight-bg);
-    color: var(--accent-hover);
-}
-
-.hero-avatar-img, .author-avatar-img {
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.hero-avatar-img:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px var(--shadow-color);
-}
 
 /* ==========================================================================
-   6. Раскрывающийся список произведений в сайдбаре
+   9. Выпадающие списки произведений / Sidebar Nested Poems Lists
    ========================================================================== */
+
 .author-card-wrapper {
     border-bottom: 1px solid var(--border-color);
 }
@@ -631,9 +572,511 @@ body.is-resizing {
     border: 1px solid var(--border-color);
 }
 
+
 /* ==========================================================================
-   7. Выпадающий список поиска автора и модалки
+   10. Профиль автора / Author Profile Hero
    ========================================================================== */
+
+.author-profile-hero {
+}
+
+.author-profile-hero h2 {
+    width: fit-content;
+}
+
+.hero-author-wrapper {
+    display: flex;
+    gap: 1rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-author-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: var(--text-main);
+}
+
+.hero-author-meta {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.author-wiki-link {
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+}
+
+.author-wiki-link:hover {
+    text-decoration: underline;
+}
+
+a.view-all {
+    color: var(--accent-color) !important;
+}
+
+/* Стилизация аватаров */
+.avatar-style {
+    filter: grayscale(100%) hue-rotate(-15deg) saturate(0.7) contrast(0.95);
+    opacity: 0.95;
+}
+
+.hero-avatar-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.hero-avatar-img, .author-avatar-img {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-avatar-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+
+/* ==========================================================================
+   11. Карточки произведений и Закладки / Poem Cards & Bookmarks
+   ========================================================================== */
+
+.poem-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.poem-card:hover {
+    box-shadow: 0 8px 24px var(--shadow-color) !important;
+}
+
+.poem-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: var(--text-main);
+}
+
+.poem-year-tag {
+    font-size: 0.75rem;
+    background-color: var(--bg-main);
+    color: var(--text-muted);
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+/* Текст стиха */
+.poem-text-container {
+    position: relative;
+    padding-left: 1rem;
+    border-left: 3px solid var(--highlight-bg);
+}
+
+.poem-content {
+    position: relative;
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    line-height: 1.75;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    background: transparent;
+    border: none;
+    margin: 0;
+    word-break: break-word;
+    column-fill: balance;
+}
+
+/* Заметка / Контекст */
+.poem-note-box {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.poem-note-content {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    margin: 0;
+    background: transparent;
+    border: none;
+    display: inline;
+}
+
+/* Ссылки-источники */
+.poem-link-badge {
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: var(--accent-color);
+    background-color: var(--bg-main);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+    max-width: 380px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.poem-link-badge:hover {
+    background-color: var(--highlight-bg);
+    color: var(--accent-hover);
+}
+
+/* Маркеры строк, закладки, подсветка */
+.poem-line-break-marker {
+    position: absolute;
+    color: #8a8f98;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    transform: translate(-50%, -140%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.poem-line-break-marker::before {
+    content: '↵';
+}
+
+.poem-content .poem-line:hover {
+    background-color: #fff3cd;
+}
+
+.poem-content .poem-line.active-bookmark {
+    background-color: #fff3cd;
+    box-shadow: inset 0 0 3px #c8a12c;
+}
+
+/* Управление закладками стихотворения */
+.post-header-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: left;
+}
+
+.post-bookmark-wrapper {
+    padding: 2px 4px;
+    display: inline-block;
+}
+
+.bookmark-btn {
+    text-decoration: none;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.bookmark-btn:hover {
+    transform: scale(1.15);
+}
+
+.bookmark-btn.active {
+    color: #d97706 !important;
+}
+
+.bookmark-btn .bookmark-filled {
+    display: none;
+}
+
+.bookmark-btn.active .bookmark-empty {
+    display: none;
+}
+
+.bookmark-btn.active .bookmark-filled {
+    display: inline-block !important;
+}
+
+
+/* ==========================================================================
+   12. Превью и Тултипы YouTube / Link Preview Tooltips
+   ========================================================================== */
+
+.link-tooltip-container {
+    position: relative;
+}
+
+.link-yt-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 100px;
+    padding: 1px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    pointer-events: none;
+}
+
+.link-yt-tooltip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+}
+
+.link-yt-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #ffffff transparent transparent transparent;
+}
+
+.link-tooltip-container:hover .link-yt-tooltip {
+    display: block;
+    animation: fadeIn 0.15s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, 5px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+
+/* ==========================================================================
+   13. Временная шкала / Timeline Bar
+   ========================================================================== */
+
+.timeline-bar-wrapper {
+    position: relative;
+    user-select: none;
+    height: 40px;
+    opacity: 0.5;
+    transition: opacity 3s ease-out;
+}
+
+.timeline-bar-wrapper:hover {
+    opacity: 1;
+    transition: opacity 0.2s ease-in;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 15px;
+    left: 1.5rem;
+    right: 1.5rem;
+    height: 1px;
+    background-color: var(--border-color);
+    z-index: 1;
+}
+
+.timeline-dots-container {
+    position: relative;
+    height: 30px;
+}
+
+/* Обертка отдельной точки */
+.timeline-dot-wrapper {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    cursor: pointer;
+}
+
+.timeline-dot-wrapper.active {
+    z-index: 10; /* Поднимает активную точку над неактивными */
+}
+
+.timeline-dot-wrapper:hover {
+    z-index: 20;
+}
+
+/* Неактивная точка (у текущего автора нет стихов) */
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #ced4da;
+    border: 1px solid #aeaeae;
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.timeline-dot-wrapper:hover .timeline-dot {
+    transform: scale(1.3);
+}
+
+/* Активный год (у текущего автора есть стихи) */
+.timeline-dot-wrapper.active .timeline-dot {
+    width: 12px;
+    height: 12px;
+    background-color: color-mix(in srgb, var(--accent-color), #fff 20%);
+    border: 1px solid color-mix(in srgb, var(--accent-color), #000 15%);
+    z-index: 999999;
+}
+
+/* Счётчик стихов внутри кружка */
+/* Объединение .timeline-dot-count и .timeline-dot-wrapper .timeline-dot-count */
+.timeline-dot-count {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 1;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.timeline-dot-wrapper.active .timeline-dot-count {
+    color: #c3c3c3;
+}
+
+/* Год под точкой */
+.timeline-year-label {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 400;
+    color: #6c757d;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Период жизни автора на таймлайне */
+.timeline-life-range {
+    position: absolute;
+    top: 0;
+    height: 40px;
+    background-color: #e6e3de;
+    border: 1px solid #dcd8d5;
+    border-bottom: none;
+    border-top: none;
+    z-index: 0;
+    pointer-events: none; 
+    transition: all 0.3s ease;
+}
+
+/* Подсветка текущего года */
+.is-current-post {
+    background-color: color-mix(in srgb, var(--accent-color), red 60%) !important;
+    border: 1px solid color-mix(in srgb, var(--accent-color), red 70%) !important;
+}
+
+/* Выпадающее меню со стихами на таймлайне */
+.timeline-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    min-width: 180px;
+    max-width: 260px;
+    z-index: 1000;
+    padding: 6px 0;
+}
+
+.timeline-dropdown-header {
+    padding: 4px 12px;
+    font-size: 12px;
+    text-align: center;
+    border-bottom: 1px solid #f1f1f1;
+    text-transform: uppercase;
+    cursor: default;
+}
+
+.timeline-post-link {
+    font-size: 13px;
+    padding: 6px 6px 6px 12px;
+    color: #212529;
+    display: flex;
+    gap: 4px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.timeline-post-link:hover {
+    background-color: var(--highlight-bg);
+    color: var(--accent-color);
+}
+
+/* Объединение и чистка стилей .author-time-item */
+.author-time-item {
+    white-space: nowrap;
+    flex-shrink: 0; /* Фамилия автора не сжимается */
+    font-weight: bold;
+}
+
+.author-time-item-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.author-time-item-bookmark {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+
+/* ==========================================================================
+   14. Модальные окна и Формы / Modals & Forms
+   ========================================================================== */
+
+/* Подгонка Bootstrap-компонентов под темы */
+.modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.modal-header, .modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+.modal-footer.bg-light {
+    background-color: var(--bg-main) !important;
+}
+
+.form-control, .form-select {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--accent-color) !important;
+}
+
+/* Автокомплит выбора автора в модалке */
 .author-search-wrapper {
     position: relative;
 }
@@ -697,6 +1140,7 @@ body.is-resizing {
     color: var(--text-muted);
 }
 
+/* Подсветка совпадения при поиске */
 .query-selection {
     outline: 2px solid rgba(var(--bs-warning-rgb)) !important;
 }
@@ -705,284 +1149,11 @@ body.is-resizing {
     color: white !important;
 }
 
-/* Подгонка Bootstrap-компонентов под темы */
-.modal-content {
-    background-color: var(--bg-card) !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border-color) !important;
-}
-
-.modal-header, .modal-footer {
-    border-color: var(--border-color) !important;
-}
-
-.modal-footer.bg-light {
-    background-color: var(--bg-main) !important;
-}
-
-.form-control, .form-select {
-    background-color: var(--bg-card) !important;
-    color: var(--text-main) !important;
-    border-color: var(--border-color) !important;
-}
-
-.form-control:focus, .form-select:focus {
-    background-color: var(--bg-card) !important;
-    color: var(--text-main) !important;
-    border-color: var(--accent-color) !important;
-}
 
 /* ==========================================================================
-   8. Кастомные скроллбары
-   ========================================================================== */
-.custom-scrollbar::-webkit-scrollbar,
-.author-posts-list::-webkit-scrollbar {
-    width: 5px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track,
-.author-posts-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb,
-.author-posts-list::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 10px;
-}
-
-/* ==========================================================================
-   Time bar
+   15. Выпадающие списки закладок / Bookmarks Dropdown
    ========================================================================== */
 
-/* Основной контейнер тайм-бара */
-.timeline-bar-wrapper {
-    position: relative;
-    user-select: none;
-    height: 40px;
-    opacity: 0.5;
-    transition: opacity 3s ease-out;
-}
-
-.timeline-bar-wrapper:hover {
-    opacity: 1;
-    transition: opacity 0.2s ease-in;
-}
-
-/* Направляющая линия — совмещена с нижней границей header */
-.timeline-line {
-    position: absolute;
-    top: 15px;
-    left: 1.5rem;
-    right: 1.5rem;
-    height: 1px;
-    background-color: var(--border-color);
-    z-index: 1;
-}
-
-.timeline-dots-container {
-    position: relative;
-    height: 30px;
-}
-
-/* Обертка отдельной точки */
-.timeline-dot-wrapper {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
-    cursor: pointer;
-}
-
-/* Сама точка (кружок) — неактивный год (у текущего автора нет стихов) */
-.timeline-dot {
-    width: 12px;
-    height: 12px;
-    background-color: #ced4da;
-    border: 1px solid #aeaeae;
-    border-radius: 50%;
-    transition: all 0.2s ease-in-out;
-    position: relative;
-}
-
-/* Активный год (у текущего автора есть стихи) */
-.timeline-dot-wrapper.active .timeline-dot {
-    width: 12px;
-    height: 12px;
-    background-color: color-mix(in srgb, var(--accent-color), #fff 20%);
-    border: 1px solid color-mix(in srgb, var(--accent-color), #000 15%);
-    z-index: 999999;
-}
-
-.timeline-dot-wrapper:hover .timeline-dot {
-    transform: scale(1.3);
-}
-
-/* Счётчик — внутри основного кружка */
-.timeline-dot-count {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 8px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1;
-    pointer-events: none;
-}
-
-.timeline-dot-wrapper.active .timeline-dot-count {
-    color: #c3c3c3;
-}
-
-    /* Подпись года под точкой */
-.timeline-year-label {
-    position: absolute;
-    top: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    font-weight: 400;
-    color: #6c757d;
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-/* Выпадающее меню со стихами при наведении */
-.timeline-dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    min-width: 180px;
-    max-width: 260px;
-    z-index: 1000;
-    padding: 6px 0;
-}
-
-.timeline-dropdown-header {
-    padding: 4px 12px;
-    font-size: 12px;
-    text-align: center;
-    border-bottom: 1px solid #f1f1f1;
-    text-transform: uppercase;
-    cursor: default;
-}
-
-.timeline-post-link {
-    font-size: 13px;
-    padding: 6px 6px 6px 12px;
-    color: #212529;
-    display: flex;
-    gap: 4px; /* Немного уменьшим отступ для экономии места */
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-}
-
-/* Левый блок занимает всё доступное место */
-.author-time-item-left {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
-    flex: 1 1 auto;
-    min-width: 0; /* КРИТИЧНО: позволяет text-truncate внутри flex-блока сжиматься */
-}
-
-.author-time-item {
-    white-space: nowrap;
-    flex-shrink: 0; /* Фамилия автора не сжимается */
-}
-
-/* Блок иконки зажимаем, чтобы он не плющился */
-.author-time-item-bookmark {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-}
-
-.timeline-post-link:hover {
-    background-color: var(--highlight-bg);
-    color: var(--accent-color);
-}
-
-.timeline-dot-wrapper .timeline-dot-count {
-    color: var(--text-muted);
-    z-index: 2;
-}
-
-.timeline-dot-wrapper.active {
-    z-index: 10; /* Поднимает всю активную точку со всеми её элементами выше неактивных */
-}
-
-.timeline-dot-wrapper:hover {
-    z-index: 20;
-}
-
-.matched-author {
-    background-color: var(--accent-color) !important;
-}
-
-.author-profile-hero h2 {
-    width: fit-content;
-}
-
-a.view-all {
-    color: var(--accent-color) !important;
-}
-
-.author-time-item {
-    font-weight: bold;
-}
-
-.author-time-item-bookmark {
-    
-}
-
-.svg-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s ease-in-out, transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
-    opacity: 0.7;
-}
-
-/* Состояние при наведении */
-.svg-button:hover {
-    color: var(--accent-color) !important; /* bootstrap primary цвет */
-    opacity: 1;
-    transform: scale(1.1); /* Легкое увеличение для интерактивности */
-}
-
-/* Состояние при нажатии */
-.svg-button:active {
-    transform: scale(0.95);
-}
-
-.search-input-wrapper span,
-.search-input-wrapper button,
-.search-input-wrapper input {
-    background-color: transparent !important;
-}
-
-.search-input-wrapper .form-control:focus {
-    background-color: transparent !important;
-}
-
-.is-current-post {
-    background-color: color-mix(in srgb, var(--accent-color), red 60%) !important;
-    border: 1px solid color-mix(in srgb, var(--accent-color), red 70%) !important;
-}
-
-/* ==========================================================================
-   Bookmarks dropdown
-   ========================================================================== */
 .bookmark-dropdown-wrapper {
     position: relative;
 }
@@ -1012,97 +1183,31 @@ a.view-all {
     box-shadow: 0 8px 24px var(--shadow-color);
 }
 
-.timeline-life-range {
-    position: absolute;
-    top: 0;
-    height: 40px;
-    background-color: #e6e3de;
-    border: 1px solid #dcd8d5;
-    border-bottom: none;
-    border-top: none;
-    z-index: 0;
-    pointer-events: none; 
-    transition: all 0.3s ease;
+
+/* ==========================================================================
+   16. Кастомные скроллбары / Custom Scrollbars
+   ========================================================================== */
+
+.custom-scrollbar::-webkit-scrollbar,
+.author-posts-list::-webkit-scrollbar {
+    width: 5px;
 }
 
-/* Контейнер для точного позиционирования */
-.link-tooltip-container {
-    position: relative;
+.custom-scrollbar::-webkit-scrollbar-track,
+.author-posts-list::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-/* Всплывающий тултип */
-.link-yt-tooltip {
-    display: none;
-    position: absolute;
-    bottom: 125%; /* Оповещение появится над ссылкой */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 150px;
-    height: 100px;
-    padding: 1px;
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 100;
-    pointer-events: none; /* Чтобы тултип не мешал кликам */
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.author-posts-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
 }
 
-/* Настройки самой картинки превью */
-.link-yt-tooltip img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Заполняет 100x50 без искажений пропорций */
-    border-radius: 4px;
-    display: block;
-}
 
-/* Маленькая стрелочка внизу тултипа */
-.link-yt-tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: #ffffff transparent transparent transparent;
-}
-
-/* Показ при наведении на обертку ссылки */
-.link-tooltip-container:hover .link-yt-tooltip {
-    display: block;
-    animation: fadeIn 0.15s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, 5px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-.poem-line-break-marker {
-    position: absolute;
-    color: #8a8f98;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1;
-    transform: translate(-50%, -140%);
-    pointer-events: none;
-    z-index: 10;
-}
-
-.poem-line-break-marker::before {
-    content: '↵';
-}
-
-.poem-content .poem-line:hover {
-    background-color: #fff3cd;
-}
-
-.poem-content .poem-line.active-bookmark {
-    background-color: #fff3cd;
-    box-shadow: inset 0 0 3px #c8a12c;
-}
+/* ==========================================================================
+   17. Кнопка прокрутки наверх / Scroll Top Button
+   ========================================================================== */
 
 .btn-scroll-top {
     position: fixed;
@@ -1121,69 +1226,4 @@ a.view-all {
 
 .btn-scroll-top:hover {
     transform: translateY(-3px);
-}
-
-.app-header .btn-sm,
-.app-header .btn-group-sm > .btn {
-    height: 31px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
-}
-
-.btn-check:checked + .btn-vintage-outline {
-    background-color: var(--text-muted);
-    border-color: var(--text-muted);
-    color: #fff !important;
-    font-weight: 600;
-}
-
-.btn-group .btn-vintage-outline {
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.unsaved-badge {
-    font-size: 0.6em;
-}
-
-/* Кнопка закладки */
-.bookmark-btn {
-    text-decoration: none;
-    transition: transform 0.15s ease, color 0.15s ease;
-}
-
-.bookmark-btn:hover {
-    transform: scale(1.15);
-}
-
-/* Цвет активной закладки (например, золотистый/винтажный) */
-.bookmark-btn.active {
-    color: #d97706 !important; /* или ваш акцентный цвет */
-}
-
-/* Переключение видимости через CSS */
-.bookmark-btn .bookmark-filled {
-    display: none;
-}
-
-.bookmark-btn.active .bookmark-empty {
-    display: none;
-}
-
-.bookmark-btn.active .bookmark-filled {
-    display: inline-block !important;
-}
-
-.post-bookmark-wrapper {
-    padding: 2px 4px;
-    display: inline-block;
-}
-
-.post-header-wrapper {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: left;
 }
