@@ -1,5 +1,21 @@
 /**
- * Утилита: Сжатие изображения через Canvas в Base64 (JPEG)
+ * ==========================================================================
+ * assets/utilities.js
+ * Набор общих утилит для работы с изображениями, текстом и DOM-элементами.
+ * ==========================================================================
+ */
+
+/* ==========================================================================
+   1. Работа с изображениями / Image Utilities
+   ========================================================================== */
+
+/**
+ * Сжимает изображение из File объекта через Canvas в формат JPEG (Base64).
+ * @param {File} file - Файл изображения.
+ * @param {number} maxWidth - Максимальная ширина.
+ * @param {number} maxHeight - Максимальная высота.
+ * @param {number} quality - Качество сжатия (0.0 - 1.0).
+ * @returns {Promise<string>} Base64 строка изображения.
  */
 function compressImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
     return new Promise((resolve, reject) => {
@@ -40,23 +56,13 @@ function compressImage(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
     });
 }
 
-function isAuthorMatch(author, q) {
-    const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.toLowerCase();
-
-    return fullName.includes(q);
-}
-
-function isPostMatch(post, q) {
-    const title = (post.title || '').toLowerCase();
-    const content = (post.content || '').toLowerCase();
-    const contentHtml = (post.contentHtml || '').toLowerCase();
-    const note = ''; // (post.note || '').toLowerCase();
-
-    return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
-}
-
 /**
- * Утилита: Загрузка изображения по URL и конвертация в сжатый Base64
+ * Загружает изображение по внешнему URL и конвертирует в сжатую строку Base64.
+ * @param {string} url - Ссылка на изображение.
+ * @param {number} maxWidth - Максимальная ширина.
+ * @param {number} maxHeight - Максимальная высота.
+ * @param {number} quality - Качество сжатия.
+ * @returns {Promise<string>} Base64 строка изображения.
  */
 function imageUrlToBase64(url, maxWidth = 300, maxHeight = 300, quality = 0.8) {
     return new Promise((resolve, reject) => {
@@ -99,20 +105,80 @@ function imageUrlToBase64(url, maxWidth = 300, maxHeight = 300, quality = 0.8) {
     });
 }
 
+
+/* ==========================================================================
+   2. Текстовый поиск и сопоставление / Text Search & Matching
+   ========================================================================== */
+
 /**
- * Утилита: Очистка текста от мусорных хвостов сайтов и линков из буфера
+ * Проверяет, соответствует ли имя автора поисковому запросу.
+ * @param {Object} author - Объект автора.
+ * @param {string} q - Поисковый запрос (в нижнем регистре).
+ * @returns {boolean}
+ */
+function isAuthorMatch(author, q) {
+    const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.toLowerCase();
+    return fullName.includes(q);
+}
+
+/**
+ * Проверяет, соответствуют ли название, текст или заметка стихотворения поисковому запросу.
+ * @param {Object} post - Объект стихотворения.
+ * @param {string} q - Поисковый запрос (в нижнем регистре).
+ * @returns {boolean}
+ */
+function isPostMatch(post, q) {
+    const title = (post.title || '').toLowerCase();
+    const content = (post.content || '').toLowerCase();
+    const contentHtml = (post.contentHtml || '').toLowerCase();
+    const note = (post.note || '').toLowerCase(); // Включаем поиск по заметкам
+
+    return title.includes(q) || content.includes(q) || contentHtml.includes(q) || note.includes(q);
+}
+
+
+/* ==========================================================================
+   3. Безопасность и Экранирование / Security & HTML Escaping
+   ========================================================================== */
+
+/**
+ * Экранирует спецсимволы HTML/XML для предотвращения XSS и корректного рендеринга.
+ * @param {string} str - Входная строка.
+ * @returns {string} Экранированная строка.
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    })[m]);
+}
+
+
+/* ==========================================================================
+   4. Парсинг и Обработка ввода / Parsing & Input Helpers
+   ========================================================================== */
+
+/**
+ * Очищает скопированный текст от мусорных хвостов сайтов (например, источников и копирайтов).
+ * @param {string} text - Исходный текст из буфера обмена.
+ * @returns {string} Очищенный текст.
  */
 function cleanPastedText(text) {
     if (!text) return '';
     return text
-        // 1. Удаляем приставки источников ("Источник: https://...", "Подробнее: http...", "Взято с: ...")
+        // Удаляем приставки источников ("Источник: https://...", "Подробнее: http...", "Взято с: ...")
         .replace(/(?:Источник|Подробнее|Взято с|Read more)?\s*:?\s*https?:\/\/\S+/gi, '')
-        // 2. Убираем лишние пустые строки на концах, оставшиеся после вырезания
         .trim();
 }
 
 /**
- * Утилита: Парсинг строки ФИО и годов жизни
+ * Парсит сырую строку с ФИО автора и годами его жизни.
+ * @param {string} rawText - Исходная строка для разбора.
+ * @returns {Object} Объект с массивом частей имени и годами жизни.
  */
 function parseAuthorText(rawText) {
     const result = {
@@ -123,13 +189,12 @@ function parseAuthorText(rawText) {
 
     if (!rawText || !rawText.trim()) return result;
 
-    // Чистим ссылки и копирайты
     let text = cleanPastedText(rawText);
 
     // Удаляем знаки ударения (Unicode combining characters)
     text = text.normalize('NFD').replace(/[\u0300\u0301]/g, '').normalize('NFC');
 
-    // Сначала находим годы (пока текст не обрезан)
+    // Находим годы жизни
     const allYears = text.match(/\b(\d{4})\b/g);
 
     if (allYears && allYears.length >= 2) {
@@ -156,6 +221,11 @@ function parseAuthorText(rawText) {
     return result;
 }
 
+/**
+ * Конвертирует строку, если она набрана в ошибочной английской раскладке клавиатуры.
+ * @param {string} str - Исходная строка.
+ * @returns {string} Сконвертированная строка на русском языке.
+ */
 function convertEngToRus(str) {
     if (!str) return '';
 
@@ -177,52 +247,14 @@ function convertEngToRus(str) {
         return str.split('').map(char => map[char] || char).join('');
     }
 
-    return str; // Возвращаем как есть, если уже есть русские буквы или только цифры
-}
-
-function scrollToAuthorInSidebar(authorId) {
-    if (!authorId) return;
-
-    const $container = $('#authorsList');
-    const $targetLink = $container.find(`.author-card[data-id="${authorId}"]`);
-
-    if (!$targetLink.length) return;
-
-    $container.find('.author-card').removeClass('active');
-    $targetLink.addClass('active');
-
-    $targetLink[0].scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-    });
-}
-
-function scrollPostToView(authorId, postId) {
-    if (!authorId) return;
-    if (!postId) return;
-
-    const $container = $('#authorsList');
-    const $authorLink = $container.find(`.author-card[data-id="${authorId}"]`);
-
-    if (!$authorLink.length) return;
-
-    $container.find('.author-card').removeClass('active');
-    $authorLink.addClass('active');
-
-    $container.find('.author-post-item').removeClass('active');
-    const $postLink = $authorLink.siblings('.author-posts-list').find(`.author-post-item[data-post-id="${postId}"]`);
-
-    if ($postLink.length) {
-        $postLink.addClass('active');
-        $postLink[0].scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest'
-        });
-    }
+    return str;
 }
 
 /**
- * Распределяет части имени по полям в зависимости от порядка
+ * Распределяет части имени по полям в зависимости от выбранного порядка ФИО.
+ * @param {Array<string>} parts - Части имени.
+ * @param {string} order - Порядок (FIO, IFO, IOF).
+ * @returns {Object} Объект с полями фамилии, имени и отчества.
  */
 function distributeNameParts(parts, order) {
     const result = {lastName: '', firstName: '', surName: ''};
@@ -251,8 +283,9 @@ function distributeNameParts(parts, order) {
 }
 
 /**
- * Утилита: Нормализация Unicode (NFC) для приведения составных символов к единым
- * Например: "й" (и + кратка) → "й" (единый символ), "ё" (е + диереза) → "ё"
+ * Нормализует Unicode (NFC) для корректного сравнения составных символов.
+ * @param {string} text - Исходный текст.
+ * @returns {string} Нормализованный текст.
  */
 function normalizeUnicode(text) {
     if (!text) return '';
@@ -260,26 +293,27 @@ function normalizeUnicode(text) {
 }
 
 /**
- * Утилита: Очистка числового значения от мусора
+ * Очищает числовое значение от нецифровых символов.
+ * @param {any} value - Входное значение.
+ * @returns {string} Только цифры.
  */
 function cleanNumericValue(value) {
     if (!value) return '';
-    // Оставляем только цифры
-    const cleaned = String(value).replace(/[^\d]/g, '');
-    return cleaned;
+    return String(value).replace(/[^\d]/g, '');
 }
 
 /**
- * 1. STORE: Хранилище данных и CRUD
+ * Извлекает первую непустую строку из текста стихотворения в качестве названия по умолчанию.
+ * @param {string} textOrHtml - Исходный текст или HTML.
+ * @param {boolean} isHtml - Флаг, указывающий, является ли входной текст разметкой HTML.
+ * @returns {string} Первая строка.
  */
-
 function extractFirstLine(textOrHtml, isHtml = false) {
     if (!textOrHtml) return 'Без названия';
 
     let text = textOrHtml;
 
     if (isHtml) {
-        // Временный элемент для очистки HTML-тегов и считывания чистого текста
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = textOrHtml;
         text = tempDiv.textContent || tempDiv.innerText || '';
@@ -295,6 +329,65 @@ function extractFirstLine(textOrHtml, isHtml = false) {
 
     return 'Без названия';
 }
+
+
+/* ==========================================================================
+   5. Навигация и Скроллинг / DOM Scrolling Helpers
+   ========================================================================== */
+
+/**
+ * Выполняет плавный скроллинг сайдбара к выбранному автору.
+ * @param {string} authorId - ID автора.
+ */
+function scrollToAuthorInSidebar(authorId) {
+    if (!authorId) return;
+
+    const $container = $('#authorsList');
+    const $targetLink = $container.find(`.author-card[data-id="${authorId}"]`);
+
+    if (!$targetLink.length) return;
+
+    $container.find('.author-card').removeClass('active');
+    $targetLink.addClass('active');
+
+    $targetLink[0].scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+    });
+}
+
+/**
+ * Активирует автора и выполняет плавный скроллинг сайдбара к выбранному произведению.
+ * @param {string} authorId - ID автора.
+ * @param {string} postId - ID произведения.
+ */
+function scrollPostToView(authorId, postId) {
+    if (!authorId || !postId) return;
+
+    const $container = $('#authorsList');
+    const $authorLink = $container.find(`.author-card[data-id="${authorId}"]`);
+
+    if (!$authorLink.length) return;
+
+    $container.find('.author-card').removeClass('active');
+    $authorLink.addClass('active');
+
+    $container.find('.author-post-item').removeClass('active');
+    const $postLink = $authorLink.siblings('.author-posts-list').find(`.author-post-item[data-post-id="${postId}"]`);
+
+    if ($postLink.length) {
+        $postLink.addClass('active');
+        $postLink[0].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+}
+
+
+/* ==========================================================================
+   6. Статические наборы строк / Poetic Titles & Subtitles Datasets
+   ========================================================================== */
 
 var poeticTitles = [
     'Фонд хранения авторских мучений',
@@ -418,7 +511,6 @@ var poeticTitles = [
     'Фонд спасения тонущего смысла',
     'Спецхранилище сомнительной лирики',
     'Фабрика картонных слёз',
-
     'Стихи. Опять.',
     'Текст в столбик',
     'Ну, рифмы',

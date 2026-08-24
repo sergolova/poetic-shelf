@@ -1,4 +1,16 @@
+/**
+ * ==========================================================================
+ * assets/store.js
+ * Хранилище данных приложения (PoemStore). Управляет CRUD-операциями,
+ * состоянием локального хранилища (localStorage), импортом и экспортом.
+ * ==========================================================================
+ */
+
 class PoemStore {
+    /* ==========================================================================
+       1. Конструктор и Инициализация / Constructor & Init
+       ========================================================================== */
+
     constructor() {
         this.data = { authors: [] };
         this.selectedAuthorId = null;
@@ -8,6 +20,9 @@ class PoemStore {
         this.postBookmarks = {}; // { postId: timestamp }
     }
 
+    /**
+     * Инициализирует хранилище из localStorage.
+     */
     async init() {
         this.authorSortMode = localStorage.getItem('authorSortMode') || 'none';
 
@@ -19,6 +34,7 @@ class PoemStore {
             this.lastViewed = {};
         }
 
+        // Безопасный парсинг закладок
         try {
             const parsedPostBookmarks = JSON.parse(localStorage.getItem('postBookmarks'));
             this.postBookmarks = (parsedPostBookmarks && typeof parsedPostBookmarks === 'object') ? parsedPostBookmarks : {};
@@ -44,6 +60,9 @@ class PoemStore {
         }
     }
 
+    /**
+     * Загружает данные по умолчанию из data.json.
+     */
     async loadDefaultJson() {
         try {
             const res = await fetch('data.json');
@@ -54,64 +73,94 @@ class PoemStore {
         }
     }
 
+
+    /* ==========================================================================
+       2. Работа с хранилищем и Настройками / Storage & Settings Operations
+       ========================================================================== */
+
+    /**
+     * Сохраняет данные авторов в localStorage и обновляет статус экспорта.
+     */
     saveData() {
-        localStorage.setItem('stih_app_data', JSON.stringify({data: this.data}));
+        localStorage.setItem('stih_app_data', JSON.stringify({ data: this.data }));
         this.markAsChanged();
         this.updateExportWarningStatus();
     }
 
+    /**
+     * Общий метод сохранения данных и настроек.
+     */
     save() {
         this.saveData();
         this.saveSettings();
     }
 
+    /**
+     * Сохраняет пользовательские настройки и состояние просмотров.
+     */
     saveSettings() {
         localStorage.setItem('postBookmarks', JSON.stringify(this.postBookmarks));
         localStorage.setItem('lastViewed', JSON.stringify(this.lastViewed));
         localStorage.setItem('authorSortMode', this.authorSortMode);
     }
 
+    /**
+     * Сохраняет ширину сайдбара.
+     */
     saveSidebar(width) {
         localStorage.setItem('authorsSidebarWidth', width);
     }
 
+    /**
+     * Загружает ширину сайдбара.
+     */
     loadSidebar() {
         return parseInt(localStorage.getItem('authorsSidebarWidth'), 10);
     }
 
+    /**
+     * Помечает данные как изменённые (увеличивает счётчик несохранённых изменений).
+     */
     markAsChanged() {
-        // Увеличиваем счетчик изменений
         const currentCount = parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
         localStorage.setItem('unsavedChangesCount', currentCount + 1);
-
         localStorage.setItem('lastChangeTimestamp', Date.now());
         this.updateExportWarningStatus();
     }
 
+    /**
+     * Помечает данные как экспортированные (сбрасывает счётчик несохранённых изменений).
+     */
     markAsExported() {
-        // При экспорте сбрасываем счетчик
         localStorage.setItem('unsavedChangesCount', '0');
         localStorage.setItem('lastExportTimestamp', Date.now());
         this.updateExportWarningStatus();
     }
 
+    /**
+     * Проверяет наличие несохранённых изменений.
+     */
     hasUnsavedChanges() {
         const count = parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
         return count > 0;
     }
 
+    /**
+     * Возвращает количество несохранённых изменений.
+     */
     getUnsavedChangesCount() {
         return parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
     }
 
+    /**
+     * Обновляет индикатор несохранённых изменений в шапке приложения.
+     */
     updateExportWarningStatus() {
         const $dataBtn = $('#dataActionsDropdown');
         const count = this.getUnsavedChangesCount();
 
         if (count > 0) {
-            // Форматируем текст: если больше 99, пишем 99+
             const badgeText = count > 99 ? '99+' : count;
-
             let $badge = $dataBtn.find('.unsaved-badge');
 
             if (!$badge.length) {
@@ -127,15 +176,38 @@ class PoemStore {
         }
     }
 
+
+    /* ==========================================================================
+       3. Управление закладками / Bookmarks Operations
+       ========================================================================== */
+
+    /**
+     * Переключает закладку для стихотворения.
+     * @param {string} postId - ID произведения.
+     * @param {boolean} state - Флаг закладки.
+     */
     toggleBookmark(postId, state = true) {
         this.postBookmarks[postId] = state;
         this.saveSettings();
     }
 
+    /**
+     * Проверяет, находится ли произведение в закладках.
+     */
     getPostBookmark(postId) {
         return Boolean(this.postBookmarks[postId]);
     }
 
+
+    /* ==========================================================================
+       4. Операции с авторами / Author Operations (CRUD)
+       ========================================================================== */
+
+    /**
+     * Возвращает список авторов с фильтрацией и сортировкой.
+     * @param {string} searchQuery - Строка поиска.
+     * @returns {Array<Object>} Отфильтрованный и отсортированный список авторов.
+     */
     getAuthors(searchQuery = '') {
         let authors = searchQuery && searchQuery.trim()
             ? this.data.authors.filter(author => {
@@ -150,49 +222,44 @@ class PoemStore {
             })
             : [...this.data.authors];
 
-        const sortAuthorsAZ = (a,b) => {
+        const sortAuthorsAZ = (a, b) => {
             const nameA = `${a.lastName || ''} ${a.firstName || ''}`.toLowerCase();
             const nameB = `${b.lastName || ''} ${b.firstName || ''}`.toLowerCase();
             return nameA.localeCompare(nameB, 'ru');
-        }
+        };
 
-        // Сортировка
+        // Сортировка по режимам
         switch (this.authorSortMode) {
             case 'birthday':
                 authors.sort((a, b) => {
                     if (!a.birthYear && !b.birthYear) {
-                        return sortAuthorsAZ(a,b)
+                        return sortAuthorsAZ(a, b);
                     }
-
                     const lA = a.birthYear || 9999;
                     const lB = b.birthYear || 9999;
 
                     if (lA === lB) {
-                        return sortAuthorsAZ(a,b)
+                        return sortAuthorsAZ(a, b);
                     }
-
                     return lA - lB;
                 });
                 break;
             case 'len':
                 authors.sort((a, b) => {
-                    if ((!a.posts && !b.posts) ) {
-                        return sortAuthorsAZ(a,b)
+                    if (!a.posts && !b.posts) {
+                        return sortAuthorsAZ(a, b);
                     }
                     const lA = a.posts ? a.posts.length : 0;
                     const lB = b.posts ? b.posts.length : 0;
 
                     if (lA === lB) {
-                        return sortAuthorsAZ(a,b)
+                        return sortAuthorsAZ(a, b);
                     }
-
                     return lB - lA;
                 });
                 break;
             case 'az':
-                authors.sort((a, b) => {
-                    return sortAuthorsAZ(a,b)
-                });
+                authors.sort(sortAuthorsAZ);
                 break;
             case 'recent':
                 authors.sort((a, b) => {
@@ -200,9 +267,8 @@ class PoemStore {
                     const timeB = this.lastViewed[b.id] || 0;
 
                     if (!timeA && !timeB) {
-                        return sortAuthorsAZ(a,b)
+                        return sortAuthorsAZ(a, b);
                     }
-
                     return timeB - timeA;
                 });
                 break;
@@ -211,51 +277,66 @@ class PoemStore {
         return authors;
     }
 
+    /**
+     * Помечает автора как просмотренного.
+     */
     markAsViewed(authorId) {
         this.lastViewed[authorId] = Date.now();
         this.saveSettings();
     }
+
+    /**
+     * Находит автора по ID.
+     */
     getAuthorById(id) {
         return this.data.authors.find(a => a.id === id);
     }
 
+    /**
+     * Сохраняет автора (нового или отредактированного).
+     * @param {Object} authorData - Данные автора.
+     * @returns {Object} { id, isModified }
+     */
     saveAuthor(authorData) {
-    let isModified = false;
+        let isModified = false;
 
         if (authorData.id) {
             const idx = this.data.authors.findIndex(a => a.id === authorData.id);
             if (idx !== -1) {
-            const current = this.data.authors[idx];
+                const current = this.data.authors[idx];
 
-            // Проверяем, изменились ли поля (игнорируя массив posts при сравнении)
-            const hasChanges = Object.keys(authorData).some(key => {
-                if (key === 'posts') return false; // стихи сравниваются отдельно
-                return JSON.stringify(current[key]) !== JSON.stringify(authorData[key]);
-            });
+                // Проверяем, изменились ли поля (игнорируем массив posts)
+                const hasChanges = Object.keys(authorData).some(key => {
+                    if (key === 'posts') return false;
+                    return JSON.stringify(current[key]) !== JSON.stringify(authorData[key]);
+                });
 
-            if (hasChanges) {
-                this.data.authors[idx] = { ...current, ...authorData };
-                isModified = true;
-            }
+                if (hasChanges) {
+                    this.data.authors[idx] = { ...current, ...authorData };
+                    isModified = true;
+                }
             }
         } else {
-        // Новый автор — это всегда новое изменение
+            // Новый автор
             authorData.id = 'author_' + Date.now();
-        authorData.posts = authorData.posts || [];
+            authorData.posts = authorData.posts || [];
             this.data.authors.push(authorData);
-        isModified = true;
+            isModified = true;
         }
 
-    // Сохраняем и фиксируем изменения ТОЛЬКО если они реально были
-    if (isModified) {
-        this.save();
+        if (isModified) {
+            this.save();
+        }
+
+        return {
+            id: authorData.id,
+            isModified
+        };
     }
 
-    return {
-        id: authorData.id,
-        isModified // флаг, чтобы в UI понять — была ли реальная правка
-    };
-}
+    /**
+     * Удаляет автора и все его произведения.
+     */
     deleteAuthor(id) {
         this.data.authors = this.data.authors.filter(a => a.id !== id);
         if (this.selectedAuthorId === id) {
@@ -264,12 +345,26 @@ class PoemStore {
         this.save();
     }
 
+
+    /* ==========================================================================
+       5. Операции с произведениями / Poem Operations (CRUD)
+       ========================================================================== */
+
+    /**
+     * Находит произведение по ID автора и ID произведения.
+     */
     getPostById(authorId, postId) {
         const author = this.getAuthorById(authorId);
         if (!author || !author.posts) return null;
         return author.posts.find(p => p.id === postId);
     }
 
+    /**
+     * Сохраняет произведение (новое или отредактированное).
+     * @param {string} authorId - ID автора.
+     * @param {Object} postData - Данные произведения.
+     * @returns {Object} { id, isModified }
+     */
     savePost(authorId, postData) {
         const author = this.getAuthorById(authorId);
         if (!author) return { id: null, isModified: false };
@@ -283,7 +378,7 @@ class PoemStore {
             if (idx !== -1) {
                 const currentPost = author.posts[idx];
 
-                // Сравниваем свойства текущего стиха с пришедшими данными
+                // Сравниваем свойства произведения
                 const hasChanges = Object.keys(postData).some(key => {
                     return JSON.stringify(currentPost[key]) !== JSON.stringify(postData[key]);
                 });
@@ -294,6 +389,7 @@ class PoemStore {
                 }
             }
         } else {
+            // Новое произведение
             postData.id = 'post_' + Date.now();
             author.posts.unshift(postData);
             isModified = true;
@@ -308,6 +404,10 @@ class PoemStore {
             isModified
         };
     }
+
+    /**
+     * Удаляет произведение автора.
+     */
     deletePost(authorId, postId) {
         const author = this.getAuthorById(authorId);
         if (!author || !author.posts) return;
@@ -316,26 +416,29 @@ class PoemStore {
         this.save();
     }
 
-     stripTags(html) {
+
+    /* ==========================================================================
+       6. Импорт и Экспорт / Import & Export Subsystem
+       ========================================================================== */
+
+    /**
+     * Вспомогательный метод очистки HTML тегов для EPUB экспорта.
+     */
+    stripTags(html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         return doc.body.textContent || '';
     }
 
+    /**
+     * Экспортирует библиотеку произведений в формат книги EPUB.
+     */
     async exportToEpub() {
         const data = JSON.parse(JSON.stringify(this.data));
         const zip = new JSZip();
-        const mainTitle = 'Буквы по центру';
-        const mainSubtitle = 'Eщё буквы';
+        const mainTitle = 'Поэтическая Полка'; // Использование стандартного названия
+        const mainSubtitle = 'Сборник произведений';
 
-        // Функция очистки спецсимволов XML
-        const escapeXml = (str) => (str || '')
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/ >/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&apos;");
-
-        // 1. Обязательный mimetype (должен идти без сжатия)
+        // 1. Обязательный mimetype (без сжатия)
         zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
 
         // 2. META-INF/container.xml
@@ -350,14 +453,14 @@ class PoemStore {
 
         const oebps = zip.folder("OEBPS");
 
-        // Сортировка авторов по алфавиту (ФИО)
+        // Сортировка авторов по алфавиту
         const sortedAuthors = (data.authors || []).sort((a, b) => {
             const nameA = `${a.lastName || ''} ${a.firstName || ''} ${a.surName || ''}`.trim();
             const nameB = `${b.lastName || ''} ${b.firstName || ''} ${b.surName || ''}`.trim();
             return nameA.localeCompare(nameB, 'uk', { sensitivity: 'base' });
         });
 
-        // Массивы для генерации content.opf и toc.ncx
+        // Списки манифеста для content.opf
         const manifestItems = [
             '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>',
             '<item id="cover" href="cover.html" media-type="application/xhtml+xml"/>',
@@ -365,7 +468,6 @@ class PoemStore {
             '<item id="toc_page" href="toc.html" media-type="application/xhtml+xml"/>'
         ];
 
-        // Порядок чтения: Титулка -> Список авторов -> Оглавление
         const spineItems = [
             '<itemref idref="cover" linear="yes"/>',
             '<itemref idref="authors_page" linear="yes"/>',
@@ -373,8 +475,6 @@ class PoemStore {
         ];
 
         let navIndex = 1;
-
-        // Пункты бокового меню ридера (NCX)
         const navPoints = [
             { id: 'cover', order: navIndex++, title: 'Титульная страница', src: 'cover.html' },
             { id: 'authors_page', order: navIndex++, title: 'Список авторов', src: 'authors.html' },
@@ -384,7 +484,6 @@ class PoemStore {
         let authorsListHtml = '';
         let tocHtmlItems = '';
 
-        // Перебираем отсортированных авторов
         sortedAuthors.forEach((author, aIdx) => {
             const authorFullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.trim();
             const authorId = `author_${aIdx}`;
@@ -392,14 +491,13 @@ class PoemStore {
             const postsCount = (author.posts || []).length;
             let imageFilename = null;
 
-            // Элемент для страницы списка авторов
             authorsListHtml += `
             <li>
-                <a href="${authorFileName}">${escapeXml(authorFullName)}</a> 
+                <a href="${authorFileName}">${escapeHtml(authorFullName)}</a> 
                 <span class="count">(${postsCount})</span>
             </li>`;
 
-            // Сохраняем фото автора, если оно есть в base64
+            // Сохранение аватара автора, если он есть
             if (author.photo && author.photo.includes("base64,")) {
                 const parts = author.photo.split("base64,");
                 const mimeMatch = parts[0].match(/:(.*?);/);
@@ -414,12 +512,12 @@ class PoemStore {
 
             const hideYears = !author.birthYear && !author.deathYear;
 
-            // Страница автора (кругле фото + центрированные года)
+            // XHTML страница автора
             const authorPageHtml = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>${escapeXml(authorFullName)}</title>
+  <title>${escapeHtml(authorFullName)}</title>
   <style>
     body { font-family: serif; margin: 5%; text-align: center; }
     .author-photo { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; margin: 0 auto 1em auto; display: block; }
@@ -427,7 +525,7 @@ class PoemStore {
     h1 { margin-bottom: 0.2em; text-align: center; }
     .years { color: #555; font-style: italic; margin: 0 auto 2em auto; text-align: center; display: block; width: 100%; }
     .author-photo-wrapper { width: 180px; height: 180px; margin: 0 auto 1em auto; display: block; text-align: center; }
-.author-photo { display: block; width: 180px; height: 180px; border-radius: 50%; -webkit-border-radius: 50%; clip-path: circle(50%); -webkit-clip-path: circle(50%); object-fit: cover; -webkit-object-fit: cover; }
+    .author-photo { display: block; width: 180px; height: 180px; border-radius: 50%; -webkit-border-radius: 50%; clip-path: circle(50%); -webkit-clip-path: circle(50%); object-fit: cover; -webkit-object-fit: cover; }
   </style>
 </head>
 <body>
@@ -435,13 +533,13 @@ class PoemStore {
 <div class="author-photo-wrapper">
   <img
     src="images/${imageFilename}"
-    alt="${escapeXml(authorFullName)}"
+    alt="${escapeHtml(authorFullName)}"
     class="author-photo avatar-style"
   >
 </div>
 ` : ''}
 
-  <h1>${escapeXml(authorFullName)}</h1>
+  <h1>${escapeHtml(authorFullName)}</h1>
   <p class="years" ${hideYears ? 'style="display: none"' : ''}>
     ${author.birthYear || ''} — ${author.deathYear || ''}
   </p>
@@ -461,11 +559,9 @@ class PoemStore {
 
             let postsTocHtml = '';
 
-            // Перебираем стихотворения автора
+            // Рендер страниц стихотворений автора
             (author.posts || []).forEach((post, pIdx) => {
                 const postId = `post_${aIdx}_${pIdx}`;
-
-                // Форматируем контент
                 let postBody = post.contentHtml ? this.stripTags(post.contentHtml) : post.content;
 
                 if (postBody) {
@@ -475,9 +571,8 @@ class PoemStore {
                             const lines = stanza
                                 .trim()
                                 .split(/\n/)
-                                .map(line => `<span class="line">${escapeXml(line)}</span>`)
+                                .map(line => `<span class="line">${escapeHtml(line)}</span>`)
                                 .join("");
-
                             return `<div class="stanza">${lines}</div>`;
                         })
                         .join("\n");
@@ -487,7 +582,7 @@ class PoemStore {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>${escapeXml(post.title)}</title>
+  <title>${escapeHtml(post.title)}</title>
   <style>
     body { font-family: serif; margin: 5%; line-height: 1.4; }
     h2 { text-align: center; margin-bottom: 0.2em; }
@@ -499,12 +594,12 @@ class PoemStore {
   </style>
 </head>
 <body>
-  <h2>${escapeXml(post.title)}</h2>
+  <h2>${escapeHtml(post.title)}</h2>
   <div class="content">
     ${postBody}
   </div>
   ${(post.year && (!post.note || !post.note.includes(String(post.year)))) ? `<p class="p_year">${post.year}</p>` : ''}
-  ${post.note ? `<p class="note">${escapeXml(post.note)}</p>` : ''}
+  ${post.note ? `<p class="note">${escapeHtml(post.note)}</p>` : ''}
 </body>
 </html>`;
 
@@ -519,20 +614,18 @@ class PoemStore {
                     title: post.title,
                     src: postFileName
                 });
-                postsTocHtml += `<li><a href="${postFileName}">${escapeXml(post.title)}</a></li>`;
+                postsTocHtml += `<li><a href="${postFileName}">${escapeHtml(post.title)}</a></li>`;
             });
 
             navPoints.push(authorNavPoint);
-
             tocHtmlItems += `
             <li>
-                <a href="${authorFileName}"><strong>${escapeXml(authorFullName)}</strong></a>
+                <a href="${authorFileName}"><strong>${escapeHtml(authorFullName)}</strong></a>
                 ${postsTocHtml ? `<ul>${postsTocHtml}</ul>` : ''}
-            </li>
-        `;
+            </li>`;
         });
 
-        // 1. ТИТУЛЬНАЯ СТРАНИЦА (cover.html)
+        // 3. Создаем титульную страницу cover.html
         const coverHtml = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -551,10 +644,9 @@ class PoemStore {
   <p class="subtitle">${mainSubtitle}</p>
 </body>
 </html>`;
-
         oebps.file("cover.html", coverHtml);
 
-        // 2. СТРАНИЦА СПИСКА АВТОРОВ (authors.html)
+        // 4. Создаем страницу авторов authors.html
         const authorsPageHtml = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -576,10 +668,9 @@ class PoemStore {
   </ul>
 </body>
 </html>`;
-
         oebps.file("authors.html", authorsPageHtml);
 
-        // 3. СТРАНИЦА ОГЛАВЛЕНИЯ (toc.html)
+        // 5. Создаем оглавление toc.html
         const tocPageHtml = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -601,10 +692,9 @@ class PoemStore {
   </ul>
 </body>
 </html>`;
-
         oebps.file("toc.html", tocPageHtml);
 
-        // Генерация OEBPS/content.opf
+        // 6. Генерация OEBPS/content.opf (С исправленным багом replace(/>/g, "&gt;"))
         const contentOpf = `<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -623,23 +713,22 @@ class PoemStore {
     <reference type="toc" title="Оглавление" href="toc.html"/>
   </guide>
 </package>`;
-
         oebps.file("content.opf", contentOpf);
 
-        // Helper для генерации иерархического NCX
+        // Вспомогательный рендерер структуры навигации ncx
         function renderNavPoint(np) {
             let childrenHtml = '';
             if (np.children && np.children.length > 0) {
                 childrenHtml = np.children.map(renderNavPoint).join("\n");
             }
             return `<navPoint id="${np.id}" playOrder="${np.order}">
-      <navLabel><text>${escapeXml(np.title)}</text></navLabel>
+      <navLabel><text>${escapeHtml(np.title)}</text></navLabel>
       <content src="${np.src}"/>
       ${childrenHtml}
     </navPoint>`;
         }
 
-        // Генерация OEBPS/toc.ncx
+        // 7. Генерация OEBPS/toc.ncx
         const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
@@ -656,21 +745,22 @@ class PoemStore {
     ${navPoints.map(renderNavPoint).join("\n    ")}
   </navMap>
 </ncx>`;
-
         oebps.file("toc.ncx", tocNcx);
 
-        // 3. Генерация архива и вызов скачивания
+        // 8. Сборка архива
         const content = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
-        saveAs(content, `authors_collection_${new Date().toISOString().slice(0,10)}.epub`);
+        saveAs(content, `authors_collection_${new Date().toISOString().slice(0, 10)}.epub`);
     }
 
+    /**
+     * Экспортирует библиотеку в JSON-файл (с нормализацией Unicode).
+     */
     exportJson() {
-        // Нормализуем все текстовые данные перед экспортом
         const normalizedData = JSON.parse(JSON.stringify(this.data));
-        
+
         const normalizeObject = (obj) => {
             if (!obj || typeof obj !== 'object') return;
-            
+
             for (const key in obj) {
                 if (typeof obj[key] === 'string') {
                     obj[key] = normalizeUnicode(obj[key]);
@@ -683,23 +773,22 @@ class PoemStore {
                 obj.title = "";
             }
         };
-        
+
         normalizeObject(normalizedData);
-        
+
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(normalizedData, null, 2));
         const a = document.createElement('a');
         a.href = dataStr;
-        a.download = `stih_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `stih_backup_${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
     }
 
+    /**
+     * Импортирует библиотеку из JSON-файла.
+     */
     importJson(jsonData) {
         this.data = jsonData;
         this.selectedAuthorId = this.data.authors.length > 0 ? this.data.authors[0].id : null;
         this.save();
     }
 }
-
-/**
- * 2. UI RENDERER: Отрисовка элементов и работа с модалками
- */

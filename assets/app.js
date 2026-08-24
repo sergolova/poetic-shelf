@@ -1,32 +1,51 @@
+/**
+ * ==========================================================================
+ * assets/app.js
+ * Главный класс приложения (PoemApp). Координирует PoemStore, PoemUI
+ * и TimelineBar, управляет инициализацией, обновлением и всеми событиями.
+ * ==========================================================================
+ */
+
 class PoemApp {
+    /* ==========================================================================
+       1. Конструктор и Инициализация / Constructor & Init
+       ========================================================================== */
+
     constructor() {
         this.store = new PoemStore();
         this.ui = new PoemUI();
         this.titleChangeInterval = null;
+        this.searchTimer = null;
+        this.poemResizeObserver = null;
+        this._prevSearchQuery = '';
     }
 
+    /**
+     * Основной метод инициализации приложения.
+     */
     async init() {
         await this.store.init();
-        this.bindEvents();
-        this.toggleClearButton();
-        this.applyAuthorsSort();
-        this.applyFontSize();
-        this.applyColumns();
-        this.applyRandomPoeticTitle();
-        this.updateTheme();
-        this.resetTitleChangeTimer();
-        this.applySidebarWidth();
-        this.store.updateExportWarningStatus();
 
+        // Восстанавливаем последнее выбранное состояние из localStorage
         this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
 
+        // Применяем настройки внешнего вида
+        this.updateTheme();
+        this.applyFontSize();
+        this.applyColumns();
+        this.applyAuthorsSort();
+        this.applySidebarWidth();
+        this.applyRandomPoeticTitle();
+        this.resetTitleChangeTimer();
+        this.toggleClearButton();
+        this.store.updateExportWarningStatus();
+
+        // Инициализируем временную шкалу
         this.timeline = new TimelineBar('timeline-bar', this.store, {
             onPostClick: (postId) => {
                 this.resetSearchQuery();
-
                 let a;
-                // Ищем автора этого стиха
                 for (const author of this.store.data.authors) {
                     const found = author.posts?.find(p => p.id === postId);
                     if (found) {
@@ -42,280 +61,22 @@ class PoemApp {
             }
         });
 
+        // Привязываем все события
+        this.bindEvents();
+
+        // Первый рендер
         this.refresh(true);
     }
 
-    randomFromArray(array, storageKey) {
-        const previous = localStorage.getItem(storageKey);
-        let index;
 
-        do {
-            index = Math.floor(Math.random() * array.length);
-        } while (array.length > 1 && String(index) === previous);
+    /* ==========================================================================
+       2. Рендеринг и Обновление интерфейса / Rendering & UI Refresh
+       ========================================================================== */
 
-        localStorage.setItem(storageKey, index);
-
-        return array[index];
-    }
-
-    updateTheme() {
-        const $themeBtn = $('#themeToggleBtn');
-        const $themeIcon = $('#themeIcon');
-
-        // Функция установки темы
-        function setTheme(theme) {
-            if (theme === 'dark') {
-                $('body').attr('data-theme', 'dark');
-                $themeIcon.text('☀️');
-                localStorage.setItem('appTheme', 'dark');
-            } else {
-                $('body').removeAttr('data-theme');
-                $themeIcon.text('🌙');
-                localStorage.setItem('appTheme', 'light');
-            }
-        }
-
-        // Инициализация темы при загрузке страницы
-        const savedTheme = localStorage.getItem('appTheme') ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-
-        setTheme(savedTheme);
-
-        // Обработчик клика по кнопке
-        $themeBtn.on('click', function () {
-            const currentTheme = $('body').attr('data-theme') === 'dark' ? 'dark' : 'light';
-            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        });
-    }
-
-    applyRandomPoeticTitle() {
-        const title = this.randomFromArray(window.poeticTitles || [], 'poeticTitleIndex');
-        const subtitle = this.randomFromArray(window.poeticSubtitles || [], 'poeticSubtitleIndex');
-
-        this.rollText($('.brand-title'), title, 500);
-        this.rollText($('.small-subtitle'), subtitle, 500);
-    }
-
-    applyFontSize() {
-        const fontSize = localStorage.getItem('fontSize') || 'normal';
-        $('body').removeClass('font-small font-normal font-large').addClass(`font-${fontSize}`);
-        $(`input[name="fontSize"][value="${fontSize}"]`).prop('checked', true);
-    }
-
-    applySidebarWidth() {
-        const $sidebar = $('.authors-sidebar');
-        const savedWidth = this.store.loadSidebar();
-
-        if (Number.isFinite(savedWidth)) {
-            $sidebar.css('flex-basis', `${savedWidth}px`);
-        }
-    }
-
-    updateSidebarHeight() {
-        const $sidebar = $('.authors-sidebar');
-        const $resizer = $('.sidebar-resizer');
-        const $layout = $('.content-layout');
-
-        if (!$layout.length || !$sidebar.length) return;
-
-        const layoutTop = $layout[0].getBoundingClientRect().top;
-        const stickyTop = 20; /* совпадает с top: 20px в CSS */
-        const offset = Math.max(stickyTop, layoutTop);
-        const height = window.innerHeight - offset;
-
-        $sidebar.css('height', height + 'px');
-        $resizer.css('height', height + 'px');
-    }
-
-    rollText($el, targetText, duration = 500) {
-        if (!$el || !$el.length) return;
-
-        const halfDuration = duration / 2;
-
-        // Первая фаза: уводим старый текст вверх
-        $el.css({
-            transition: `transform ${halfDuration}ms ease-in, opacity ${halfDuration}ms ease-in`,
-            transform: 'translateY(-10px)',
-            opacity: 0
-        });
-
-        setTimeout(() => {
-            // Подменяем текст и сбрасываем позицию вниз без анимации
-            $el.text(targetText).css({
-                transition: 'none',
-                transform: 'translateY(10px)'
-            });
-
-            // Принудительный reflow для применения сброса
-            $el[0].offsetHeight;
-
-            // Вторая фаза: проявляем новый текст на место
-            $el.css({
-                transition: `transform ${halfDuration}ms ease-out, opacity ${halfDuration}ms ease-out`,
-                transform: 'translateY(0)',
-                opacity: 1
-            });
-        }, halfDuration);
-    }
-
-    applyAuthorsSort() {
-        $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
-    }
-
-    markPoemLineBreaks($poemContent) {
-        const container = $poemContent[0];
-        if (!container) return;
-
-        const markersParent = container.closest('.poem-text-container') || container.parentElement;
-        if (!markersParent) return;
-
-        // 1. Удаляем старые маркеры
-        markersParent.querySelectorAll('.poem-line-break-marker').forEach(marker => marker.remove());
-
-        const parentRect = markersParent.getBoundingClientRect();
-
-        container.querySelectorAll('.poem-line').forEach(line => {
-            const rects = [];
-            const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT, null, false);
-
-            let textNode;
-            while ((textNode = walker.nextNode())) {
-                // Пропускаем пустые узлы (пробелы/переносы)
-                if (!textNode.textContent.trim()) continue;
-
-                const range = document.createRange();
-                range.selectNode(textNode);
-                const nodeRects = range.getClientRects();
-                for (let r = 0; r < nodeRects.length; r++) {
-                    // Игнорируем узлы без реальной ширины
-                    if (nodeRects[r].width > 0) {
-                        rects.push(nodeRects[r]);
-                    }
-                }
-            }
-
-            if (rects.length === 0) return;
-
-            // Группируем rect'ы строго в DOM-порядке с учетом колонок
-            const visualLines = [];
-            const EPSILON = 4; // Погрешность по высоте
-
-            rects.forEach(rect => {
-                const currentGroup = visualLines[visualLines.length - 1];
-
-                // Если это первый rect ИЛИ изменилась строка/колонка (top ушел вверх/вниз или left резко сдвинулся)
-                if (!currentGroup || Math.abs(currentGroup.top - rect.top) > EPSILON) {
-                    visualLines.push({
-                        top: rect.top,
-                        bottom: rect.bottom,
-                        right: rect.right
-                    });
-                } else {
-                    // Если элемент находится на той же самой визуальной строчке в той же колонке
-                    currentGroup.right = Math.max(currentGroup.right, rect.right);
-                    currentGroup.bottom = Math.max(currentGroup.bottom, rect.bottom);
-                }
-            });
-
-            // Если физическая строка поместилась целиком — маркеры не нужны
-            if (visualLines.length < 2) return;
-
-            // Ставим маркеры в конце каждого визуального отрезка, КРОМЕ самого последнего
-            for (let i = 0; i < visualLines.length - 1; i++) {
-                const lineGroup = visualLines[i];
-                const marker = document.createElement('span');
-
-                marker.className = 'poem-line-break-marker';
-                marker.setAttribute('aria-hidden', 'true');
-
-                // Позиционируем строго по правому краю конца строки в текущей колонке
-                marker.style.left = `${lineGroup.right - parentRect.left}px`;
-                marker.style.top = `${lineGroup.bottom - parentRect.top}px`;
-
-                markersParent.appendChild(marker);
-            }
-        });
-    }
-
-    updatePoemLineBreakMarkers() {
-        $('.poem-content').each((index, element) => {
-            this.markPoemLineBreaks($(element));
-        });
-    }
-    
-    initPoemLineBreakMarkers() {
-        this.poemResizeObserver?.disconnect();
-
-        const mainContent = document.querySelector('#mainContent');
-
-        if (!mainContent) {
-            return;
-        }
-
-        this.poemResizeObserver = new ResizeObserver(() => {
-            requestAnimationFrame(() => {
-                this.updatePoemLineBreakMarkers();
-            });
-        });
-
-        this.poemResizeObserver.observe(mainContent);
-
-        // Ждём следующего кадра, чтобы layout был полностью вычислен
-        requestAnimationFrame(() => {
-            this.updatePoemLineBreakMarkers();
-        });
-    }
-    applyColumns() {
-        const maxColumns = parseInt(localStorage.getItem('columns'), 10) || 1;
-
-        // We go through each card
-        $('.poem-card').each((index, card) => {
-            const $content = $(card).find('.poem-content');
-            if (!$content.length) return;
-
-            $content.removeClass('cols-1 cols-2 cols-3 cols-4');
-
-            const text = $content.text().trim();
-            const lineCount = text ? text.split('\n').length : 0;
-
-            // Рассчитываем желаемое кол-во колонок по длине стиха
-            let targetCols = 1;
-
-            if (lineCount > 50) {
-                targetCols = 4;
-            } else if (lineCount > 32) {
-                targetCols = 3;
-            } else if (lineCount >= 16) {
-                targetCols = 2;
-            } else {
-                targetCols = 1;
-            }
-
-            // Ограничиваем выбранным лимитом пользователя (Math.min)
-            const finalCols = Math.min(targetCols, maxColumns);
-
-            // Вешаем итоговый класс
-            $content.addClass(`cols-${finalCols}`);
-        });
-    }
-
-    toggleClearButton() {
-        const hasValue = $('#searchInput').val().trim().length > 0;
-        $('#clearSearchBtn').toggleClass('d-none', !hasValue);
-    }
-
-    updateSidebarBookmarkIcon(postId, isBookmarked) {
-        const $postItem = $(`.author-post-item[data-post-id="${postId}"]`);
-        if (!$postItem.length) return;
-
-        const $titleSpan = $postItem.find('.author-post-title');
-        $titleSpan.find('.bookmark-icon').remove();
-
-        if (isBookmarked) {
-            $titleSpan.append(this.ui.renderBookmarkIcon(postId, true));
-        }
-    }
-
+    /**
+     * Полное обновление интерфейса: список авторов, тайм-бар, главная область.
+     * @param {boolean} animate - Включить анимацию списка постов.
+     */
     refresh(animate = true) {
         let searchQuery = $('#searchInput').val();
         searchQuery = window.convertEngToRus(searchQuery);
@@ -325,14 +86,17 @@ class PoemApp {
         const searchChanged = searchQuery !== prevSearchQuery;
         this._prevSearchQuery = searchQuery;
 
+        // Выбираем первого автора по умолчанию
         if (!this.store.selectedAuthorId && authors.length > 0) {
             this.store.selectedAuthorId = authors[0].id;
         }
 
+        // Если выбранный автор не в результатах поиска — переключаемся на первого
         if (searchQuery && !authors.some(a => a.id === this.store.selectedAuthorId) && authors.length > 0) {
             this.store.selectedAuthorId = authors[0].id;
         }
 
+        // При изменении поиска — выбираем первое совпавшее произведение
         if (searchChanged && searchQuery && searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
             let firstFoundPostId = null;
@@ -348,18 +112,15 @@ class PoemApp {
                 }
             }
 
-            if (firstFoundPostId) {
-                this.store.selectedPostId = firstFoundPostId;
-            } else {
-                this.store.selectedPostId = null;
-            }
+            this.store.selectedPostId = firstFoundPostId || null;
         }
 
-        // При очистке поиска сбрасываем selectedPostId
+        // При очистке поиска — сбрасываем выбранное произведение
         if (searchChanged && (!searchQuery || !searchQuery.trim())) {
             this.store.selectedPostId = null;
         }
 
+        // Рендерим список авторов в сайдбаре
         this.ui.renderAuthorsList(authors, this.store.selectedAuthorId, this.store.selectedPostId, searchQuery);
 
         if (animate) {
@@ -368,24 +129,25 @@ class PoemApp {
             $('.author-posts-list').show();
         }
 
-        const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
-
-        // Тайм-бар: все посты всех авторов, подсветка — текущий автор
+        // Рендерим тайм-бар
         const allPosts = [];
         for (const author of this.store.data.authors) {
             if (author.posts) {
                 for (const post of author.posts) {
-                    allPosts.push({...post, authorId: author.id});
+                    allPosts.push({ ...post, authorId: author.id });
                 }
             }
         }
         this.timeline.render(allPosts, this.store.selectedAuthorId, authors, this.store.selectedPostId);
 
+        // Рендерим главную область
+        const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
         this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
 
         this.applyColumns();
         this.initPoemLineBreakMarkers();
 
+        // Сохраняем текущее состояние в localStorage
         if (this.store.selectedPostId) {
             localStorage.setItem('selectedPostId', this.store.selectedPostId);
         } else {
@@ -398,20 +160,349 @@ class PoemApp {
         }
     }
 
-    resetTitleChangeTimer() {
-        clearInterval(this.titleChangeInterval);
+    /**
+     * Обновляет иконку закладки в сайдбаре для конкретного поста.
+     */
+    updateSidebarBookmarkIcon(postId, isBookmarked) {
+        const $postItem = $(`.author-post-item[data-post-id="${postId}"]`);
+        if (!$postItem.length) return;
 
-        this.titleChangeInterval = setInterval(() => {
-            this.applyRandomPoeticTitle();
-        }, 30000);
+        const $titleSpan = $postItem.find('.author-post-title');
+        $titleSpan.find('.bookmark-icon').remove();
+
+        if (isBookmarked) {
+            $titleSpan.append(this.ui.renderBookmarkIcon(postId, true));
+        }
     }
 
+
+    /* ==========================================================================
+       3. Применение Настроек / Settings Appliers
+       ========================================================================== */
+
+    /**
+     * Инициализирует тему оформления (тёмная/светлая) и обработчик её переключения.
+     */
+    updateTheme() {
+        const $themeBtn = $('#themeToggleBtn');
+        const $themeIcon = $('#themeIcon');
+
+        const setTheme = (theme) => {
+            if (theme === 'dark') {
+                $('body').attr('data-theme', 'dark');
+                $themeIcon.text('☀️');
+                localStorage.setItem('appTheme', 'dark');
+            } else {
+                $('body').removeAttr('data-theme');
+                $themeIcon.text('🌙');
+                localStorage.setItem('appTheme', 'light');
+            }
+        };
+
+        const savedTheme = localStorage.getItem('appTheme') ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        setTheme(savedTheme);
+
+        $themeBtn.on('click', function () {
+            const currentTheme = $('body').attr('data-theme') === 'dark' ? 'dark' : 'light';
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+    }
+
+    /**
+     * Применяет сохранённый размер шрифта.
+     */
+    applyFontSize() {
+        const fontSize = localStorage.getItem('fontSize') || 'normal';
+        $('body').removeClass('font-small font-normal font-large').addClass(`font-${fontSize}`);
+        $(`input[name="fontSize"][value="${fontSize}"]`).prop('checked', true);
+    }
+
+    /**
+     * Применяет сохранённую ширину сайдбара.
+     */
+    applySidebarWidth() {
+        const $sidebar = $('.authors-sidebar');
+        const savedWidth = this.store.loadSidebar();
+        if (Number.isFinite(savedWidth)) {
+            $sidebar.css('flex-basis', `${savedWidth}px`);
+        }
+    }
+
+    /**
+     * Устанавливает галочку у текущего режима сортировки авторов.
+     */
+    applyAuthorsSort() {
+        $(`input[name="authorSort"][value="${this.store.authorSortMode}"]`).prop('checked', true);
+    }
+
+    /**
+     * Применяет сохранённое количество колонок к карточкам стихов.
+     * Автоматически выбирает оптимальное количество исходя из длины произведения.
+     */
+    applyColumns() {
+        const maxColumns = parseInt(localStorage.getItem('columns'), 10) || 1;
+
+        $('.poem-card').each((index, card) => {
+            const $content = $(card).find('.poem-content');
+            if (!$content.length) return;
+
+            $content.removeClass('cols-1 cols-2 cols-3 cols-4');
+
+            const text = $content.text().trim();
+            const lineCount = text ? text.split('\n').length : 0;
+
+            let targetCols;
+            if (lineCount > 50) {
+                targetCols = 4;
+            } else if (lineCount > 32) {
+                targetCols = 3;
+            } else if (lineCount >= 16) {
+                targetCols = 2;
+            } else {
+                targetCols = 1;
+            }
+
+            const finalCols = Math.min(targetCols, maxColumns);
+            $content.addClass(`cols-${finalCols}`);
+        });
+    }
+
+    /**
+     * Применяет случайный заголовок и подзаголовок из массива.
+     */
+    applyRandomPoeticTitle() {
+        const title = this.randomFromArray(window.poeticTitles || [], 'poeticTitleIndex');
+        const subtitle = this.randomFromArray(window.poeticSubtitles || [], 'poeticSubtitleIndex');
+
+        this.rollText($('.brand-title'), title, 500);
+        this.rollText($('.small-subtitle'), subtitle, 500);
+    }
+
+
+    /* ==========================================================================
+       4. Вспомогательные методы / Utility Methods
+       ========================================================================== */
+
+    /**
+     * Выбирает случайный элемент из массива, избегая повторного выбора предыдущего.
+     */
+    randomFromArray(array, storageKey) {
+        const previous = localStorage.getItem(storageKey);
+        let index;
+
+        do {
+            index = Math.floor(Math.random() * array.length);
+        } while (array.length > 1 && String(index) === previous);
+
+        localStorage.setItem(storageKey, index);
+        return array[index];
+    }
+
+    /**
+     * Сбрасывает строку поиска.
+     */
     resetSearchQuery() {
         $('#searchInput').val('');
         $('.btn-clear-search').addClass('d-none');
         this._prevSearchQuery = '';
     }
 
+    /**
+     * Показывает/скрывает кнопку очистки поиска.
+     */
+    toggleClearButton() {
+        const hasValue = $('#searchInput').val().trim().length > 0;
+        $('#clearSearchBtn').toggleClass('d-none', !hasValue);
+    }
+
+    /**
+     * Перезапускает таймер автоматической смены заголовка приложения.
+     */
+    resetTitleChangeTimer() {
+        clearInterval(this.titleChangeInterval);
+        this.titleChangeInterval = setInterval(() => {
+            this.applyRandomPoeticTitle();
+        }, 30000);
+    }
+
+    /**
+     * Анимация «прокрутки» текста (fade up/down) для заголовков.
+     */
+    rollText($el, targetText, duration = 500) {
+        if (!$el || !$el.length) return;
+
+        const halfDuration = duration / 2;
+
+        // Фаза 1: уводим старый текст вверх с затуханием
+        $el.css({
+            transition: `transform ${halfDuration}ms ease-in, opacity ${halfDuration}ms ease-in`,
+            transform: 'translateY(-10px)',
+            opacity: 0
+        });
+
+        setTimeout(() => {
+            // Меняем текст и сбрасываем позицию вниз без анимации
+            $el.text(targetText).css({
+                transition: 'none',
+                transform: 'translateY(10px)'
+            });
+
+            // Принудительный reflow для применения сброса
+            $el[0].offsetHeight;
+
+            // Фаза 2: проявляем новый текст снизу вверх
+            $el.css({
+                transition: `transform ${halfDuration}ms ease-out, opacity ${halfDuration}ms ease-out`,
+                transform: 'translateY(0)',
+                opacity: 1
+            });
+        }, halfDuration);
+    }
+
+
+    /* ==========================================================================
+       5. Маркеры переноса строк стихов / Poem Line Break Markers
+       ========================================================================== */
+
+    /**
+     * Расставляет визуальные маркеры переноса строк стихотворения.
+     * Применяется для многоколоночного режима.
+     */
+    markPoemLineBreaks($poemContent) {
+        const container = $poemContent[0];
+        if (!container) return;
+
+        const markersParent = container.closest('.poem-text-container') || container.parentElement;
+        if (!markersParent) return;
+
+        // Удаляем старые маркеры
+        markersParent.querySelectorAll('.poem-line-break-marker').forEach(marker => marker.remove());
+
+        const parentRect = markersParent.getBoundingClientRect();
+
+        container.querySelectorAll('.poem-line').forEach(line => {
+            const rects = [];
+            const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT, null, false);
+
+            let textNode;
+            while ((textNode = walker.nextNode())) {
+                if (!textNode.textContent.trim()) continue;
+
+                const range = document.createRange();
+                range.selectNode(textNode);
+                const nodeRects = range.getClientRects();
+
+                for (let r = 0; r < nodeRects.length; r++) {
+                    if (nodeRects[r].width > 0) {
+                        rects.push(nodeRects[r]);
+                    }
+                }
+            }
+
+            if (rects.length === 0) return;
+
+            // Группируем rect'ы по визуальным строкам с учётом колонок
+            const visualLines = [];
+            const EPSILON = 4;
+
+            rects.forEach(rect => {
+                const currentGroup = visualLines[visualLines.length - 1];
+                if (!currentGroup || Math.abs(currentGroup.top - rect.top) > EPSILON) {
+                    visualLines.push({ top: rect.top, bottom: rect.bottom, right: rect.right });
+                } else {
+                    currentGroup.right = Math.max(currentGroup.right, rect.right);
+                    currentGroup.bottom = Math.max(currentGroup.bottom, rect.bottom);
+                }
+            });
+
+            // Если строка помещается целиком — маркеры не нужны
+            if (visualLines.length < 2) return;
+
+            // Ставим маркеры в конце каждой визуальной строки, кроме последней
+            for (let i = 0; i < visualLines.length - 1; i++) {
+                const lineGroup = visualLines[i];
+                const marker = document.createElement('span');
+                marker.className = 'poem-line-break-marker';
+                marker.setAttribute('aria-hidden', 'true');
+                marker.style.left = `${lineGroup.right - parentRect.left}px`;
+                marker.style.top = `${lineGroup.bottom - parentRect.top}px`;
+                markersParent.appendChild(marker);
+            }
+        });
+    }
+
+    /**
+     * Обновляет маркеры переноса строк для всех видимых карточек.
+     */
+    updatePoemLineBreakMarkers() {
+        $('.poem-content').each((index, element) => {
+            this.markPoemLineBreaks($(element));
+        });
+    }
+
+    /**
+     * Инициализирует ResizeObserver для автоматического обновления маркеров.
+     */
+    initPoemLineBreakMarkers() {
+        this.poemResizeObserver?.disconnect();
+
+        const mainContent = document.querySelector('#mainContent');
+        if (!mainContent) return;
+
+        this.poemResizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(() => {
+                this.updatePoemLineBreakMarkers();
+            });
+        });
+
+        this.poemResizeObserver.observe(mainContent);
+
+        requestAnimationFrame(() => {
+            this.updatePoemLineBreakMarkers();
+        });
+    }
+
+    /**
+     * Динамически пересчитывает высоту сайдбара.
+     */
+    updateSidebarHeight() {
+        const $sidebar = $('.authors-sidebar');
+        const $resizer = $('.sidebar-resizer');
+        const $layout = $('.content-layout');
+
+        if (!$layout.length || !$sidebar.length) return;
+
+        const layoutTop = $layout[0].getBoundingClientRect().top;
+        const stickyTop = 20; // совпадает с top: 20px в CSS
+        const offset = Math.max(stickyTop, layoutTop);
+        const height = window.innerHeight - offset;
+
+        $sidebar.css('height', height + 'px');
+        $resizer.css('height', height + 'px');
+    }
+
+
+    /* ==========================================================================
+       6. Привязка событий / Event Binding (разделено по группам)
+       ========================================================================== */
+
+    /**
+     * Точка входа: привязывает все события приложения.
+     */
+    bindEvents() {
+        this.bindResizer();
+        this.bindGlobalEvents();
+        this.bindHeaderEvents();
+        this.bindSidebarEvents();
+        this.bindAuthorEvents();
+        this.bindPostEvents();
+        this.bindDataEvents();
+    }
+
+    /**
+     * Ресайзер сайдбара (drag-to-resize).
+     */
     bindResizer() {
         const $layout = $('.content-layout');
         const $sidebar = $('.authors-sidebar');
@@ -421,9 +512,7 @@ class PoemApp {
 
         $resizer.on('mousedown', function (e) {
             e.preventDefault();
-
             isResizing = true;
-
             $('body').addClass('is-resizing');
 
             $(document).on('mousemove.sidebarResize', function (e) {
@@ -431,14 +520,7 @@ class PoemApp {
 
                 const layoutLeft = $layout.offset().left;
                 const newWidth = e.clientX - layoutLeft;
-
-                const minWidth = 220;
-                const maxWidth = 600;
-
-                const width = Math.max(
-                    minWidth,
-                    Math.min(maxWidth, newWidth)
-                );
+                const width = Math.max(220, Math.min(600, newWidth));
 
                 $sidebar.css('flex-basis', `${width}px`);
             });
@@ -452,14 +534,49 @@ class PoemApp {
         });
     }
 
-    bindEvents() {
-        $('.clickable-logo').on('click', (e) => {
-            this.applyRandomPoeticTitle();
-            this.resetTitleChangeTimer();
+    /**
+     * Глобальные события: Esc, кнопка «наверх», хедер при скролле,
+     * меню закладок, клики по строкам стихов.
+     */
+    bindGlobalEvents() {
+        // Кнопка прокрутки наверх
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollTopBtn.classList.remove('d-none');
+            } else {
+                scrollTopBtn.classList.add('d-none');
+            }
+        });
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        this.bindResizer();
+        // Класс «scrolled» на хедер при прокрутке + пересчёт высоты сайдбара
+        this.updateSidebarHeight();
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.app-header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            this.updateSidebarHeight();
+        });
+        window.addEventListener('resize', () => this.updateSidebarHeight());
 
+        // Клавиша Esc — сброс поиска
+        $(document).on('keydown', (e) => {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                if ($('#searchInput').val() !== '') {
+                    e.preventDefault();
+                    this.resetSearchQuery();
+                    this.refresh(true);
+                }
+            }
+        });
+
+        // Меню закладок в шапке: открытие, навигация по стихам, закрытие по клику мимо
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.js-toggle-bookmarks');
             const wrapper = e.target.closest('.bookmark-dropdown-wrapper');
@@ -468,13 +585,9 @@ class PoemApp {
             if (btn) {
                 app.ui.toggleBookmarksMenu(wrapper);
             } else if (postLink) {
-                // Клик по пункту в списке закладок — переходим к стиху
                 const postId = postLink.dataset.postId;
                 if (postId) {
-                    // Закрываем меню
                     document.querySelectorAll('.bookmarks-dropdown-container').forEach(el => el.innerHTML = '');
-
-                    // Ищем автора и переходим
                     for (const author of app.store.data.authors) {
                         const found = author.posts?.find(p => p.id === postId);
                         if (found) {
@@ -488,43 +601,11 @@ class PoemApp {
                     }
                 }
             } else if (!e.target.closest('.bookmarks-dropdown-container')) {
-                // Закрываем меню при клике снаружи
                 document.querySelectorAll('.bookmarks-dropdown-container').forEach(el => el.innerHTML = '');
             }
         });
 
-        $(document).on('click', '.bookmark-btn', (e) => {
-            e.stopPropagation();
-
-            const $btn = $(e.currentTarget);
-            const postId = $btn.data('post-id');
-
-            if (postId) {
-                const isBookmarked = $btn.toggleClass('active').hasClass('active');
-
-                $btn.attr('title', isBookmarked ? 'Убрать закладку' : 'Поставить закладку');
-                $btn.find('.bookmark-empty').toggleClass('d-none', isBookmarked);
-                $btn.find('.bookmark-filled').toggleClass('d-none', !isBookmarked);
-
-                this.store.toggleBookmark(postId, isBookmarked);
-                this.updateSidebarBookmarkIcon(postId, isBookmarked);
-            }
-        });
-
-        // Перехват клавиши Esc для сброса поиска
-        $(document).on('keydown', (e) => {
-            if (e.key === 'Escape' || e.keyCode === 27) {
-
-                // Проверяем, есть ли что сбрасывать
-                if ($('#searchInput').val() !== '') {
-                    e.preventDefault();
-                    this.resetSearchQuery();
-
-                    this.refresh(true);
-                }
-            }
-        });
-
+        // Закладка на строку стиха по клику
         $(document).on('click', '.poem-line', (e) => {
             const $line = $(e.target);
             const $container = $line.closest('.poem-content');
@@ -533,6 +614,7 @@ class PoemApp {
             const postId = $card.data('post-id');
             const authorId = $card.data('author-id');
 
+            // При активном поиске — первый клик на строку переключает вид на конкретный стих
             if (authorId && postId && $searchInput.length && $searchInput.val()) {
                 this.store.selectedPostId = postId;
                 this.store.selectedAuthorId = authorId;
@@ -545,14 +627,61 @@ class PoemApp {
                 return;
             }
 
-            // Убираем закладку с других строк в этой карточке
             $container.find('.poem-line.active-bookmark').removeClass('active-bookmark');
-
-            // Ставим закладку на выбранную строку
             $line.addClass('active-bookmark');
         });
+    }
 
-        // Переключение автора в списке
+    /**
+     * События шапки: логотип (смена заголовка), поиск, размер шрифта, колонки.
+     */
+    bindHeaderEvents() {
+        // Клик по логотипу — случайный новый заголовок
+        $('.clickable-logo').on('click', () => {
+            this.applyRandomPoeticTitle();
+            this.resetTitleChangeTimer();
+        });
+
+        // Поиск (с задержкой debounce)
+        $('#searchInput').on('input', () => {
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => {
+                this.refresh();
+            }, 400);
+            this.toggleClearButton();
+        });
+
+        // Выделение текста поиска при фокусе
+        $('#searchInput').on('focus', function () {
+            $(this).select();
+        });
+
+        // Очистка поиска кнопкой ×
+        $('#clearSearchBtn').on('click', () => {
+            this.resetSearchQuery();
+            $('#searchInput').trigger('input').focus();
+        });
+
+        // Переключение размера шрифта
+        $(document).on('change', 'input[name="fontSize"]', (e) => {
+            const fontSize = $(e.target).val();
+            localStorage.setItem('fontSize', fontSize);
+            this.applyFontSize();
+        });
+
+        // Переключение числа колонок
+        $(document).on('change', 'input[name="columns"]', (e) => {
+            const columns = $(e.target).val();
+            localStorage.setItem('columns', columns);
+            this.applyColumns();
+        });
+    }
+
+    /**
+     * События сайдбара: выбор автора, переход по стиху, сортировка.
+     */
+    bindSidebarEvents() {
+        // Выбор автора в списке
         $(document).on('click', '.author-card', (e) => {
             e.preventDefault();
             const id = $(e.currentTarget).data('id');
@@ -562,42 +691,14 @@ class PoemApp {
             this.refresh();
         });
 
-        // Сортировка авторов
-        $(document).on('change', 'input[name="authorSort"]', (e) => {
-            this.store.authorSortMode = $(e.target).val();
-            this.store.saveSettings();
-            this.refresh();
-        });
-
-        // Размер шрифта
-        $(document).on('change', 'input[name="fontSize"]', (e) => {
-            const fontSize = $(e.target).val();
-            localStorage.setItem('fontSize', fontSize);
-            this.applyFontSize();
-        });
-
-        // Колонки
-        $(document).on('change', 'input[name="columns"]', (e) => {
-            const columns = $(e.target).val();
-            localStorage.setItem('columns', columns);
-            this.applyColumns();
-        });
-
-        $('#exportEpubBtn').on('click', () => {
-            this.store.exportToEpub();
-        });
-
-        // Клик по списку произведений в сайдбаре
+        // Клик по произведению в списке автора
         $(document).on('click', '.author-post-item', (e) => {
             e.preventDefault();
             e.stopPropagation();
             const postId = $(e.currentTarget).data('post-id');
-
-            // Получаем автора, которому принадлежит этот стих
             const $authorCard = $(e.currentTarget).closest('.author-card-wrapper').find('.author-card');
             const authorId = $authorCard.data('id');
 
-            // Переключаемся на этого автора
             if (authorId) {
                 this.store.selectedAuthorId = authorId;
                 this.store.markAsViewed(authorId);
@@ -607,65 +708,77 @@ class PoemApp {
             this.refresh(false);
         });
 
-        this.updateSidebarHeight();
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('.app-header');
-            if (window.scrollY > 100) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-            this.updateSidebarHeight();
+        // Изменение режима сортировки
+        $(document).on('change', 'input[name="authorSort"]', (e) => {
+            this.store.authorSortMode = $(e.target).val();
+            this.store.saveSettings();
+            this.refresh();
         });
-        window.addEventListener('resize', () => this.updateSidebarHeight());
+    }
 
-        // Поиск
-        $('#searchInput').on('input', () => {
-            clearTimeout(this.searchTimer);
-
-            this.searchTimer = setTimeout(() => {
-                this.refresh();
-            }, 400);
-
-            this.toggleClearButton();
-        });
-
-        // Выделение всего текста при фокусе на поле поиска
-        $('#searchInput').on('focus', function () {
-            $(this).select();
-        });
-
-        // Очистка поиска
-        $('#clearSearchBtn').on('click', () => {
-            this.resetSearchQuery();
-            $('#searchInput').trigger('input').focus();
-        });
-
-        // --- События Автора ---
+    /**
+     * События, связанные с авторами: добавление, редактирование, удаление,
+     * загрузка фото (файл, URL, буфер обмена), парсинг ФИО.
+     */
+    bindAuthorEvents() {
+        // Кнопка «Добавить автора»
         $('#addAuthorBtn').on('click', () => {
             this.ui.openAuthorModal();
         });
 
+        // Кнопка «Редактировать автора» (в главной области)
         $(document).on('click', '#editAuthorBtn', () => {
             const author = this.store.getAuthorById(this.store.selectedAuthorId);
             if (author) this.ui.openAuthorModal(author);
         });
 
-        // 📋 ПАРСИНГ ИЗ БУФЕРА ОБМЕНА
+        // Двойной клик по аватару в Hero — открыть модалку автора
+        $(document).on('dblclick', '.hero-avatar-img', () => {
+            const author = this.store.getAuthorById(this.store.selectedAuthorId);
+            if (author) this.ui.openAuthorModal(author);
+        });
+
+        // Одиночный клик по аватару — прокрутить до автора в сайдбаре (или сбросить поиск)
+        $(document).on('click', '.hero-avatar-img', (e) => {
+            e.preventDefault();
+            if ($('#searchInput').val()) {
+                this.resetSearchQuery();
+                this.refresh();
+            }
+            const author = this.store.getAuthorById(this.store.selectedAuthorId);
+            if (author) scrollToAuthorInSidebar(author.id);
+        });
+
+        // Ссылка «Смотреть все» → сброс поиска и selectedPost
+        $(document).on('click', 'a.view-all', (e) => {
+            e.preventDefault();
+            this.resetSearchQuery();
+            this.store.selectedPostId = null;
+            this.refresh();
+            const author = this.store.getAuthorById(this.store.selectedAuthorId);
+            if (author) scrollToAuthorInSidebar(author.id);
+        });
+
+        // Двойной клик по аватару в сайдбаре — открыть модалку
+        $(document).on('dblclick', '.author-avatar-img', (e) => {
+            e.stopPropagation();
+            const authorId = $(e.currentTarget).closest('.author-card').data('id');
+            const author = this.store.getAuthorById(authorId);
+            if (author) {
+                this.store.selectedAuthorId = authorId;
+                this.refresh();
+                this.ui.openAuthorModal(author);
+            }
+        });
+
+        // Парсинг ФИО и дат из буфера обмена
         $('#parseClipboardBtn').on('click', async () => {
             try {
                 let text = await navigator.clipboard.readText();
-                if (!text) {
-                    alert('Буфер обмена пуст!');
-                    return;
-                }
+                if (!text) { alert('Буфер обмена пуст!'); return; }
 
-                // Нормализуем Unicode (приводим составные символы к единым)
                 text = normalizeUnicode(text);
-
                 const parsed = parseAuthorText(text);
-
-                // Сохраняем исходные части для перераспределения
                 $('#authorForm').data('parsedParts', parsed.parts);
 
                 const order = $('input[name="nameOrder"]:checked').val();
@@ -676,13 +789,12 @@ class PoemApp {
                 if (distributed.surName) $('#authorSurName').val(distributed.surName);
                 if (parsed.birthYear) $('#authorBirthYear').val(parsed.birthYear);
                 if (parsed.deathYear) $('#authorDeathYear').val(parsed.deathYear);
-
             } catch (err) {
-                alert('Не удалось прочитать буфер обмена. Разрешите доступ к буферу в браузере.');
+                alert('Не удалось прочитать буфер обмена. Разрешите доступ в браузере.');
             }
         });
 
-        // Переключатель порядка ФИО — перераспределяет значения из исходных parts
+        // Переключатель порядка ФИО — перераспределяет поля
         $(document).on('change', 'input[name="nameOrder"]', () => {
             const parts = $('#authorForm').data('parsedParts');
             if (!parts || parts.length === 0) return;
@@ -695,32 +807,29 @@ class PoemApp {
             $('#authorSurName').val(distributed.surName);
         });
 
-        // Переключение источника фото (Файл / URL / Буфер)
+        // Переключение источника фото: файл / URL / буфер
         $('input[name="photoSourceMode"]').on('change', (e) => {
             const mode = $(e.target).val();
-
             $('#photoFileInputContainer').toggleClass('d-none', mode !== 'file');
             $('#photoUrlInputContainer').toggleClass('d-none', mode !== 'url');
             $('#photoBufferInputContainer').toggleClass('d-none', mode !== 'buffer');
         });
 
-        // 📋 Загрузка изображения из буфера обмена
+        // Загрузка фото из буфера обмена (кнопка)
         $('#pastePhotoFromBufferBtn').on('click', async () => {
             try {
                 if (!navigator.clipboard || !navigator.clipboard.read) {
                     alert('Ваш браузер не поддерживает чтение файлов из буфера обмена.');
                     return;
                 }
-
                 const items = await navigator.clipboard.read();
                 let imageFile = null;
 
                 for (const item of items) {
-                    // Ищем тип, начинающийся с image/ (image/png, image/jpeg и т.д.)
                     const imageType = item.types.find(type => type.startsWith('image/'));
                     if (imageType) {
                         const blob = await item.getType(imageType);
-                        imageFile = new File([blob], 'clipboard_image.png', {type: imageType});
+                        imageFile = new File([blob], 'clipboard_image.png', { type: imageType });
                         break;
                     }
                 }
@@ -730,19 +839,17 @@ class PoemApp {
                     return;
                 }
 
-                // Используем готовую функцию сжатия
                 const compressedBase64 = await compressImage(imageFile, 300, 300, 0.8);
                 $('#authorPhotoBase64').val(compressedBase64);
                 $('#authorPhotoPreview').attr('src', compressedBase64);
                 $('#removePhotoBtn').removeClass('d-none');
-
             } catch (err) {
                 console.error(err);
-                alert('Не удалось прочитать изображение из буфера. Убедитесь, что разрешили доступ к буферу в браузере.');
+                alert('Не удалось прочитать изображение из буфера. Убедитесь, что разрешили доступ в браузере.');
             }
         });
 
-        // Автоматическая вставка картинки по Ctrl+V внутри модалки автора
+        // Автовставка картинки по Ctrl+V внутри модалки автора
         $('#authorModal').on('paste', async (e) => {
             const clipboardData = e.originalEvent.clipboardData;
             if (!clipboardData || !clipboardData.items) return;
@@ -750,8 +857,7 @@ class PoemApp {
             for (let i = 0; i < clipboardData.items.length; i++) {
                 const item = clipboardData.items[i];
                 if (item.type.indexOf('image') !== -1) {
-                    e.preventDefault(); // Предотвращаем стандартную вставку
-
+                    e.preventDefault();
                     const file = item.getAsFile();
                     if (file) {
                         try {
@@ -759,8 +865,6 @@ class PoemApp {
                             $('#authorPhotoBase64').val(compressedBase64);
                             $('#authorPhotoPreview').attr('src', compressedBase64);
                             $('#removePhotoBtn').removeClass('d-none');
-
-                            // Включаем радиобаттон "Буфер" для визуального подтверждения
                             $('#photoModeBuffer').prop('checked', true).trigger('change');
                         } catch (err) {
                             alert('Ошибка сжатия изображения из буфера');
@@ -771,21 +875,18 @@ class PoemApp {
             }
         });
 
+        // Автофокус на поле «Фамилия» при открытии модалки
         $('#authorModal').on('shown.bs.modal', () => {
             $('#authorLastName').focus();
         });
 
-        // 🔗 Загрузка фото по URL
+        // Загрузка фото по URL
         $('#loadPhotoFromUrlBtn').on('click', async () => {
             const url = $('#authorPhotoUrlInput').val().trim();
-            if (!url) {
-                alert('Введите URL картинки!');
-                return;
-            }
+            if (!url) { alert('Введите URL картинки!'); return; }
 
             const $btn = $('#loadPhotoFromUrlBtn');
             $btn.prop('disabled', true).text('Загрузка...');
-
             try {
                 const compressedBase64 = await imageUrlToBase64(url, 300, 300, 0.8);
                 $('#authorPhotoBase64').val(compressedBase64);
@@ -798,54 +899,7 @@ class PoemApp {
             }
         });
 
-        // 1. Двойной клик по аватарке в главном профиле автора (Hero-секция)
-        $(document).on('dblclick', '.hero-avatar-img', () => {
-            const author = this.store.getAuthorById(this.store.selectedAuthorId);
-            if (author) {
-                this.ui.openAuthorModal(author);
-            }
-        });
-
-        $(document).on('click', '.hero-avatar-img', (e) => {
-            e.preventDefault();
-
-            if ($('#searchInput').val()) {
-                this.resetSearchQuery();
-                this.refresh();
-            }
-
-            const author = this.store.getAuthorById(this.store.selectedAuthorId);
-            if (author) {
-                scrollToAuthorInSidebar(author.id);
-            }
-        });
-
-        $(document).on('click', 'a.view-all', (e) => {
-            e.preventDefault();
-
-            this.resetSearchQuery();
-            this.store.selectedPostId = null;
-            this.refresh();
-
-            const author = this.store.getAuthorById(this.store.selectedAuthorId);
-            if (author) {
-                scrollToAuthorInSidebar(author.id);
-            }
-        });
-
-// 2. (Опционально) Двойной клик по аватарке автора в левом списке
-        $(document).on('dblclick', '.author-avatar-img', (e) => {
-            e.stopPropagation(); // Предотвращаем лишние срабатывания
-            const authorId = $(e.currentTarget).closest('.author-card').data('id');
-            const author = this.store.getAuthorById(authorId);
-            if (author) {
-                this.store.selectedAuthorId = authorId;
-                this.refresh();
-                this.ui.openAuthorModal(author);
-            }
-        });
-
-        // Удаление фото в модалке
+        // Удаление фото
         $('#removePhotoBtn').on('click', () => {
             $('#authorPhotoInput').val('');
             $('#authorPhotoUrlInput').val('');
@@ -869,19 +923,16 @@ class PoemApp {
                 photo: $('#authorPhotoBase64').val() || ''
             };
 
-            const {id: newId, isModified} = this.store.saveAuthor(authorData);
+            const { id: newId, isModified } = this.store.saveAuthor(authorData);
             this.store.selectedAuthorId = newId;
             this.ui.closeAuthorModal();
-            if (isModified) {
-                this.refresh();
-            }
+            if (isModified) this.refresh();
         });
 
         // Удаление автора
         $('#deleteAuthorBtn').on('click', () => {
             const authorId = $('#authorId').val();
             if (!authorId) return;
-
             if (confirm('Вы уверены, что хотите удалить автора и все его произведения?')) {
                 this.store.deleteAuthor(authorId);
                 this.ui.closeAuthorModal();
@@ -889,7 +940,36 @@ class PoemApp {
             }
         });
 
-        // --- События Стиха ---
+        // Перехват вставки из буфера во всех полях модалок (очистка мусора)
+        const $modalFields = $('#authorModal input[type="text"], #authorModal textarea, #postModal input[type="text"], #postModal textarea');
+        $modalFields.on('paste', function (e) {
+            const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            const pastedText = clipboardData.getData('text/plain');
+            if (pastedText) {
+                e.preventDefault();
+                const cleaned = cleanPastedText(pastedText);
+                const input = this;
+                const start = input.selectionStart || 0;
+                const end = input.selectionEnd || 0;
+                const currentVal = $(input).val();
+                const newVal = currentVal.substring(0, start) + cleaned + currentVal.substring(end);
+                $(input).val(newVal);
+
+                const newCursorPos = start + cleaned.length;
+                input.setSelectionRange(newCursorPos, newCursorPos);
+                $(input).trigger('input');
+            }
+        });
+    }
+
+    /**
+     * События, связанные с произведениями: добавление, редактирование,
+     * удаление, ссылки, закладки, переключение HTML-режима, случайный стих.
+     */
+    bindPostEvents() {
+        // Кнопка «Добавить стих»
         $(document).on('click', '#addPostBtn', () => {
             if (!this.store.selectedAuthorId) {
                 alert('Сначала выберите или создайте автора!');
@@ -898,11 +978,12 @@ class PoemApp {
             this.ui.openPostModal(null, this.store.selectedAuthorId, this.store.data.authors);
         });
 
+        // Кнопка «Редактировать стих» (в карточке)
         $(document).on('click', '.edit-post-btn', (e) => {
             const postId = $(e.currentTarget).data('post-id');
-            // Ищем пост у всех авторов
             let post = null;
             let postAuthorId = null;
+
             for (const author of this.store.data.authors) {
                 const found = author.posts?.find(p => p.id === postId);
                 if (found) {
@@ -911,13 +992,14 @@ class PoemApp {
                     break;
                 }
             }
+
             if (post) {
                 post.authorId = postAuthorId;
                 this.ui.openPostModal(post, this.store.selectedAuthorId, this.store.data.authors);
             }
         });
 
-        // Поиск автора в модалке произведения
+        // Поиск автора в поле автокомплита модалки стиха
         $(document).on('input', '#postAuthorSearch', () => {
             const query = $('#postAuthorSearch').val();
             this.ui.renderAuthorSearchDropdown(this.store.data.authors, query);
@@ -928,7 +1010,7 @@ class PoemApp {
             $(this).select();
         });
 
-        // Клик по элементу списка авторов
+        // Клик по элементу в дропдауне авторов
         $(document).on('click', '.author-search-item', (e) => {
             const authorId = $(e.currentTarget).data('author-id');
             const author = this.store.getAuthorById(authorId);
@@ -939,14 +1021,14 @@ class PoemApp {
             }
         });
 
-        // Скрыть dropdown при клике вне его
+        // Скрытие дропдауна при клике вне его
         $(document).on('click', (e) => {
             if (!$(e.target).closest('.author-search-wrapper').length) {
                 $('#authorSearchDropdown').addClass('d-none');
             }
         });
 
-        // Переключение тумблера HTML
+        // Переключение HTML-режима в форме стиха
         $('#useHtmlToggle').on('change', (e) => {
             const isHtml = $(e.target).is(':checked');
             if (isHtml) {
@@ -958,10 +1040,25 @@ class PoemApp {
             }
         });
 
-        // Добавление / удаление строк ссылок
+        // Управление строками ссылок
         $('#addLinkRowBtn').on('click', () => this.ui.addLinkRow('', '', true));
         $(document).on('click', '.remove-link-btn', (e) => {
             $(e.currentTarget).closest('.link-row').remove();
+        });
+
+        // Закладка на произведение (кнопка в карточке)
+        $(document).on('click', '.bookmark-btn', (e) => {
+            e.stopPropagation();
+            const $btn = $(e.currentTarget);
+            const postId = $btn.data('post-id');
+            if (postId) {
+                const isBookmarked = $btn.toggleClass('active').hasClass('active');
+                $btn.attr('title', isBookmarked ? 'Убрать закладку' : 'Поставить закладку');
+                $btn.find('.bookmark-empty').toggleClass('d-none', isBookmarked);
+                $btn.find('.bookmark-filled').toggleClass('d-none', !isBookmarked);
+                this.store.toggleBookmark(postId, isBookmarked);
+                this.updateSidebarBookmarkIcon(postId, isBookmarked);
+            }
         });
 
         // Сохранение формы стиха
@@ -972,24 +1069,12 @@ class PoemApp {
             const contentText = $('#postContent').val().trim();
             const contentHtml = $('#postContentHtml').val().trim();
 
-            if (!isHtml && !contentText) {
-                alert('Заполните текст произведения!');
-                return;
-            }
+            if (!isHtml && !contentText) { alert('Заполните текст произведения!'); return; }
+            if (isHtml && !contentHtml) { alert('Заполните HTML код произведения!'); return; }
 
-            if (isHtml && !contentHtml) {
-                alert('Заполните HTML код произведения!');
-                return;
-            }
-
-            // Проверяем что выбран автор
             const authorId = $('#postAuthorId').val();
-            if (!authorId) {
-                alert('Выберите автора!');
-                return;
-            }
+            if (!authorId) { alert('Выберите автора!'); return; }
 
-            // Если название не заполнено — парсим первую строку из текста
             let title = $('#postTitle').val().trim();
             if (!title) {
                 title = extractFirstLine(isHtml ? contentHtml : contentText, isHtml);
@@ -999,17 +1084,15 @@ class PoemApp {
             $('#linksListContainer .link-row').each((_, el) => {
                 const titleLink = $(el).find('.link-title-input').val().trim();
                 const url = $(el).find('.link-url-input').val().trim();
-                if (url) {
-                    links.push({title: titleLink, url: url});
-                }
+                if (url) links.push({ title: titleLink, url });
             });
 
             const postData = {
                 id: $('#postId').val() || null,
-                title: title,
+                title,
                 year: cleanNumericValue($('#postYear').val()) ? parseInt(cleanNumericValue($('#postYear').val()), 10) : null,
                 note: $('#postNote').val().trim(),
-                links: links
+                links
             };
 
             if (isHtml) {
@@ -1020,10 +1103,9 @@ class PoemApp {
                 postData.contentHtml = '';
             }
 
-            // 1. Сохраняем пост у выбранного автора
-            let {id: postId, isModified} = this.store.savePost(authorId, postData);
+            let { id: postId, isModified } = this.store.savePost(authorId, postData);
 
-            // 2. Если пост существовал ранее, проверяем, не сменился ли автор
+            // Если сменился автор — удаляем пост у старого автора
             const originalPostId = $('#postId').val();
             let authorChanged = false;
 
@@ -1040,13 +1122,10 @@ class PoemApp {
                 }
             }
 
-            // 3. Закрываем модалку
             this.ui.closePostModal();
 
-            // 4. Если сменился автор или изменились данные стиха — фиксируем изменения и перерисовываем UI
             if (isModified || authorChanged) {
                 this.store.save();
-                
                 this.store.selectedPostId = postId;
                 this.store.selectedAuthorId = authorId;
                 this.refresh();
@@ -1066,24 +1145,18 @@ class PoemApp {
             }
         });
 
-        // --- RAND (Случайное произведение) ---
+        // Кнопка «Случайное произведение»
         $('#randBtn').on('click', () => {
             this.resetSearchQuery();
 
-            // Собираем все произведения всех авторов в плоский массив для равномерного распределения
             const allPosts = [];
             for (const author of this.store.data.authors) {
                 if (author.posts && author.posts.length > 0) {
-                    author.posts.forEach(post => {
-                        allPosts.push({post, authorId: author.id});
-                    });
+                    author.posts.forEach(post => allPosts.push({ post, authorId: author.id }));
                 }
             }
 
-            if (allPosts.length === 0) {
-                alert('Нет ни одного произведения!');
-                return;
-            }
+            if (allPosts.length === 0) { alert('Нет ни одного произведения!'); return; }
 
             const random = allPosts[Math.floor(Math.random() * allPosts.length)];
             this.store.selectedAuthorId = random.authorId;
@@ -1091,32 +1164,26 @@ class PoemApp {
             this.store.markAsViewed(random.authorId);
             this.refresh();
 
-            window.scrollTo({top: 0, behavior: 'smooth'});
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+    }
 
-        const scrollTopBtn = document.getElementById('scrollTopBtn');
-
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                scrollTopBtn.classList.remove('d-none');
-            } else {
-                scrollTopBtn.classList.add('d-none');
-            }
-        });
-
-        scrollTopBtn.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // --- Экспорт / Импорт ---
+    /**
+     * События данных: экспорт JSON, экспорт EPUB, импорт JSON.
+     */
+    bindDataEvents() {
+        // Экспорт JSON
         $('#exportBtn').on('click', () => {
             this.store.exportJson();
             this.store.markAsExported();
         });
 
+        // Экспорт EPUB
+        $('#exportEpubBtn').on('click', () => {
+            this.store.exportToEpub();
+        });
+
+        // Импорт JSON — открываем диалог выбора файла
         $('#importBtn').on('click', () => $('#importFileInput').click());
 
         $('#importFileInput').on('change', (e) => {
@@ -1135,44 +1202,14 @@ class PoemApp {
             };
             reader.readAsText(file);
         });
-
-        // Селектор всех инпутов и текстовых областей в модалках автора и стиха
-        const $modalFields = $('#authorModal input[type="text"], #authorModal textarea, #postModal input[type="text"], #postModal textarea');
-
-        // Перехват прямой вставки из буфера (Ctrl+V или правый клик -> Вставить)
-        $modalFields.on('paste', function (e) {
-            const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
-            if (!clipboardData) return;
-
-            const pastedText = clipboardData.getData('text/plain');
-
-            // Если в тексте есть ссылки или слово "Источник"
-            if (pastedText) {
-                e.preventDefault(); // Отменяем стандартное вставление
-
-                const cleaned = cleanPastedText(pastedText);
-
-                // Вставляем очищенный текст в текущую позицию курсора
-                const input = this;
-                const start = input.selectionStart || 0;
-                const end = input.selectionEnd || 0;
-                const currentVal = $(input).val();
-
-                const newVal = currentVal.substring(0, start) + cleaned + currentVal.substring(end);
-                $(input).val(newVal);
-
-                // Возвращаем курсор в конец вставленного текста
-                const newCursorPos = start + cleaned.length;
-                input.setSelectionRange(newCursorPos, newCursorPos);
-
-                // Генерируем событие input для корректной работы реактивных обработчиков
-                $(input).trigger('input');
-            }
-        });
     }
 }
 
-// Старт
+
+/* ==========================================================================
+   Старт приложения
+   ========================================================================== */
+
 $(document).ready(() => {
     window.app = new PoemApp();
     window.app.init();
