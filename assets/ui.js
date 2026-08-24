@@ -107,6 +107,27 @@ class PoemUI {
         return authorName ? `https://ru.wikipedia.org/w/index.php?search=${encodeURIComponent(authorName.trim())}` : '#';
     }
 
+    getAgeString(age) {
+        if (age === null || age === undefined || isNaN(age)) return '';
+
+        const absAge = Math.abs(Number(age));
+        const lastTwo = absAge % 100;
+        const lastOne = absAge % 10;
+        let word;
+
+        if (lastTwo >= 11 && lastTwo <= 14) {
+            word = 'лет';
+        } else if (lastOne === 1) {
+            word = 'год';
+        } else if (lastOne >= 2 && lastOne <= 4) {
+            word = 'года';
+        } else {
+            word = 'лет';
+        }
+
+        return `${word}`;
+    }
+
     renderAuthorMain(author, searchQuery = '', selectedPostId = null) {
         if (!author) {
             this.$mainContent.html(`
@@ -147,7 +168,7 @@ class PoemUI {
         const currentYear = new Date().getFullYear();
         let numYears = (author.birthYear) ? ((author.deathYear ?? currentYear) - author.birthYear) : null;
 
-        numYears = ` (${numYears} лет)`;
+        numYears = ` (${numYears} ${this.getAgeString(numYears)})`;
 
         const isMatchedAuthor = q && isAuthorMatch(author, q);
         const matchedAuthorClass = isMatchedAuthor ? 'bg-warning text-dark' : '';
@@ -320,6 +341,8 @@ class PoemUI {
 
         const bookmarkBtn = this.renderBookmarkButton(post.id, app.store.getPostBookmark(post.id));
 
+        const yearsString = this.getAgeString(writtenYears);
+
         return `
       <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
         <div class="card-body p-4">
@@ -329,7 +352,7 @@ class PoemUI {
               <div class="post-bookmark-wrapper">${bookmarkBtn}</div>
             </div>
             <div class="d-flex align-items-center gap-2">
-              ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} лет)` : ''}</span>` : ''}
+              ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} ${yearsString})` : ''}</span>` : ''}
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>
