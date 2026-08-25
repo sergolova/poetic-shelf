@@ -111,6 +111,21 @@ class PoemStore {
 
     /** Сохраняет данные авторов в localStorage. */
     saveData() {
+        const postsCount = (this.data.authors || []).reduce((sum, a) => sum + (a.posts?.length || 0), 0);
+
+        if (!this.data.meta) {
+            this.data.meta = {
+                appName: 'Поэтическая Полка',
+                version: '1.0',
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        this.data.meta.modifiedAt = new Date().toISOString();
+        this.data.meta.modifiedBy = 'user';
+        this.data.meta.authorsCount = (this.data.authors || []).length;
+        this.data.meta.postsCount = postsCount;
+
         localStorage.setItem('stih_app_data', JSON.stringify({ data: this.data }));
         this.markAsChanged();
         this.updateExportWarningStatus();
@@ -604,18 +619,19 @@ class PoemStore {
 
         const postsCount = (normalizedData.authors || []).reduce((sum, a) => sum + (a.posts?.length || 0), 0);
 
-        const exportData = {
-            meta: {
+        if (!normalizedData.meta) {
+            normalizedData.meta = {
                 appName:      'Поэтическая Полка',
                 version:      '1.0',
-                createdAt:    new Date().toISOString(),
-                authorsCount: (normalizedData.authors || []).length,
-                postsCount,
-            },
-            authors: normalizedData.authors,
-        };
+                createdAt:    new Date().toISOString()
+            };
+        }
+        normalizedData.meta.modifiedAt = new Date().toISOString();
+        normalizedData.meta.modifiedBy = 'user';
+        normalizedData.meta.authorsCount = (normalizedData.authors || []).length;
+        normalizedData.meta.postsCount = postsCount;
 
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2));
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(normalizedData, null, 2));
         const a = document.createElement('a');
         a.href = dataStr;
         a.download = `stih_backup_${new Date().toISOString().slice(0, 10)}.json`;
@@ -627,7 +643,16 @@ class PoemStore {
      * @param {Object} jsonData
      */
     importJson(jsonData) {
-        this.data = jsonData.authors ? { authors: jsonData.authors } : jsonData;
+        if (jsonData.authors) {
+            this.data = {
+                meta: jsonData.meta || null,
+                authors: jsonData.authors
+            };
+        } else {
+            this.data = {
+                authors: Array.isArray(jsonData) ? jsonData : (jsonData.authors || [])
+            };
+        }
         this.selectedAuthorId = this.data.authors.length > 0 ? this.data.authors[0].id : null;
         this.save();
     }

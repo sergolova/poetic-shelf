@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "poetic-shelf": {
+      "command": "php",
+      "args": [
+        "./mcp-server/server.php",
+        "."
+      ]
+    }
+  }
+}
