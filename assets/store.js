@@ -602,7 +602,20 @@ class PoemStore {
 
         normalizeObj(normalizedData);
 
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(normalizedData, null, 2));
+        const postsCount = (normalizedData.authors || []).reduce((sum, a) => sum + (a.posts?.length || 0), 0);
+
+        const exportData = {
+            meta: {
+                appName:      'Поэтическая Полка',
+                version:      '1.0',
+                createdAt:    new Date().toISOString(),
+                authorsCount: (normalizedData.authors || []).length,
+                postsCount,
+            },
+            authors: normalizedData.authors,
+        };
+
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2));
         const a = document.createElement('a');
         a.href = dataStr;
         a.download = `stih_backup_${new Date().toISOString().slice(0, 10)}.json`;
@@ -614,7 +627,7 @@ class PoemStore {
      * @param {Object} jsonData
      */
     importJson(jsonData) {
-        this.data = jsonData;
+        this.data = jsonData.authors ? { authors: jsonData.authors } : jsonData;
         this.selectedAuthorId = this.data.authors.length > 0 ? this.data.authors[0].id : null;
         this.save();
     }
