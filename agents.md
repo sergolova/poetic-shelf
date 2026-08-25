@@ -1,0 +1,105 @@
+# Agents — Поэтическая Полка (Stih)
+
+Справочник по проекту для AI-агентов.
+
+## Обзор
+
+Клиентское SPA для хранения и чтения поэзии. Без бэкенда, без сборщика, без фреймворков. Данные живут в `localStorage`. Язык интерфейса — русский.
+
+## Архитектура
+
+Классическая MVC, реализованная через ES6 классы:
+
+| Класс | Файл | Роль |
+|---|---|---|
+| `PoemApp` | `assets/app.js` | Контроллер. Инициализация, привязка событий, координация Store и UI |
+| `PoemStore` | `assets/store.js` | Модель. CRUD авторов/произведений, localStorage, импорт/экспорт, закладки |
+| `PoemUI` | `assets/ui.js` | Представление. Рендеринг списков, карточек, модальных окон, навигация |
+| `TimelineBar` | `assets/timebar.js` | Компонент временной шкалы (годы, точки, выпадающие меню) |
+
+Глобальные утилиты без привязки к классам — в `assets/utilities.js`:
+- `escapeHtml()` — экранирование HTML (используется повсеместно)
+- `compressImage()` / `imageUrlToBase64()` — сжатие фото авторов
+- `normalizeUnicode()` / `cleanPastedText()` — очистка вставленного текста
+- `convertEngToRus()` — конвертация английской раскладки в русскую для поиска
+
+Хелперы поиска `isAuthorMatch()` / `isPostMatch()` объявлены в `store.js` вне класса — используются и в Store, и в UI.
+
+## Модель данных
+
+Структура в localStorage (`stih_app_data`):
+
+```
+{ data: { authors: [Author] } }
+```
+
+**Author:**
+```
+{
+  id: "author_<timestamp>",
+  lastName, firstName, surName,
+  birthYear, deathYear,           // number | null
+  photo,                          // base64 строка | ""
+  posts: [Post]
+}
+```
+
+**Post:**
+```
+{
+  id: "post_<timestamp>",
+  title,
+  content,                        // plain text (если не HTML)
+  contentHtml,                    // HTML разметка (если включён HTML-режим)
+  year,                           // number | null
+  note,                           // заметка/контекст
+  links: [{ title, url }]        // внешние ссылки
+}
+```
+
+## Зависимости
+
+- `jquery` 4.x, `bootstrap` 5.3.x — через `node_modules/`, подключены в `index.html`
+- `JSZip`, `FileSaver.js` — через CDN, только для EPUB-экспорта
+- Шрифты: Merriweather, Playfair Display, Plus Jakarta Sans — локальные woff2 в `assets/fonts/`
+
+## Стили
+
+- `assets/styles.css` — основные стили (~1230 строк). CSS-переменные для цветов и размеров. Классы `vintage-app`, `font-small/normal/large`, `cols-1/2/3/4`
+- `assets/theme-dark.css` — тёмная тема (~380 строк). Активируется через `data-theme="dark"` на `<body>`
+
+## Порядок подключения скриптов
+
+```
+jquery → bootstrap → timebar.js → utilities.js → store.js → ui.js → app.js → JSZip → FileSaver
+```
+
+Порядок важен: каждый следующий файл зависит от предыдущих.
+
+## Точка входа
+
+```js
+$(document).ready(() => {
+    window.app = new PoemApp();
+    window.app.init();
+});
+```
+
+`window.app` — глобальная ссылка на приложение, используется в обработчиках событий.
+
+## Ключевые паттерны
+
+- **Нет сборщика** — все файлы загружаются как обычные `<script>`. При добавлении нового файла его нужно подключить в `index.html` в правильном порядке
+- **jQuery для DOM** — используется `$()` для выборки, событий, анимаций. Не смешивать с React/Vue
+- **Bootstrap модалки** — `bootstrap.Modal` для форм авторов и произведений
+- **localStorage как БД** — все данные в одном ключе `stih_app_data`. Настройки в отдельных ключах: `appTheme`, `fontSize`, `columns`, `authorSortMode`, `postBookmarks`, `lastViewed`, `selectedAuthorId`, `selectedPostId`, `authorsSidebarWidth`
+- **Счётчик изменений** — `unsavedChangesCount` в localStorage, отображается бейджем на кнопке "Данные". Сбрасывается при экспорте
+- **Случайные заголовки** — массивы `PoemApp.poeticTitles` и `PoemApp.poeticSubtitles` ротируются каждые 30 секунд в шапке
+
+## При внесении изменений
+
+- Проект открывается прямо через `index.html` или `npx serve .`
+- Тесты отсутствуют — проверять вручную в браузере
+- Комментарии в коде на русском языке
+- JSDoc используется для документации функций
+- `npm install` для загрузки `node_modules/` (jQuery, Bootstrap)
