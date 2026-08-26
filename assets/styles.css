@@ -531,6 +531,19 @@ body.is-resizing {
     cursor: pointer;
 }
 
+.author-post-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 0 1 auto;
+}
+
+.author-post-title-wrapper .bookmark-icon,
+.author-post-title-wrapper svg {
+    flex-shrink: 0;      /* Иконка НИКОГДА не сжимается и не пропадает */
+}
+
 .author-post-item:last-child {
     border-bottom: none;
 }
@@ -544,7 +557,13 @@ body.is-resizing {
 .author-post-item.active {
     background-color: var(--highlight-bg);
     color: var(--accent-color);
-    font-weight: 600;
+    text-shadow: 0 0 0.8px currentColor, 0.6px 0 0.8px currentColor;
+}
+
+.timeline-post-link:hover {
+    background-color: var(--highlight-bg);
+    color: var(--accent-color);
+    text-shadow: 0 0 0.5px currentColor;
 }
 
 .author-post-all {
@@ -557,6 +576,7 @@ body.is-resizing {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .author-post-year {
@@ -589,7 +609,7 @@ body.is-resizing {
     gap: 1rem;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
 }
 
 .hero-author-name {
@@ -611,7 +631,7 @@ body.is-resizing {
 }
 
 .author-wiki-link:hover {
-    text-decoration: underline;
+    border-bottom: 1px solid var(--text-main);
 }
 
 a.view-all {
@@ -990,14 +1010,14 @@ a.view-all {
     background: #ffffff;
     border: 1px solid #dee2e6;
     border-radius: 6px;
-    min-width: 180px;
-    max-width: 260px;
+    min-width: 220px;
+    max-width: 300px;
     z-index: 1000;
     padding: 6px 0;
 }
 
 .timeline-dropdown-header {
-    padding: 4px 12px;
+    padding: 0 12px 4px 12px;
     font-size: 12px;
     text-align: center;
     border-bottom: 1px solid #f1f1f1;

@@ -458,7 +458,7 @@ class PoemApp {
 
         const layoutTop  = $layout[0].getBoundingClientRect().top;
         const stickyTop  = 20;
-        const height     = window.innerHeight - Math.max(stickyTop, layoutTop);
+        const height     = window.innerHeight - Math.max(stickyTop, layoutTop) - 5;
 
         $sidebar.css('height', height + 'px');
         $resizer.css('height', height + 'px');

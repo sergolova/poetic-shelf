@@ -381,3 +381,7 @@
 [data-theme="dark"] .search-input-wrapper .form-control:focus {
     background-color: transparent !important;
 }
+
+[data-theme="dark"] .app-header.scrolled {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+}

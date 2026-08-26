@@ -208,9 +208,12 @@ class PoemUI {
                     const isPostActive = p.id === selectedPostId;
                     const bookmarkIcon = this.renderBookmarkIcon(p.id, app.store.getPostBookmark(p.id));
                     return `<span class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
-                        <span class="author-post-title text-truncate">${escapeHtml(p.title)} ${bookmarkIcon}</span>
-                        ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
-                    </span>`;
+            <span class="author-post-title-wrapper">
+                <span class="author-post-title text-truncate">${escapeHtml(p.title)}</span>
+                ${bookmarkIcon}
+            </span>
+            ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
+        </span>`;
                 }).join('');
                 postsListHtml = `<div class="author-posts-list" style="display:none;">${itemsHtml}</div>`;
             }
@@ -299,8 +302,8 @@ class PoemUI {
                 </div>
               </div>
               <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
-                <span ${hideYears ? 'style="display:none"' : ''}>📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} гг.${ageString}</span>
-                <span>•</span>📖
+                <span ${hideYears ? 'style="display:none"' : ''}>📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} ${ageString}&nbsp;&nbsp;•</span>
+                📖
                 <a class="view-all" href="#">${author.posts?.length || 0} произведений</a>
                 <span>${q ? `(найдено: ${posts.length})` : ''}</span>
               </div>
@@ -340,7 +343,7 @@ class PoemUI {
 
         const linksHtml = (post.links?.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
-         <small class="text-muted fw-bold">Ссылки:</small>
+         <small class="text-muted fw-bold"></small>
          ${post.links.map(l => {
                 const icon  = isYoutube(l.url) ? '▶️' : '🔗';
                 const ytId  = this.getYouTubeId(l.url);
@@ -354,14 +357,14 @@ class PoemUI {
 
         return `
       <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-center justify-content-between pb-2 border-bottom">
+        <div class="card-body p-4 pt-0">
+          <div class="d-flex align-items-center justify-content-between pb-0 border-bottom" style="height: 4em">
             <div class="post-header-wrapper">
               <h3 class="poem-title mb-0">${titleHtml}</h3>
               <div class="post-bookmark-wrapper">${bookmarkBtn}</div>
             </div>
             <div class="d-flex align-items-center gap-2">
-              ${post.year ? `<span class="poem-year-tag">${post.year} г. ${writtenYears ? `(в ${writtenYears} ${yearsWord})` : ''}</span>` : ''}
+              ${post.year ? `<span class="poem-year-tag">${post.year} г ${writtenYears ? `, ${writtenYears} ${yearsWord}` : ''}</span>` : ''}
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>
