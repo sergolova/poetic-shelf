@@ -148,7 +148,7 @@ class PoemApp {
     updateSidebarBookmarkIcon(postId, isBookmarked) {
         const $postItem = $(`.author-post-item[data-post-id="${postId}"]`);
         if (!$postItem.length) return;
-        const $titleSpan = $postItem.find('.author-post-title');
+        const $titleSpan = $postItem.find('.author-post-title-wrapper');
         $titleSpan.find('.bookmark-icon').remove();
         if (isBookmarked) $titleSpan.append(this.ui.renderBookmarkIcon(postId, true));
     }

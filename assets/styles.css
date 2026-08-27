@@ -819,6 +819,10 @@ a.view-all {
     display: inline-block !important;
 }
 
+.item-bookmark-filled {
+    color: #e5a051;
+}
+
 
 /* ==========================================================================
    12. Превью и Тултипы YouTube / Link Preview Tooltips
