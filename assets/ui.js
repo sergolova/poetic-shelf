@@ -14,12 +14,12 @@ class PoemUI {
        ========================================================================== */
 
     constructor() {
-        this.$authorsList  = $('#authorsList');
+        this.$authorsList = $('#authorsList');
         this.$authorsCount = $('#authorsCount');
-        this.$mainContent  = $('#mainContent');
+        this.$mainContent = $('#mainContent');
 
         this.authorModal = new bootstrap.Modal(document.getElementById('authorModal'));
-        this.postModal   = new bootstrap.Modal(document.getElementById('postModal'));
+        this.postModal = new bootstrap.Modal(document.getElementById('postModal'));
 
         // Автофокус на textarea при открытии модалки произведения
         document.getElementById('postModal').addEventListener('shown.bs.modal', () => {
@@ -42,12 +42,12 @@ class PoemUI {
     scrollToAuthor(authorId) {
         if (!authorId) return;
         const $container = $('#authorsList');
-        const $target    = $container.find(`.author-card[data-id="${authorId}"]`);
+        const $target = $container.find(`.author-card[data-id="${authorId}"]`);
         if (!$target.length) return;
 
         $container.find('.author-card').removeClass('active');
         $target.addClass('active');
-        $target[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        $target[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});
     }
 
     /**
@@ -57,7 +57,7 @@ class PoemUI {
      */
     scrollToPost(authorId, postId) {
         if (!authorId || !postId) return;
-        const $container  = $('#authorsList');
+        const $container = $('#authorsList');
         const $authorLink = $container.find(`.author-card[data-id="${authorId}"]`);
         if (!$authorLink.length) return;
 
@@ -71,7 +71,7 @@ class PoemUI {
 
         if ($postLink.length) {
             $postLink.addClass('active');
-            $postLink[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            $postLink[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});
         }
     }
 
@@ -90,10 +90,10 @@ class PoemUI {
         const fuzzyReg = this._buildFuzzySearchRegExp(query);
         if (!fuzzyReg) return htmlContent;
 
-        const parser    = new DOMParser();
-        const doc       = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
         const container = doc.body.firstChild;
-        const walk      = doc.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const walk = doc.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
         const toReplace = [];
 
         let node;
@@ -186,8 +186,8 @@ class PoemUI {
         }
 
         authors.forEach(author => {
-            const isActive  = author.id === selectedId;
-            const avatar    = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
+            const isActive = author.id === selectedId;
+            const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
             const isMatchedAuthor = q && isAuthorMatch(author, q);
 
             let authorPosts = author.posts || [];
@@ -201,7 +201,7 @@ class PoemUI {
                 : authorPosts.length;
 
             let postsListHtml = '';
-            const showPosts   = q ? authorPosts.length > 0 : (isActive && authorPosts.length > 0);
+            const showPosts = q ? authorPosts.length > 0 : (isActive && authorPosts.length > 0);
 
             if (showPosts) {
                 const itemsHtml = authorPosts.map(p => {
@@ -219,6 +219,8 @@ class PoemUI {
             }
 
             const hideYears = !author.birthYear && !author.deathYear;
+            let authorName = author.lastName + ' ' + author.firstName;
+            authorName = this.highlightText(authorName, q);
 
             this.$authorsList.append(`
         <div class="author-card-wrapper">
@@ -227,7 +229,7 @@ class PoemUI {
               <img src="${avatar}" class="author-avatar-img avatar-style" alt="${author.lastName}">
             </div>
             <div class="author-info flex-grow-1 overflow-hidden">
-              <h6 class="author-name mb-0 text-truncate ${isMatchedAuthor ? 'bg-warning text-dark' : ''}">${escapeHtml(author.lastName)} ${escapeHtml(author.firstName)}</h6>
+              <h6 class="author-name mb-0 text-truncate">${authorName}</h6>
               <span class="author-years text-muted" ${hideYears ? 'style="display:none"' : ''}>${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
             </div>
             <span class="posts-count-badge">${postsCount}</span>
@@ -259,14 +261,17 @@ class PoemUI {
         }
 
         const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
-        const q      = searchQuery.toLowerCase().trim();
-        let posts    = author.posts || [];
+        const q = searchQuery.toLowerCase().trim();
+        let posts = author.posts || [];
 
-        if (q) posts = posts.filter(p => isPostMatch(p, q));
+        if (q) {
+            posts = posts.filter(p => isPostMatch(p, q));
+        }
 
-        let displayPosts = (q === '' && selectedPostId === null)
-            ? posts
-            : posts.filter(p => p.id === selectedPostId);
+        const displayPosts = selectedPostId
+            ? posts.filter(p => p.id === selectedPostId)
+            : posts;
+
         this._sortPostsDefault(displayPosts);
 
         const postsHtml = displayPosts.length > 0
@@ -275,12 +280,12 @@ class PoemUI {
           ${searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых стихов'}
          </div>`;
 
-        const hideYears   = !author.birthYear && !author.deathYear;
+        const hideYears = !author.birthYear && !author.deathYear;
         const currentYear = new Date().getFullYear();
-        const numYears    = author.birthYear ? ((author.deathYear ?? currentYear) - author.birthYear) : null;
-        const ageString   = numYears !== null ? ` (${numYears} ${this.getAgeWord(numYears)})` : '';
-        const authorName  = `${author.lastName || ''} ${author.firstName || ''} ${author.surName || ''}`.trim();
-        const isMatched   = q && isAuthorMatch(author, q);
+        const numYears = author.birthYear ? ((author.deathYear ?? currentYear) - author.birthYear) : null;
+        const ageString = numYears !== null ? ` (${numYears} ${this.getAgeWord(numYears)})` : '';
+        let authorName = `${author.lastName || ''} ${author.firstName || ''} ${author.surName || ''}`.trim();
+        authorName = this.highlightText(authorName, q);
 
         this.$mainContent.html(`
       <div class="author-profile-hero border-0">
@@ -289,8 +294,8 @@ class PoemUI {
             <img src="${avatar}" class="hero-avatar-img avatar-style" alt="${author.lastName}">
             <div>
               <div class="hero-author-wrapper">
-                <h2 class="hero-author-name mb-1 ${isMatched ? 'bg-warning text-dark' : ''}">
-                  <a class="author-wiki-link" href="${this.getWikiLink(authorName)}">${escapeHtml(authorName)}</a>
+                <h2 class="hero-author-name mb-1">
+                  <a class="author-wiki-link" href="${this.getWikiLink(authorName)}">${authorName}</a>
                 </h2>
                 <div>
                   <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="editAuthorBtn" title="Редактировать">✏️</button>
@@ -331,22 +336,22 @@ class PoemUI {
             }).join('\n');
         };
 
-        const rawContent    = post.contentHtml ? post.contentHtml : escapeHtml(post.content);
-        const bodyContent   = `<pre class="poem-content">${formatLines(rawContent)}</pre>`;
-        const titleHtml     = query ? this.highlightText(escapeHtml(post.title), query) : escapeHtml(post.title);
-        const noteHtml      = (post.note && query) ? this.highlightText(escapeHtml(post.note), query) : escapeHtml(post.note);
-        const isYoutube     = (url) => /(youtube\.com|youtu\.be)/i.test(url);
-        const postMatch     = query && isPostMatch(post, query);
-        const writtenYears  = (author?.birthYear && post.year) ? post.year - author.birthYear : '';
-        const yearsWord     = writtenYears ? this.getAgeWord(writtenYears) : '';
-        const bookmarkBtn   = this.renderBookmarkButton(post.id, app.store.getPostBookmark(post.id));
+        const rawContent = post.contentHtml ? post.contentHtml : escapeHtml(post.content);
+        const bodyContent = `<pre class="poem-content">${formatLines(rawContent)}</pre>`;
+        const titleHtml = query ? this.highlightText(escapeHtml(post.title), query) : escapeHtml(post.title);
+        const noteHtml = (post.note && query) ? this.highlightText(escapeHtml(post.note), query) : escapeHtml(post.note);
+        const isYoutube = (url) => /(youtube\.com|youtu\.be)/i.test(url);
+        const postMatch = query && isPostMatch(post, query);
+        const writtenYears = (author?.birthYear && post.year) ? post.year - author.birthYear : '';
+        const yearsWord = writtenYears ? this.getAgeWord(writtenYears) : '';
+        const bookmarkBtn = this.renderBookmarkButton(post.id, app.store.getPostBookmark(post.id));
 
         const linksHtml = (post.links?.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
          <small class="text-muted fw-bold"></small>
          ${post.links.map(l => {
-                const icon  = isYoutube(l.url) ? '▶️' : '🔗';
-                const ytId  = this.getYouTubeId(l.url);
+                const icon = isYoutube(l.url) ? '▶️' : '🔗';
+                const ytId = this.getYouTubeId(l.url);
                 const thumb = ytId ? `<span class="link-yt-tooltip"><img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="thumbnail"></span>` : '';
                 return `<span class="link-tooltip-container position-relative d-inline-block">
                  <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="poem-link-badge">${icon} ${escapeHtml(l.title || l.url)} ↗</a>
@@ -459,7 +464,9 @@ class PoemUI {
     }
 
     /** Закрывает модалку автора. */
-    closeAuthorModal() { this.authorModal.hide(); }
+    closeAuthorModal() {
+        this.authorModal.hide();
+    }
 
     /**
      * Открывает модалку создания/редактирования произведения.
@@ -524,7 +531,9 @@ class PoemUI {
     }
 
     /** Закрывает модалку произведения. */
-    closePostModal() { this.postModal.hide(); }
+    closePostModal() {
+        this.postModal.hide();
+    }
 
     /**
      * Отрисовывает автокомплит авторов в модалке произведения.
@@ -535,7 +544,10 @@ class PoemUI {
         const $dropdown = $('#authorSearchDropdown');
         $dropdown.empty();
 
-        if (!query?.trim()) { $dropdown.addClass('d-none'); return; }
+        if (!query?.trim()) {
+            $dropdown.addClass('d-none');
+            return;
+        }
 
         const filtered = authors.filter(a => isAuthorMatch(a, query.toLowerCase().trim()));
 
@@ -628,7 +640,7 @@ class PoemUI {
         app.store.data.authors.forEach(author => {
             (author.posts || []).forEach(post => {
                 if (app.store.postBookmarks[post.id]) {
-                    bookmarkedPosts.push({ ...post, authorId: author.id });
+                    bookmarkedPosts.push({...post, authorId: author.id});
                 }
             });
         });
@@ -686,11 +698,11 @@ class PoemUI {
      */
     getAgeWord(age) {
         if (age === null || age === undefined || isNaN(age)) return '';
-        const abs  = Math.abs(Number(age));
-        const mod  = abs % 100;
+        const abs = Math.abs(Number(age));
+        const mod = abs % 100;
         const last = abs % 10;
         if (mod >= 11 && mod <= 14) return 'лет';
-        if (last === 1)             return 'год';
+        if (last === 1) return 'год';
         if (last >= 2 && last <= 4) return 'года';
         return 'лет';
     }
