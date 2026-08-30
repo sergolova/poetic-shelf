@@ -551,6 +551,7 @@ class PoemApp {
                     for (const author of this.store.data.authors) {
                         const found = author.posts?.find(p => p.id === postId);
                         if (found) {
+                            this.resetSearchQuery();
                             this.store.selectedAuthorId = author.id;
                             this.store.selectedPostId   = postId;
                             this.store.markAsViewed(author.id);
@@ -574,11 +575,15 @@ class PoemApp {
             const postId     = $card.data('post-id');
             const authorId   = $card.data('author-id');
 
-            if (authorId && postId && $search.length && $search.val()) {
-                this.store.selectedPostId   = postId;
-                this.store.selectedAuthorId = authorId;
-                this.resetSearchQuery();
-                this.refresh(false);
+            if (authorId && postId) {
+                if ($search.length && $search.val()) {
+                    this.store.selectedPostId = postId;
+                    this.store.selectedAuthorId = authorId;
+                    this.resetSearchQuery();
+                    this.refresh(false);
+                }
+
+                this.store.markAsViewed(authorId);
             }
 
             if ($line.hasClass('active-bookmark')) { $line.removeClass('active-bookmark'); return; }
@@ -683,9 +688,12 @@ class PoemApp {
             e.preventDefault();
             this.resetSearchQuery();
             this.store.selectedPostId = null;
-            this.refresh();
+            this.refresh(false);
             const author = this.store.getAuthorById(this.store.selectedAuthorId);
-            if (author) this.ui.scrollToAuthor(author.id);
+            if (author) {
+                this.ui.scrollToAuthor(author.id);
+                this.store.markAsViewed(author.id);
+            }
         });
 
         // Двойной клик по аватару в сайдбаре — редактировать автора

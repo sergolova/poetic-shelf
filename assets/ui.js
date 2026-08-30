@@ -263,6 +263,7 @@ class PoemUI {
         const avatar = author.photo || this.getInitialsAvatar(`${author.firstName} ${author.lastName}`);
         const q = searchQuery.toLowerCase().trim();
         let posts = author.posts || [];
+        const allPostsCount = author.posts?.length || 0;
 
         if (q) {
             posts = posts.filter(p => isPostMatch(p, q));
@@ -286,6 +287,9 @@ class PoemUI {
         const ageString = numYears !== null ? ` (${numYears} ${this.getAgeWord(numYears)})` : '';
         let authorName = `${author.lastName || ''} ${author.firstName || ''} ${author.surName || ''}`.trim();
         authorName = this.highlightText(authorName, q);
+
+        const moreCount = allPostsCount - 1;
+        const morePosts = (allPostsCount > 1 && selectedPostId !== null)  ? `<div class="mb-2"><a class="view-all" href="#">Ещё ${moreCount} >></a></div>` : '';
 
         this.$mainContent.html(`
       <div class="author-profile-hero border-0">
@@ -316,7 +320,10 @@ class PoemUI {
           </div>
         </div>
       </div>
-      <div class="posts-feed">${postsHtml}</div>`);
+      <div class="posts-feed">
+         ${postsHtml} 
+         ${morePosts}
+      </div>`);
     }
 
     /**
