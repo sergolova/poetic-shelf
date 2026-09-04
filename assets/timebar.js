@@ -81,6 +81,8 @@ class TimelineBar {
             const leftPct  = ((year - startYear) / totalRange) * 100;
             const isActive = activeAuthorId && authorIds.has(activeAuthorId);
 
+            sortPosts(posts);
+
             const menuItemsHtml = posts.map(post => {
                 if (activePostId && String(post.id) === String(activePostId)) currentPostYear = year;
                 const author       = this.store.getAuthorById(post.authorId);

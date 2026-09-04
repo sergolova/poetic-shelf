@@ -385,3 +385,8 @@
 [data-theme="dark"] .app-header.scrolled {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
 }
+
+[data-theme="dark"] .paper-bg-parchment,
+[data-theme="dark"] .paper-bg-light {
+    background-image: none;
+}

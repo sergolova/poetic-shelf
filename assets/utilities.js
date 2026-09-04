@@ -160,3 +160,17 @@ function convertEngToRus(str) {
 
     return str;
 }
+
+function sortAZ(a, b) {
+    return `${a.lastName} ${a.firstName} ${a.surName || ''}`.toLowerCase().localeCompare(`${b.lastName} ${b.firstName} ${a.surName || ''}`.toLowerCase(), 'ru');
+}
+
+function sortPosts(posts) {
+    posts.sort((a, b) => {
+            if (a.authorId === b.authorId) {
+                return (a.title || '').localeCompare(b.title || '', 'ru');
+            }
+            return sortAZ(app.store.getAuthorById(a.authorId), app.store.getAuthorById(b.authorId))
+        }
+    );
+}

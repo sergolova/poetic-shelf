@@ -368,7 +368,7 @@ class PoemUI {
        </div>` : '';
 
         return `
-      <article class="${postMatch ? 'query-selection' : ''} poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
+      <article class="${postMatch ? 'query-selection' : ''} paper-bg-light poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
         <div class="card-body p-4 pt-0">
           <div class="d-flex align-items-center justify-content-between pb-0 border-bottom" style="height: 4em">
             <div class="post-header-wrapper">
@@ -652,9 +652,7 @@ class PoemUI {
             });
         });
 
-        bookmarkedPosts.sort((a, b) =>
-            (app.store.postBookmarks[b.id] || 0) - (app.store.postBookmarks[a.id] || 0)
-        );
+        sortPosts(bookmarkedPosts)
 
         return this.renderPostsDropdown(bookmarkedPosts, 'Закладки', 'show');
     }

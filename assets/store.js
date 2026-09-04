@@ -236,10 +236,6 @@ class PoemStore {
             })
             : [...this.data.authors];
 
-        const sortAZ = (a, b) =>
-            `${a.lastName} ${a.firstName}`.toLowerCase()
-                .localeCompare(`${b.lastName} ${b.firstName}`.toLowerCase(), 'ru');
-
         switch (this.authorSortMode) {
             case 'birthday':
                 authors.sort((a, b) => {
@@ -404,14 +400,81 @@ class PoemStore {
         return new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
     }
 
+    async cropImageToCircle(base64Data) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { alpha: true }); // Включаем прозрачность явно
+
+                const size = Math.min(img.width, img.height);
+                canvas.width = size;
+                canvas.height = size;
+
+                const offsetX = (img.width - size) / 2;
+                const offsetY = (img.height - size) / 2;
+
+                // КРИТИЧНО: Полностью очищаем холст до абсолютной прозрачности (RGBA 0,0,0,0)
+                ctx.clearRect(0, 0, size, size);
+
+                // Настройка сглаживания краев
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                // Рисуем круговую маску
+                ctx.beginPath();
+                ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2); // -1px от края убирает лесенку
+                ctx.closePath();
+                ctx.clip();
+
+                ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+
+                // Экспортируем ЧИСТЫЙ PNG с поддержкой альфа-канала
+                resolve(canvas.toDataURL('image/png'));
+            };
+
+            img.onerror = () => resolve(base64Data);
+            img.src = base64Data;
+        });
+    }
+    
+    /**
+     * Преобразует Base64-изображение в градацию серого (Grayscale)
+     */
+    async convertToGrayscale(base64Data) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                // Используем нативный фильтр Canvas для максимальной производительности
+                ctx.filter = 'grayscale(100%)';
+                ctx.drawImage(img, 0, 0);
+
+                resolve(canvas.toDataURL('image/png'));
+            };
+
+            img.onerror = () => resolve(base64Data);
+            img.src = base64Data;
+        });
+    }
+
     /**
      * Экспортирует библиотеку в формат EPUB.
      */
     async exportToEpub() {
         const data = JSON.parse(JSON.stringify(this.data));
         const zip = new JSZip();
-        const mainTitle = 'Поэтическая Полка';
-        const mainSubtitle = 'Сборник произведений';
+        const mainTitle = 'Буквы по центру';
+        const mainSubtitle = 'Eщё буквы';
 
         zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 
@@ -424,12 +487,7 @@ class PoemStore {
 </container>`);
 
         const oebps = zip.folder('OEBPS');
-
-        const sortedAuthors = (data.authors || []).sort((a, b) => {
-            const nameA = `${a.lastName} ${a.firstName} ${a.surName || ''}`.trim();
-            const nameB = `${b.lastName} ${b.firstName} ${b.surName || ''}`.trim();
-            return nameA.localeCompare(nameB, 'uk', { sensitivity: 'base' });
-        });
+        const sortedAuthors = (data.authors || []).sort(sortAZ);
 
         const manifestItems = [
             '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>',
@@ -452,7 +510,8 @@ class PoemStore {
         let authorsListHtml = '';
         let tocHtmlItems    = '';
 
-        sortedAuthors.forEach((author, aIdx) => {
+        for (let aIdx = 0; aIdx < sortedAuthors.length; aIdx++) {
+            const author = sortedAuthors[aIdx];
             const authorFullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.trim();
             const authorId       = `author_${aIdx}`;
             const authorFileName = `${authorId}.html`;
@@ -462,11 +521,15 @@ class PoemStore {
             authorsListHtml += `<li><a href="${authorFileName}">${escapeHtml(authorFullName)}</a> <span class="count">(${postsCount})</span></li>`;
 
             if (author.photo && author.photo.includes('base64,')) {
-                const parts     = author.photo.split('base64,');
-                const mimeMatch = parts[0].match(/:(.*?);/);
-                const mimeType  = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-                const ext       = mimeType.split('/')[1] || 'jpg';
-                imageFilename   = `img_${authorId}.${ext}`;
+                const bwPhoto = await this.convertToGrayscale(author.photo);
+                const roundBase64 = await this.cropImageToCircle(bwPhoto);
+
+                const parts = roundBase64.split('base64,');
+                const mimeType = 'image/png';
+                const ext = 'png';
+
+                imageFilename = `img_${authorId}.${ext}`;
+
                 oebps.file(`images/${imageFilename}`, parts[1], { base64: true });
                 manifestItems.push(`<item id="img_${authorId}" href="images/${imageFilename}" media-type="${mimeType}"/>`);
             }
@@ -483,13 +546,13 @@ class PoemStore {
     .author-photo-wrapper { width: 180px; height: 180px; margin: 0 auto 1em; display: block; }
     .author-photo { display: block; width: 180px; height: 180px; border-radius: 50%; -webkit-border-radius: 50%; clip-path: circle(50%); object-fit: cover; filter: grayscale(100%) }
     h1 { margin-bottom: 0.2em; }
-    .years { color: #555; font-style: italic; display: block; }
+    .years { color: #555; font-style: italic; display: block; font-size: 0.8em}
   </style>
 </head>
 <body>
   ${imageFilename ? `<div class="author-photo-wrapper"><img src="images/${imageFilename}" alt="${escapeHtml(authorFullName)}" class="author-photo"></div>` : ''}
   <h1>${escapeHtml(authorFullName)}</h1>
-  <p class="years" ${hideYears ? 'style="display:none"' : ''}>${author.birthYear || ''} — ${author.deathYear || ''}</p>
+  <h2 class="years" ${hideYears ? 'style="display:none"' : ''}>${author.birthYear || ''} — ${author.deathYear || 'наст.вр.'}</h2>
 </body>
 </html>`);
             manifestItems.push(`<item id="${authorId}" href="${authorFileName}" media-type="application/xhtml+xml"/>`);
@@ -518,8 +581,8 @@ class PoemStore {
     body { font-family: serif; margin: 5%; line-height: 1.4; }
     h2 { text-align: center; }
     .note, .p_year { font-size: 0.85em; color: #666; font-style: italic; }
-    .stanza { margin: 0 0 1.2em; }
-    .line { display: block; }
+    .stanza { margin: 0 0 1.2em; font-style: normal }
+    .line { display: block; font-style: normal }
   </style>
 </head>
 <body>
@@ -532,12 +595,12 @@ class PoemStore {
                 manifestItems.push(`<item id="${postId}" href="${postFileName}" media-type="application/xhtml+xml"/>`);
                 spineItems.push(`<itemref idref="${postId}"/>`);
                 authorNavPoint.children.push({ id: postId, order: navIndex++, title: post.title, src: postFileName });
-                postsTocHtml += `<li><a href="${postFileName}">${escapeHtml(post.title)}</a></li>`;
+                postsTocHtml += `<li><a href="${postFileName}">• ${escapeHtml(post.title)}</a></li>`;
             });
 
             navPoints.push(authorNavPoint);
-            tocHtmlItems += `<li><a href="${authorFileName}"><strong>${escapeHtml(authorFullName)}</strong></a>${postsTocHtml ? `<ul>${postsTocHtml}</ul>` : ''}</li>`;
-        });
+            tocHtmlItems += `<li><a href="${authorFileName}"><strong>${escapeHtml(authorFullName)}:</strong></a>${postsTocHtml ? `<ul>${postsTocHtml}</ul>` : ''}</li>`;
+        }
 
         const xhtmlHead = (title, style) =>
             `<?xml version="1.0" encoding="utf-8"?>
@@ -546,8 +609,8 @@ class PoemStore {
 <head><title>${title}</title><style>${style}</style></head>`;
 
         oebps.file('cover.html', xhtmlHead(mainTitle,
-            'body{font-family:serif;text-align:center;margin:20% 5%} h1{font-size:2.2em} p{color:#555;font-style:italic}')
-            + `<body><h1>${mainTitle}</h1><hr/><p>${mainSubtitle}</p></body></html>`);
+            'body{font-family:serif;text-align:center;margin:20% 5%} h1{font-size:2.2em} h2{font-size:1.5em; color:#555;font-style:normal;text-align:center}')
+            + `<body><h1>${mainTitle}</h1><h2>${mainSubtitle}</h2></body></html>`);
 
         oebps.file('authors.html', xhtmlHead('Список авторов',
             'body{font-family:serif;margin:5%;line-height:1.6} ul{list-style:none;padding:0} li{margin-bottom:.8em;border-bottom:1px dashed #ccc;padding-bottom:.4em} a{color:#000;font-weight:bold} .count{color:#666;font-size:.9em;font-weight:normal}')
