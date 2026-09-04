@@ -275,7 +275,8 @@ class PoemUI {
 
         this._sortPostsDefault(displayPosts);
 
-        const postsHtml = displayPosts.length > 0
+        const emptyHtml = displayPosts.length  === 0;
+        const postsHtml = !emptyHtml
             ? displayPosts.map(p => this.createPoemCardHtml(p, author, q)).join('')
             : `<div class="alert alert-light text-center border py-4 text-muted">
           ${searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых стихов'}
@@ -289,7 +290,7 @@ class PoemUI {
         authorName = this.highlightText(authorName, q);
 
         const moreCount = allPostsCount - 1;
-        const morePosts = (allPostsCount > 1 && selectedPostId !== null)  ? `<div class="mb-2"><a class="view-all" href="#">Ещё ${moreCount} >></a></div>` : '';
+        const morePosts = (!emptyHtml && allPostsCount > 1 && selectedPostId !== null)  ? `<div class="mb-2"><a class="view-all" href="#">Ещё ${moreCount} >></a></div>` : '';
 
         this.$mainContent.html(`
       <div class="author-profile-hero border-0">

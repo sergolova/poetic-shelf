@@ -19,12 +19,12 @@ class PoemApp {
        ========================================================================== */
 
     constructor() {
-        this.store              = new PoemStore();
-        this.ui                 = new PoemUI();
+        this.store = new PoemStore();
+        this.ui = new PoemUI();
         this.titleChangeInterval = null;
-        this.searchTimer        = null;
+        this.searchTimer = null;
         this.poemResizeObserver = null;
-        this._prevSearchQuery   = '';
+        this._prevSearchQuery = '';
     }
 
     /**
@@ -33,7 +33,7 @@ class PoemApp {
     async init() {
         await this.store.init();
 
-        this.store.selectedPostId   = localStorage.getItem('selectedPostId')   ?? null;
+        this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
         this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
 
         this.updateTheme();
@@ -81,9 +81,9 @@ class PoemApp {
         let searchQuery = $('#searchInput').val();
         searchQuery = convertEngToRus(searchQuery);
 
-        const authors         = this.store.getAuthors(searchQuery);
+        const authors = this.store.getAuthors(searchQuery);
         const prevSearchQuery = this._prevSearchQuery || '';
-        const searchChanged   = searchQuery !== prevSearchQuery;
+        const searchChanged = searchQuery !== prevSearchQuery;
         this._prevSearchQuery = searchQuery;
 
         if (!this.store.selectedAuthorId && authors.length > 0) {
@@ -120,7 +120,7 @@ class PoemApp {
         animate ? $('.author-posts-list').slideDown(250) : $('.author-posts-list').show();
 
         const allPosts = this.store.data.authors.flatMap(
-            a => (a.posts || []).map(p => ({ ...p, authorId: a.id }))
+            a => (a.posts || []).map(p => ({...p, authorId: a.id}))
         );
         this.timeline.render(allPosts, this.store.selectedAuthorId, authors, this.store.selectedPostId);
 
@@ -162,7 +162,7 @@ class PoemApp {
      * Инициализирует тему оформления (тёмная/светлая) и обработчик переключения.
      */
     updateTheme() {
-        const $themeBtn  = $('#themeToggleBtn');
+        const $themeBtn = $('#themeToggleBtn');
         const $themeIcon = $('#themeIcon');
 
         const setTheme = (theme) => {
@@ -219,10 +219,10 @@ class PoemApp {
             const lineCount = $content.text().trim().split('\n').length;
 
             let targetCols;
-            if      (lineCount > 50) targetCols = 4;
+            if (lineCount > 50) targetCols = 4;
             else if (lineCount > 32) targetCols = 3;
             else if (lineCount >= 16) targetCols = 2;
-            else                     targetCols = 1;
+            else targetCols = 1;
 
             $content.addClass(`cols-${Math.min(targetCols, maxColumns)}`);
         });
@@ -232,7 +232,7 @@ class PoemApp {
      * Применяет случайный заголовок и подзаголовок из встроенных массивов.
      */
     applyRandomPoeticTitle() {
-        const title    = this._randomFromArray(PoemApp.poeticTitles,    'poeticTitleIndex');
+        const title = this._randomFromArray(PoemApp.poeticTitles, 'poeticTitleIndex');
         const subtitle = this._randomFromArray(PoemApp.poeticSubtitles, 'poeticSubtitleIndex');
         this._rollText($('.brand-title'), title, 500);
         this._rollText($('.small-subtitle'), subtitle, 500);
@@ -283,11 +283,19 @@ class PoemApp {
     _rollText($el, targetText, duration = 500) {
         if (!$el?.length) return;
         const half = duration / 2;
-        $el.css({ transition: `transform ${half}ms ease-in, opacity ${half}ms ease-in`, transform: 'translateY(-10px)', opacity: 0 });
+        $el.css({
+            transition: `transform ${half}ms ease-in, opacity ${half}ms ease-in`,
+            transform: 'translateY(-10px)',
+            opacity: 0
+        });
         setTimeout(() => {
-            $el.text(targetText).css({ transition: 'none', transform: 'translateY(10px)' });
+            $el.text(targetText).css({transition: 'none', transform: 'translateY(10px)'});
             $el[0].offsetHeight; // reflow
-            $el.css({ transition: `transform ${half}ms ease-out, opacity ${half}ms ease-out`, transform: 'translateY(0)', opacity: 1 });
+            $el.css({
+                transition: `transform ${half}ms ease-out, opacity ${half}ms ease-out`,
+                transform: 'translateY(0)',
+                opacity: 1
+            });
         }, half);
     }
 
@@ -299,7 +307,7 @@ class PoemApp {
      * @returns {{ parts: string[], birthYear: number|null, deathYear: number|null }}
      */
     _parseAuthorText(rawText) {
-        const result = { parts: [], birthYear: null, deathYear: null };
+        const result = {parts: [], birthYear: null, deathYear: null};
         if (!rawText?.trim()) return result;
 
         let text = cleanPastedText(rawText)
@@ -331,12 +339,18 @@ class PoemApp {
      * @returns {{ lastName: string, firstName: string, surName: string }}
      */
     _distributeNameParts(parts, order) {
-        const r = { lastName: '', firstName: '', surName: '' };
+        const r = {lastName: '', firstName: '', surName: ''};
         if (!parts?.length) return r;
         switch (order) {
-            case 'FIO': [r.lastName, r.firstName, r.surName] = parts; break;
-            case 'IFO': [r.firstName, r.lastName, r.surName] = parts; break;
-            case 'IOF': [r.firstName, r.surName, r.lastName] = parts; break;
+            case 'FIO':
+                [r.lastName, r.firstName, r.surName] = parts;
+                break;
+            case 'IFO':
+                [r.firstName, r.lastName, r.surName] = parts;
+                break;
+            case 'IOF':
+                [r.firstName, r.surName, r.lastName] = parts;
+                break;
         }
         return r;
     }
@@ -390,7 +404,7 @@ class PoemApp {
 
         markersParent.querySelectorAll('.poem-line-break-marker').forEach(m => m.remove());
         const parentRect = markersParent.getBoundingClientRect();
-        const EPSILON    = 4;
+        const EPSILON = 4;
 
         container.querySelectorAll('.poem-line').forEach(line => {
             const rects = [];
@@ -401,7 +415,9 @@ class PoemApp {
                 if (!textNode.textContent.trim()) continue;
                 const range = document.createRange();
                 range.selectNode(textNode);
-                Array.from(range.getClientRects()).forEach(r => { if (r.width > 0) rects.push(r); });
+                Array.from(range.getClientRects()).forEach(r => {
+                    if (r.width > 0) rects.push(r);
+                });
             }
 
             if (!rects.length) return;
@@ -410,9 +426,9 @@ class PoemApp {
             rects.forEach(rect => {
                 const group = visualLines[visualLines.length - 1];
                 if (!group || Math.abs(group.top - rect.top) > EPSILON) {
-                    visualLines.push({ top: rect.top, bottom: rect.bottom, right: rect.right });
+                    visualLines.push({top: rect.top, bottom: rect.bottom, right: rect.right});
                 } else {
-                    group.right  = Math.max(group.right,  rect.right);
+                    group.right = Math.max(group.right, rect.right);
                     group.bottom = Math.max(group.bottom, rect.bottom);
                 }
             });
@@ -420,12 +436,12 @@ class PoemApp {
             if (visualLines.length < 2) return;
 
             for (let i = 0; i < visualLines.length - 1; i++) {
-                const { right, bottom } = visualLines[i];
+                const {right, bottom} = visualLines[i];
                 const marker = document.createElement('span');
                 marker.className = 'poem-line-break-marker';
                 marker.setAttribute('aria-hidden', 'true');
-                marker.style.left = `${right  - parentRect.left}px`;
-                marker.style.top  = `${bottom - parentRect.top}px`;
+                marker.style.left = `${right - parentRect.left}px`;
+                marker.style.top = `${bottom - parentRect.top}px`;
                 markersParent.appendChild(marker);
             }
         });
@@ -453,12 +469,12 @@ class PoemApp {
     updateSidebarHeight() {
         const $sidebar = $('.authors-sidebar');
         const $resizer = $('.sidebar-resizer');
-        const $layout  = $('.content-layout');
+        const $layout = $('.content-layout');
         if (!$layout.length || !$sidebar.length) return;
 
-        const layoutTop  = $layout[0].getBoundingClientRect().top;
-        const stickyTop  = 20;
-        const height     = window.innerHeight - Math.max(stickyTop, layoutTop) - 5;
+        const layoutTop = $layout[0].getBoundingClientRect().top;
+        const stickyTop = 20;
+        const height = window.innerHeight - Math.max(stickyTop, layoutTop) - 5;
 
         $sidebar.css('height', height + 'px');
         $resizer.css('height', height + 'px');
@@ -484,7 +500,7 @@ class PoemApp {
      * Ресайзер сайдбара (drag-to-resize).
      */
     bindResizer() {
-        const $layout  = $('.content-layout');
+        const $layout = $('.content-layout');
         const $sidebar = $('.authors-sidebar');
         const $resizer = $('.sidebar-resizer');
         let isResizing = false;
@@ -518,7 +534,7 @@ class PoemApp {
         window.addEventListener('scroll', () => {
             scrollTopBtn.classList.toggle('d-none', window.scrollY <= 300);
         });
-        scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        scrollTopBtn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
 
         this.updateSidebarHeight();
         window.addEventListener('scroll', () => {
@@ -536,10 +552,51 @@ class PoemApp {
             }
         });
 
+        $(document).on('click', '#findDuplicatesBtn', async (e) => {
+            const storageData = app.store.data;
+            if (!storageData || !storageData.authors || storageData.authors.length === 0) {
+                alert('База данных пуста или не загружена!');
+                return;
+            }
+
+            $('body').css('cursor', 'wait');
+            const $overlay = $(`
+        <div id="appLoadingOverlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff;">
+            <div style="width: 320px;" class="bg-dark p-4 rounded shadow text-center border border-secondary">
+                <div class="fw-bold mb-1">Поиск дубликатов... </div><span id="dupPercent"></span>
+                <div class="progress mb-1" style="height: 20px;">
+                    <div id="dupProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-accent" role="progressbar" style="width: 0"></div>
+                </div>
+            </div>
+        </div>
+    `).appendTo('body');
+            const updateProgress = (percent) => {
+                const clampedPercent = Math.min(100, Math.max(0, percent));
+                $('#dupProgressBar').css('width', `${clampedPercent}%`);
+                $('#dupPercent').text(`${clampedPercent}%`);
+            };
+
+            try {
+                const detector = new DuplicateDetector({threshold: 0.90});
+                const results = await detector.detectAsync(storageData, updateProgress);
+                const modalEl = document.getElementById('duplicatesModal');
+                const modal = new bootstrap.Modal(modalEl);
+
+                detector.renderDuplicateResults(results);
+                modal.show();
+            } catch (err) {
+                console.error('Ошибка при поиске дубликатов:', err);
+                alert('Произошла ошибка при обработке данных.');
+            } finally {
+                $overlay.remove();
+                $('body').css('cursor', 'default');
+            }
+        });
+
         // Меню закладок и навигация по стихам из дропдауна
         document.addEventListener('click', (e) => {
-            const btn      = e.target.closest('.js-toggle-bookmarks');
-            const wrapper  = e.target.closest('.bookmark-dropdown-wrapper');
+            const btn = e.target.closest('.js-toggle-bookmarks');
+            const wrapper = e.target.closest('.bookmark-dropdown-wrapper');
             const postLink = e.target.closest('.timeline-post-link');
 
             if (btn) {
@@ -553,7 +610,7 @@ class PoemApp {
                         if (found) {
                             this.resetSearchQuery();
                             this.store.selectedAuthorId = author.id;
-                            this.store.selectedPostId   = postId;
+                            this.store.selectedPostId = postId;
                             this.store.markAsViewed(author.id);
                             this.refresh();
                             this.ui.scrollToPost(author.id, postId);
@@ -568,12 +625,12 @@ class PoemApp {
 
         // Закладка на строку стиха (click toggle)
         $(document).on('click', '.poem-line', (e) => {
-            const $line      = $(e.target);
+            const $line = $(e.target);
             const $container = $line.closest('.poem-content');
-            const $card      = $line.closest('.poem-card');
-            const $search    = $('#searchInput');
-            const postId     = $card.data('post-id');
-            const authorId   = $card.data('author-id');
+            const $card = $line.closest('.poem-card');
+            const $search = $('#searchInput');
+            const postId = $card.data('post-id');
+            const authorId = $card.data('author-id');
 
             if (authorId && postId) {
                 if ($search.length && $search.val()) {
@@ -586,7 +643,10 @@ class PoemApp {
                 this.store.markAsViewed(authorId);
             }
 
-            if ($line.hasClass('active-bookmark')) { $line.removeClass('active-bookmark'); return; }
+            if ($line.hasClass('active-bookmark')) {
+                $line.removeClass('active-bookmark');
+                return;
+            }
             $container.find('.poem-line.active-bookmark').removeClass('active-bookmark');
             $line.addClass('active-bookmark');
         });
@@ -607,7 +667,9 @@ class PoemApp {
             this.toggleClearButton();
         });
 
-        $('#searchInput').on('focus', function () { $(this).select(); });
+        $('#searchInput').on('focus', function () {
+            $(this).select();
+        });
 
         $('#clearSearchBtn').on('click', () => {
             this.resetSearchQuery();
@@ -633,7 +695,7 @@ class PoemApp {
             e.preventDefault();
             const id = $(e.currentTarget).data('id');
             this.store.selectedAuthorId = id;
-            this.store.selectedPostId   = null;
+            this.store.selectedPostId = null;
             this.store.markAsViewed(id);
             this.refresh();
         });
@@ -641,7 +703,7 @@ class PoemApp {
         $(document).on('click', '.author-post-item', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const postId   = $(e.currentTarget).data('post-id');
+            const postId = $(e.currentTarget).data('post-id');
             const authorId = $(e.currentTarget).closest('.author-card-wrapper').find('.author-card').data('id');
             if (authorId) {
                 this.store.selectedAuthorId = authorId;
@@ -678,7 +740,10 @@ class PoemApp {
         // Одиночный клик по аватару Hero — прокрутить сайдбар к автору
         $(document).on('click', '.hero-avatar-img', (e) => {
             e.preventDefault();
-            if ($('#searchInput').val()) { this.resetSearchQuery(); this.refresh(); }
+            if ($('#searchInput').val()) {
+                this.resetSearchQuery();
+                this.refresh();
+            }
             const author = this.store.getAuthorById(this.store.selectedAuthorId);
             if (author) this.ui.scrollToAuthor(author.id);
         });
@@ -700,7 +765,7 @@ class PoemApp {
         $(document).on('dblclick', '.author-avatar-img', (e) => {
             e.stopPropagation();
             const authorId = $(e.currentTarget).closest('.author-card').data('id');
-            const author   = this.store.getAuthorById(authorId);
+            const author = this.store.getAuthorById(authorId);
             if (author) {
                 this.store.selectedAuthorId = authorId;
                 this.refresh();
@@ -712,19 +777,22 @@ class PoemApp {
         $('#parseClipboardBtn').on('click', async () => {
             try {
                 let text = await navigator.clipboard.readText();
-                if (!text) { alert('Буфер обмена пуст!'); return; }
+                if (!text) {
+                    alert('Буфер обмена пуст!');
+                    return;
+                }
 
                 text = normalizeUnicode(text);
-                const parsed      = this._parseAuthorText(text);
-                const order       = $('input[name="nameOrder"]:checked').val();
+                const parsed = this._parseAuthorText(text);
+                const order = $('input[name="nameOrder"]:checked').val();
                 const distributed = this._distributeNameParts(parsed.parts, order);
 
                 $('#authorForm').data('parsedParts', parsed.parts);
-                if (distributed.lastName)  $('#authorLastName').val(distributed.lastName);
+                if (distributed.lastName) $('#authorLastName').val(distributed.lastName);
                 if (distributed.firstName) $('#authorFirstName').val(distributed.firstName);
-                if (distributed.surName)   $('#authorSurName').val(distributed.surName);
-                if (parsed.birthYear)      $('#authorBirthYear').val(parsed.birthYear);
-                if (parsed.deathYear)      $('#authorDeathYear').val(parsed.deathYear);
+                if (distributed.surName) $('#authorSurName').val(distributed.surName);
+                if (parsed.birthYear) $('#authorBirthYear').val(parsed.birthYear);
+                if (parsed.deathYear) $('#authorDeathYear').val(parsed.deathYear);
             } catch {
                 alert('Не удалось прочитать буфер обмена. Разрешите доступ в браузере.');
             }
@@ -744,7 +812,7 @@ class PoemApp {
         $('input[name="photoSourceMode"]').on('change', (e) => {
             const mode = $(e.target).val();
             $('#photoFileInputContainer').toggleClass('d-none', mode !== 'file');
-            $('#photoUrlInputContainer').toggleClass('d-none',  mode !== 'url');
+            $('#photoUrlInputContainer').toggleClass('d-none', mode !== 'url');
             $('#photoBufferInputContainer').toggleClass('d-none', mode !== 'buffer');
         });
 
@@ -759,9 +827,15 @@ class PoemApp {
                 let imageFile = null;
                 for (const item of items) {
                     const type = item.types.find(t => t.startsWith('image/'));
-                    if (type) { imageFile = new File([await item.getType(type)], 'clipboard_image.png', { type }); break; }
+                    if (type) {
+                        imageFile = new File([await item.getType(type)], 'clipboard_image.png', {type});
+                        break;
+                    }
                 }
-                if (!imageFile) { alert('В буфере обмена нет изображения!'); return; }
+                if (!imageFile) {
+                    alert('В буфере обмена нет изображения!');
+                    return;
+                }
                 await this._setPhotoFromFile(imageFile);
             } catch (err) {
                 console.error(err);
@@ -778,8 +852,12 @@ class PoemApp {
                     e.preventDefault();
                     const file = item.getAsFile();
                     if (file) {
-                        try { await this._setPhotoFromFile(file); $('#photoModeBuffer').prop('checked', true).trigger('change'); }
-                        catch { alert('Ошибка сжатия изображения'); }
+                        try {
+                            await this._setPhotoFromFile(file);
+                            $('#photoModeBuffer').prop('checked', true).trigger('change');
+                        } catch {
+                            alert('Ошибка сжатия изображения');
+                        }
                     }
                     break;
                 }
@@ -789,7 +867,10 @@ class PoemApp {
         // Загрузка фото по URL
         $('#loadPhotoFromUrlBtn').on('click', async () => {
             const url = $('#authorPhotoUrlInput').val().trim();
-            if (!url) { alert('Введите URL картинки!'); return; }
+            if (!url) {
+                alert('Введите URL картинки!');
+                return;
+            }
             const $btn = $('#loadPhotoFromUrlBtn').prop('disabled', true).text('Загрузка...');
             try {
                 const base64 = await imageUrlToBase64(url, 300, 300, 0.8);
@@ -820,14 +901,14 @@ class PoemApp {
                 const v = this._cleanNumericValue($(`#${id}`).val());
                 return v ? parseInt(v, 10) : null;
             };
-            const { id: newId, isModified } = this.store.saveAuthor({
-                id:        $('#authorId').val() || null,
-                lastName:  $('#authorLastName').val().trim(),
+            const {id: newId, isModified} = this.store.saveAuthor({
+                id: $('#authorId').val() || null,
+                lastName: $('#authorLastName').val().trim(),
                 firstName: $('#authorFirstName').val().trim(),
-                surName:   $('#authorSurName').val().trim(),
+                surName: $('#authorSurName').val().trim(),
                 birthYear: cleanInt('authorBirthYear'),
                 deathYear: cleanInt('authorDeathYear'),
-                photo:     $('#authorPhotoBase64').val() || ''
+                photo: $('#authorPhotoBase64').val() || ''
             });
             this.store.selectedAuthorId = newId;
             this.ui.closeAuthorModal();
@@ -851,11 +932,11 @@ class PoemApp {
                 const text = (e.originalEvent.clipboardData || window.clipboardData).getData('text/plain');
                 if (!text) return;
                 e.preventDefault();
-                const input   = this;
-                const start   = input.selectionStart || 0;
-                const end     = input.selectionEnd   || 0;
+                const input = this;
+                const start = input.selectionStart || 0;
+                const end = input.selectionEnd || 0;
                 const cleaned = cleanPastedText(text);
-                const newVal  = $(input).val().substring(0, start) + cleaned + $(input).val().substring(end);
+                const newVal = $(input).val().substring(0, start) + cleaned + $(input).val().substring(end);
                 $(input).val(newVal);
                 input.setSelectionRange(start + cleaned.length, start + cleaned.length);
                 $(input).trigger('input');
@@ -887,7 +968,10 @@ class PoemApp {
      */
     bindPostEvents() {
         $(document).on('click', '#addPostBtn', () => {
-            if (!this.store.selectedAuthorId) { alert('Сначала выберите или создайте автора!'); return; }
+            if (!this.store.selectedAuthorId) {
+                alert('Сначала выберите или создайте автора!');
+                return;
+            }
             this.ui.openPostModal(null, this.store.selectedAuthorId, this.store.data.authors);
         });
 
@@ -896,7 +980,11 @@ class PoemApp {
             let post = null, postAuthorId = null;
             for (const author of this.store.data.authors) {
                 const found = author.posts?.find(p => p.id === postId);
-                if (found) { post = found; postAuthorId = author.id; break; }
+                if (found) {
+                    post = found;
+                    postAuthorId = author.id;
+                    break;
+                }
             }
             if (post) {
                 post.authorId = postAuthorId;
@@ -907,7 +995,9 @@ class PoemApp {
         $(document).on('input', '#postAuthorSearch', () => {
             this.ui.renderAuthorSearchDropdown(this.store.data.authors, $('#postAuthorSearch').val());
         });
-        $(document).on('focus', '#postAuthorSearch', function () { $(this).select(); });
+        $(document).on('focus', '#postAuthorSearch', function () {
+            $(this).select();
+        });
 
         $(document).on('click', '.author-search-item', (e) => {
             const author = this.store.getAuthorById($(e.currentTarget).data('author-id'));
@@ -947,36 +1037,45 @@ class PoemApp {
         // Сохранение формы произведения
         $('#postForm').on('submit', (e) => {
             e.preventDefault();
-            const isHtml      = $('#useHtmlToggle').is(':checked');
+            const isHtml = $('#useHtmlToggle').is(':checked');
             const contentText = $('#postContent').val().trim();
             const contentHtml = $('#postContentHtml').val().trim();
-            const authorId    = $('#postAuthorId').val();
+            const authorId = $('#postAuthorId').val();
 
-            if (!isHtml && !contentText)   { alert('Заполните текст произведения!'); return; }
-            if (isHtml  && !contentHtml)   { alert('Заполните HTML код произведения!'); return; }
-            if (!authorId)                 { alert('Выберите автора!'); return; }
+            if (!isHtml && !contentText) {
+                alert('Заполните текст произведения!');
+                return;
+            }
+            if (isHtml && !contentHtml) {
+                alert('Заполните HTML код произведения!');
+                return;
+            }
+            if (!authorId) {
+                alert('Выберите автора!');
+                return;
+            }
 
             const rawTitle = $('#postTitle').val().trim();
-            const title    = rawTitle || this._extractFirstLine(isHtml ? contentHtml : contentText, isHtml);
-            const yearRaw  = this._cleanNumericValue($('#postYear').val());
+            const title = rawTitle || this._extractFirstLine(isHtml ? contentHtml : contentText, isHtml);
+            const yearRaw = this._cleanNumericValue($('#postYear').val());
 
             const links = [];
             $('#linksListContainer .link-row').each((_, el) => {
                 const url = $(el).find('.link-url-input').val().trim();
-                if (url) links.push({ title: $(el).find('.link-title-input').val().trim(), url });
+                if (url) links.push({title: $(el).find('.link-title-input').val().trim(), url});
             });
 
             const postData = {
-                id:          $('#postId').val() || null,
+                id: $('#postId').val() || null,
                 title,
-                year:        yearRaw ? parseInt(yearRaw, 10) : null,
-                note:        $('#postNote').val().trim(),
+                year: yearRaw ? parseInt(yearRaw, 10) : null,
+                note: $('#postNote').val().trim(),
                 links,
-                content:     isHtml ? '' : contentText,
+                content: isHtml ? '' : contentText,
                 contentHtml: isHtml ? contentHtml : ''
             };
 
-            let { id: postId, isModified } = this.store.savePost(authorId, postData);
+            let {id: postId, isModified} = this.store.savePost(authorId, postData);
             let authorChanged = false;
             const originalPostId = $('#postId').val();
 
@@ -984,7 +1083,11 @@ class PoemApp {
                 for (const author of this.store.data.authors) {
                     if (author.id !== authorId && author.posts) {
                         const idx = author.posts.findIndex(p => p.id === originalPostId);
-                        if (idx !== -1) { author.posts.splice(idx, 1); authorChanged = true; break; }
+                        if (idx !== -1) {
+                            author.posts.splice(idx, 1);
+                            authorChanged = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -992,14 +1095,14 @@ class PoemApp {
             this.ui.closePostModal();
             if (isModified || authorChanged) {
                 this.store.save();
-                this.store.selectedPostId   = postId;
+                this.store.selectedPostId = postId;
                 this.store.selectedAuthorId = authorId;
                 this.refresh();
             }
         });
 
         $('#deletePostBtn').on('click', () => {
-            const postId   = $('#postId').val();
+            const postId = $('#postId').val();
             const authorId = $('#postAuthorId').val();
             if (!postId || !authorId) return;
             if (confirm('Удалить это произведение?')) {
@@ -1013,15 +1116,18 @@ class PoemApp {
         $('#randBtn').on('click', () => {
             this.resetSearchQuery();
             const allPosts = this.store.data.authors.flatMap(a =>
-                (a.posts || []).map(p => ({ post: p, authorId: a.id }))
+                (a.posts || []).map(p => ({post: p, authorId: a.id}))
             );
-            if (!allPosts.length) { alert('Нет ни одного произведения!'); return; }
-            const { post, authorId } = allPosts[Math.floor(Math.random() * allPosts.length)];
+            if (!allPosts.length) {
+                alert('Нет ни одного произведения!');
+                return;
+            }
+            const {post, authorId} = allPosts[Math.floor(Math.random() * allPosts.length)];
             this.store.selectedAuthorId = authorId;
-            this.store.selectedPostId   = post.id;
+            this.store.selectedPostId = post.id;
             this.store.markAsViewed(authorId);
             this.refresh();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({top: 0, behavior: 'smooth'});
         });
     }
 
@@ -1064,65 +1170,65 @@ class PoemApp {
      * Используется только в applyRandomPoeticTitle().
      */
     static poeticTitles = [
-        'Фонд хранения авторских мучений','Гении на хранении','Рифмы и последствия',
-        'Шедевры местного значения','Архив возвышенного','Склад рифм',
-        'Полка прекрасного','Полка великих и не очень','Полка душевного барахла',
-        'Полка подозрительной поэзии','Полка поэтических происшествий',
-        'Цех по переработке чувств','Кладбище хороших рифм','Государственный фонд страданий',
-        'Гениальность на хранении','Рифмованные страдания','Стихи, которые мы заслужили',
-        'Глубокие мысли мелким шрифтом','Зачем-то написанное','Не трогать, это искусство',
-        'Пушкин, выйди','Опять эти стихи','Стихи. Много.','Контролируемая поэзия',
-        'Поэты и их последствия','Последнее прибежище рифмы','Место массового вдохновения',
-        'Здесь опять Пушкин','Пушкин бы одобрил','Пушкин не одобрил',
-        'Великие творения неизвестно кого','Музей великих заблуждений','Парад метафор',
-        'Цитаты, которых никто не просил','Миллион рифм — и все зря',
-        'Высокое искусство низкого давления','Слова закончились, остались стихи',
-        'Рифмопровод','Рифмохранилище','Метафорный склад','Склад эмоционального лома',
-        'Литературный холодильник','Поэтический пылесос','Пункт приёма метафор',
-        'Поэзия времён хранения','Утилизация прозы','Реактор возвышенных состояний',
-        'Инкубатор бессмертия','Поэтическая полка','Кладовка поэзии','Заповедник рифм',
-        'Резервуар прекрасного','Хранилище вдохновения','Склад душевных терзаний',
-        'Шкафчик возвышенного','Уголок страдающих авторов','Комната поэтических мучений',
-        'Накопитель стихов','Депо прекрасного','Страдания на рифме','Рифмоприёмник',
-        'Поэтический склад № 1','Гараж для гениев','Музей несбывшихся метафор',
-        'Министерство рифм','Комбинат по производству прекрасного',
-        'Отдел по производству стихов','Управление по делам рифм',
-        'Департамент возвышенных мыслей','Министерство поэтических дел',
-        'Реестр рифмованных граждан','Архив особо ценных метафор',
-        'Отдел учёта вдохновения','Картотека душевных переживаний',
-        'Единый реестр стихотворений','Комиссия по особо важным рифмам',
-        'Государственное хранилище рифм','Бюро по учёту прекрасного',
-        'Главное управление метафор','Центральный архив поэзии',
-        'Департамент стихотворных происшествий','Отдел рифмованного имущества',
-        'Комитет по возвышенным вопросам','Управление по борьбе с белым стихом',
-        'Инвентаризация вдохновения','Картотека великих мыслей',
-        'Хранилище литературных ценностей','Фонд особо выдающихся рифм',
-        'Научно-исследовательский склад поэзии','Центр хранения душевных состояний',
-        'Кладбище невинных глаголов','Мусороперерабатывающий завод чувств',
-        'Архив напрасно потраченных чернил','Заповедник непризнанных гениев',
-        'Кунсткамера душевных порывов','Приют несъедобных рифм',
-        'Департамент упущенного смысла','Завод по розливу экзистенциальной тоски',
-        'Институт недосказанной ерунды','Склад просроченных метафор',
-        'Центр утилизации рифмы «кровь-любовь»','Сборник рифмованных извинений',
-        'Выставка достижений графомании','Палата № 6 имени Есенина',
-        'Поэзия средней паршивости','Бюро бессмысленных откровений',
-        'Комитет по завышенной самооценке','Супермаркет сопливых метафор',
-        'Цех по сборке душевной драмы','Музей пыльной драмы',
-        'Жертвы школьной программы','Обитель сомнительных талантов',
-        'Бюро выдачи липового вдохновения','Лаборатория потешных страданий',
-        'Реестр напрасных надежд','Отдел списания шедевров',
-        'Заповедник глагольных рифм','Фонд спасения тонущего смысла',
-        'Спецхранилище сомнительной лирики','Фабрика картонных слёз',
-        'Стихи. Опять.','Текст в столбик','Ну, рифмы','Строчки с переносом',
-        'Опять про любовь, наверное','Буквы по центру','Поэзия. В ассортименте.',
-        'Снова эти ваши рифмы','Графомания. Свежее.','Рифмы. Оптом.',
-        'Стихотворения (к сожалению)','Лирика. Зачем-то.','Стихи. Снова.',
-        'Очередной шедевр. Честно.','Кто-то это написал','Рифма есть. Смысла нет.',
-        'Так получилось','Слова. Много слов.','Поэзия. Пачка.',
-        'Пачка рифмованной бумаги','Зачем-то стихи','Опять наболело',
-        'Написалось и лежит','Рифмованные строчки. Разные.','Кусок лирики',
-        'Просто рифмы','Стихи. Разборчиво.','Ещё немного бреда',
-        'Набор слов с рифмой','Шедевры (нет)'
+        'Фонд хранения авторских мучений', 'Гении на хранении', 'Рифмы и последствия',
+        'Шедевры местного значения', 'Архив возвышенного', 'Склад рифм',
+        'Полка прекрасного', 'Полка великих и не очень', 'Полка душевного барахла',
+        'Полка подозрительной поэзии', 'Полка поэтических происшествий',
+        'Цех по переработке чувств', 'Кладбище хороших рифм', 'Государственный фонд страданий',
+        'Гениальность на хранении', 'Рифмованные страдания', 'Стихи, которые мы заслужили',
+        'Глубокие мысли мелким шрифтом', 'Зачем-то написанное', 'Не трогать, это искусство',
+        'Пушкин, выйди', 'Опять эти стихи', 'Стихи. Много.', 'Контролируемая поэзия',
+        'Поэты и их последствия', 'Последнее прибежище рифмы', 'Место массового вдохновения',
+        'Здесь опять Пушкин', 'Пушкин бы одобрил', 'Пушкин не одобрил',
+        'Великие творения неизвестно кого', 'Музей великих заблуждений', 'Парад метафор',
+        'Цитаты, которых никто не просил', 'Миллион рифм — и все зря',
+        'Высокое искусство низкого давления', 'Слова закончились, остались стихи',
+        'Рифмопровод', 'Рифмохранилище', 'Метафорный склад', 'Склад эмоционального лома',
+        'Литературный холодильник', 'Поэтический пылесос', 'Пункт приёма метафор',
+        'Поэзия времён хранения', 'Утилизация прозы', 'Реактор возвышенных состояний',
+        'Инкубатор бессмертия', 'Поэтическая полка', 'Кладовка поэзии', 'Заповедник рифм',
+        'Резервуар прекрасного', 'Хранилище вдохновения', 'Склад душевных терзаний',
+        'Шкафчик возвышенного', 'Уголок страдающих авторов', 'Комната поэтических мучений',
+        'Накопитель стихов', 'Депо прекрасного', 'Страдания на рифме', 'Рифмоприёмник',
+        'Поэтический склад № 1', 'Гараж для гениев', 'Музей несбывшихся метафор',
+        'Министерство рифм', 'Комбинат по производству прекрасного',
+        'Отдел по производству стихов', 'Управление по делам рифм',
+        'Департамент возвышенных мыслей', 'Министерство поэтических дел',
+        'Реестр рифмованных граждан', 'Архив особо ценных метафор',
+        'Отдел учёта вдохновения', 'Картотека душевных переживаний',
+        'Единый реестр стихотворений', 'Комиссия по особо важным рифмам',
+        'Государственное хранилище рифм', 'Бюро по учёту прекрасного',
+        'Главное управление метафор', 'Центральный архив поэзии',
+        'Департамент стихотворных происшествий', 'Отдел рифмованного имущества',
+        'Комитет по возвышенным вопросам', 'Управление по борьбе с белым стихом',
+        'Инвентаризация вдохновения', 'Картотека великих мыслей',
+        'Хранилище литературных ценностей', 'Фонд особо выдающихся рифм',
+        'Научно-исследовательский склад поэзии', 'Центр хранения душевных состояний',
+        'Кладбище невинных глаголов', 'Мусороперерабатывающий завод чувств',
+        'Архив напрасно потраченных чернил', 'Заповедник непризнанных гениев',
+        'Кунсткамера душевных порывов', 'Приют несъедобных рифм',
+        'Департамент упущенного смысла', 'Завод по розливу экзистенциальной тоски',
+        'Институт недосказанной ерунды', 'Склад просроченных метафор',
+        'Центр утилизации рифмы «кровь-любовь»', 'Сборник рифмованных извинений',
+        'Выставка достижений графомании', 'Палата № 6 имени Есенина',
+        'Поэзия средней паршивости', 'Бюро бессмысленных откровений',
+        'Комитет по завышенной самооценке', 'Супермаркет сопливых метафор',
+        'Цех по сборке душевной драмы', 'Музей пыльной драмы',
+        'Жертвы школьной программы', 'Обитель сомнительных талантов',
+        'Бюро выдачи липового вдохновения', 'Лаборатория потешных страданий',
+        'Реестр напрасных надежд', 'Отдел списания шедевров',
+        'Заповедник глагольных рифм', 'Фонд спасения тонущего смысла',
+        'Спецхранилище сомнительной лирики', 'Фабрика картонных слёз',
+        'Стихи. Опять.', 'Текст в столбик', 'Ну, рифмы', 'Строчки с переносом',
+        'Опять про любовь, наверное', 'Буквы по центру', 'Поэзия. В ассортименте.',
+        'Снова эти ваши рифмы', 'Графомания. Свежее.', 'Рифмы. Оптом.',
+        'Стихотворения (к сожалению)', 'Лирика. Зачем-то.', 'Стихи. Снова.',
+        'Очередной шедевр. Честно.', 'Кто-то это написал', 'Рифма есть. Смысла нет.',
+        'Так получилось', 'Слова. Много слов.', 'Поэзия. Пачка.',
+        'Пачка рифмованной бумаги', 'Зачем-то стихи', 'Опять наболело',
+        'Написалось и лежит', 'Рифмованные строчки. Разные.', 'Кусок лирики',
+        'Просто рифмы', 'Стихи. Разборчиво.', 'Ещё немного бреда',
+        'Набор слов с рифмой', 'Шедевры (нет)'
     ];
 
     /**
@@ -1130,41 +1236,41 @@ class PoemApp {
      * Используется только в applyRandomPoeticTitle().
      */
     static poeticSubtitles = [
-        'Центр контроля за ямбом','Архив особо ценных метафор','Отдел учёта вдохновения',
-        'Министерство поэтических дел','Картотека душевных переживаний',
-        'Рифмы на ответственном хранении','Комиссия по особо важным рифмам',
-        'Реестр рифмованных граждан','Отдел по производству стихов',
-        'Не трогать, это искусство','Здесь рождается бессмертие',
-        'Бессмертие временно недоступно','Место массового вдохновения',
-        'Последнее прибежище метафор','Центр по борьбе с ямбом',
-        'Слова закончились, остались стихи','Ответственность за прочитанное не предусмотрена',
-        'Территория возвышенных переживаний','Место, где рифмуют','Контроль качества метафор',
-        'Учёт душевных терзаний','Пункт приёма рифм','Рифмы принимаются круглосуточно',
-        'Выдача вдохновения по талонам','Отдел особо возвышенных случаев',
-        'Хранилище эмоционального имущества','Глубина мысли не гарантируется',
-        'Содержание может вызывать вдохновение','Все совпадения с поэзией случайны',
-        'Возможны следы высокого искусства','Не является медицинской помощью',
-        'Принимать по одному стихотворению','Перед употреблением ознакомиться с рифмой',
-        'Не смешивать с прозой','Хранить вдали от критиков','Беречь от литературоведов',
-        'Не подвергать редактуре','Исправлению не подлежит','Автор за последствия не отвечает',
-        'Смысл может отсутствовать','Метафоры могут быть неожиданными',
-        'Рифма обнаружена','Ямб под наблюдением','Хорей временно недоступен',
-        'Размер установлен условно','Страдание соответствует норме','Уровень пафоса повышен',
-        'Пафос под контролем','Возвышенность в пределах нормы','Эмоциональный фон нестабилен',
-        'Здесь опять эти стихи','Пушкин бы одобрил','Пушкин не одобрил','Пушкин, выйди',
-        'Гений временно занят','Гениальность подтверждается документально',
-        'Шедевр находится на хранении','Местное значение подтверждено',
-        'Склад работает без выходных','Вход свободный, выход через рифму',
-        'Рифмованное имущество учтено','Метафоры пересчитаны','Все стихи пронумерованы',
-        'Вдохновение инвентаризировано','Душевные муки зарегистрированы',
-        'Авторские страдания поставлены на учёт','Литературный лом принят',
-        'Проза временно не принимается','Белый стих находится под наблюдением',
-        'Свободная рифма разрешена','Стихотворные работы ведутся',
-        'Производство прекрасного не остановлено','Ведётся накопление бессмертия',
-        'Глубокие мысли — мелким шрифтом','Неизвестно зачем, но красиво',
-        'Смысл будет найден позднее','Продолжение следует','Всё уже было сказано',
-        'Но мы попробуем ещё раз','Осторожно: высокое напряжение пафоса',
-        'Перед прочтением отключите логику','Одобрено вашей бывшей',
+        'Центр контроля за ямбом', 'Архив особо ценных метафор', 'Отдел учёта вдохновения',
+        'Министерство поэтических дел', 'Картотека душевных переживаний',
+        'Рифмы на ответственном хранении', 'Комиссия по особо важным рифмам',
+        'Реестр рифмованных граждан', 'Отдел по производству стихов',
+        'Не трогать, это искусство', 'Здесь рождается бессмертие',
+        'Бессмертие временно недоступно', 'Место массового вдохновения',
+        'Последнее прибежище метафор', 'Центр по борьбе с ямбом',
+        'Слова закончились, остались стихи', 'Ответственность за прочитанное не предусмотрена',
+        'Территория возвышенных переживаний', 'Место, где рифмуют', 'Контроль качества метафор',
+        'Учёт душевных терзаний', 'Пункт приёма рифм', 'Рифмы принимаются круглосуточно',
+        'Выдача вдохновения по талонам', 'Отдел особо возвышенных случаев',
+        'Хранилище эмоционального имущества', 'Глубина мысли не гарантируется',
+        'Содержание может вызывать вдохновение', 'Все совпадения с поэзией случайны',
+        'Возможны следы высокого искусства', 'Не является медицинской помощью',
+        'Принимать по одному стихотворению', 'Перед употреблением ознакомиться с рифмой',
+        'Не смешивать с прозой', 'Хранить вдали от критиков', 'Беречь от литературоведов',
+        'Не подвергать редактуре', 'Исправлению не подлежит', 'Автор за последствия не отвечает',
+        'Смысл может отсутствовать', 'Метафоры могут быть неожиданными',
+        'Рифма обнаружена', 'Ямб под наблюдением', 'Хорей временно недоступен',
+        'Размер установлен условно', 'Страдание соответствует норме', 'Уровень пафоса повышен',
+        'Пафос под контролем', 'Возвышенность в пределах нормы', 'Эмоциональный фон нестабилен',
+        'Здесь опять эти стихи', 'Пушкин бы одобрил', 'Пушкин не одобрил', 'Пушкин, выйди',
+        'Гений временно занят', 'Гениальность подтверждается документально',
+        'Шедевр находится на хранении', 'Местное значение подтверждено',
+        'Склад работает без выходных', 'Вход свободный, выход через рифму',
+        'Рифмованное имущество учтено', 'Метафоры пересчитаны', 'Все стихи пронумерованы',
+        'Вдохновение инвентаризировано', 'Душевные муки зарегистрированы',
+        'Авторские страдания поставлены на учёт', 'Литературный лом принят',
+        'Проза временно не принимается', 'Белый стих находится под наблюдением',
+        'Свободная рифма разрешена', 'Стихотворные работы ведутся',
+        'Производство прекрасного не остановлено', 'Ведётся накопление бессмертия',
+        'Глубокие мысли — мелким шрифтом', 'Неизвестно зачем, но красиво',
+        'Смысл будет найден позднее', 'Продолжение следует', 'Всё уже было сказано',
+        'Но мы попробуем ещё раз', 'Осторожно: высокое напряжение пафоса',
+        'Перед прочтением отключите логику', 'Одобрено вашей бывшей',
         'Смысловая нагрузка не предусмотрена базовой комплектацией',
         'Протестировано на котах (коты в шоке)',
         'Ни один настоящий поэт при создании не пострадал',
@@ -1172,16 +1278,16 @@ class PoemApp {
         'Осторожно, повышенная концентрация глагольных рифм',
         'Не рекомендуется лицам со здравым смыслом',
         'В случае душевного тонуса закрыть немедленно',
-        'Гарантия литературной ценности аннулирована','Смысл утонул во втором куплете',
-        'Пафос зашкаливает, пристегните ремни','Разработано без участия здравого смысла',
-        'Основано на реальных соплях','Содержит повышенный уровень экзистенциального кринжа',
+        'Гарантия литературной ценности аннулирована', 'Смысл утонул во втором куплете',
+        'Пафос зашкаливает, пристегните ремни', 'Разработано без участия здравого смысла',
+        'Основано на реальных соплях', 'Содержит повышенный уровень экзистенциального кринжа',
         'За последствия для вашего вкуса автор ответственности не несёт',
         'Все совпадения с поэзией — чистая случайность',
         'Не пытайтесь повторить это в трезвом уме',
         'Рекомендовано для поднятия самооценки других авторов',
         'Принимать строго по одной строчке, запивая водой',
         'Хранить в сухом месте, подальше от критиков',
-        'Автор сам не понял, но получилось красиво','Литературоведам вход строго воспрещён',
+        'Автор сам не понял, но получилось красиво', 'Литературоведам вход строго воспрещён',
         'Возможны побочные эффекты в виде нервного смешка',
         'Содержание соответствию реальности не подлежит',
         'Написано ради трёх лайков и одного комментария',

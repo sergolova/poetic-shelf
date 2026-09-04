@@ -1257,3 +1257,23 @@ a.view-all {
 .btn-scroll-top:hover {
     transform: translateY(-3px);
 }
+
+.dropdown-item:active {
+    background-color: var(--accent-color);
+}
+
+.nav-link {
+    color: var(--text-main);
+}
+
+.nav-link:hover {
+    color: var(--accent-hover)
+}
+
+.nav-link:active {
+    color: var(--accent-color)
+}
+
+.bg-accent{
+    background-color: var(--accent-color);
+}

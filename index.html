@@ -97,6 +97,11 @@
                             <span>Загрузить...</span>
                         </button>
                     </li>
+                    <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="findDuplicatesBtn">
+                            <span class="fs-5 lh-1 text-primary">❐</span> Найти дубликаты
+                        </button>
+                    </li>
                     <li><hr class="dropdown-divider my-1"></li>
                     <li>
                         <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="exportEpubBtn">
@@ -198,6 +203,49 @@
             </div>
         </main>
 
+    </div>
+</div>
+
+<!-- Модальное окно результатов поиска дубликатов -->
+<div class="modal fade" id="duplicatesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="content modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="bi bi-intersect"></i> Найденные дубликаты
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Вкладки -->
+                <ul class="nav nav-tabs nav-fill px-3 pt-2 bg-light border-bottom" id="dupTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="authors-tab" data-bs-toggle="tab" data-bs-target="#authors-tab-pane" type="button" role="tab">
+                            Авторы <span class="posts-count-badge" id="dupAuthorsCount">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts-tab-pane" type="button" role="tab">
+                            Стихотворения <span class="posts-count-badge" id="dupPostsCount">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content p-3" id="dupTabsContent">
+                    <!-- Таб авторов -->
+                    <div class="tab-pane fade show active" id="authors-tab-pane" role="tabpanel">
+                        <div id="authorDuplicatesList" class="d-flex flex-column gap-3"></div>
+                    </div>
+                    <!-- Таб постов -->
+                    <div class="tab-pane fade" id="posts-tab-pane" role="tabpanel">
+                        <div id="postDuplicatesList" class="d-flex flex-column gap-3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -417,6 +465,7 @@
 
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/DuplicateDetector.js"></script>
 <script src="assets/timebar.js"></script>
 <script src="assets/utilities.js"></script>
 <script src="assets/store.js"></script>
