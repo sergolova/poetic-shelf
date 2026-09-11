@@ -346,12 +346,12 @@ class PoemUI {
         const isParallel = translation.isTranslation && localStorage.getItem('columns') === 'parallel';
 
         // Форматирует одну строку с учётом перевода
-        const formatLine = (line, idx) => {
+        const formatLine = (line, idx, dataIndex = null) => {
             if (!line.trim()) return '';
             const processed = query ? this.highlightText(line, query) : line;
             const extraClass = translation.isTranslation && translation.lineTypes[idx] === 'translate'
                 ? ' poem-line--translation' : ' poem-line--original';
-            return `<span class="poem-line${extraClass}" data-line-index="${idx}">${processed}</span>`;
+            return `<span class="poem-line${extraClass}" data-line-index="${dataIndex !== null ? dataIndex : idx}">${processed}</span>`;
         };
 
         // Обычный режим: все строки подряд
@@ -367,13 +367,17 @@ class PoemUI {
             const leftCol = [], rightCol = [];
 
             lines.forEach((line, idx) => {
-                if (!line.trim()) return;
-                const span = formatLine(line, idx);
                 const type = translation.lineTypes[idx];
+
                 if (type === 'translate') {
+                    const span = formatLine(line, idx, rightCol.length);
                     rightCol.push(span);
-                } else {
+                } else if (type === 'original') {
+                    const span = formatLine(line, idx, leftCol.length);
                     leftCol.push(span);
+                } else {
+                    rightCol.push('');
+                    leftCol.push('');
                 }
             });
 

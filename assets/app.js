@@ -681,12 +681,7 @@ class PoemApp {
 
         const isTranslation = $line.hasClass('poem-line--translation');
         const targetClass = isTranslation ? '.poem-line--original' : '.poem-line--translation';
-
-        const $target = $card.find(
-            `${targetClass}[data-line-index="${lineIndex}"], ` +
-            `${targetClass}[data-line-index="${lineIndex + 1}"], ` +
-            `${targetClass}[data-line-index="${lineIndex - 1}"]`
-        ).first();
+        const $target = $card.find(`${targetClass}[data-line-index="${lineIndex}"]`).first();
 
         return $target.length ? $line.add($target) : $line;
     }

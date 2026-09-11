@@ -171,7 +171,9 @@
     filter: saturate(0.55);
 }
 
-[data-theme="dark"] .poem-content .poem-line:hover {
+[data-theme="dark"] .poem-content .poem-line:hover,
+[data-theme="dark"] .poem-content .poem-line.hover
+{
     background-color: #293545;
 }
 
