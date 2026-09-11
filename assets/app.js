@@ -207,9 +207,21 @@ class PoemApp {
     /**
      * Применяет количество колонок к карточкам стихов.
      * Число колонок определяется по длине произведения, но не превышает максимум.
+     * Значение "parallel" переключает в режим оригинал|перевод.
      */
     applyColumns() {
-        const maxColumns = parseInt(localStorage.getItem('columns'), 10) || 1;
+        const columns = localStorage.getItem('columns') || '1';
+        $(`input[name="columns"][value="${columns}"]`).prop('checked', true);
+
+        // Parallel-режим — стандартные колонки не применяются
+        if (columns === 'parallel') {
+            $('.poem-card').each((_, card) => {
+                $(card).find('.poem-content').removeClass('cols-1 cols-2 cols-3 cols-4');
+            });
+            return;
+        }
+
+        const maxColumns = parseInt(columns, 10) || 1;
 
         $('.poem-card').each((_, card) => {
             const $content = $(card).find('.poem-content');
@@ -623,10 +635,9 @@ class PoemApp {
             }
         });
 
-        // Закладка на строку стиха (click toggle)
+        // Закладка на строку стиха (click toggle) с синхронизацией колонок
         $(document).on('click', '.poem-line', (e) => {
-            const $line = $(e.target);
-            const $container = $line.closest('.poem-content');
+            const $line = $(e.target).closest('.poem-line');
             const $card = $line.closest('.poem-card');
             const $search = $('#searchInput');
             const postId = $card.data('post-id');
@@ -643,13 +654,41 @@ class PoemApp {
                 this.store.markAsViewed(authorId);
             }
 
-            if ($line.hasClass('active-bookmark')) {
-                $line.removeClass('active-bookmark');
+            const $pair = this.getLinePair($card, $line);
+            if ($pair.first().hasClass('active-bookmark')) {
+                $pair.removeClass('active-bookmark');
                 return;
             }
-            $container.find('.poem-line.active-bookmark').removeClass('active-bookmark');
-            $line.addClass('active-bookmark');
+            $card.find('.poem-line.active-bookmark').removeClass('active-bookmark');
+            $pair.addClass('active-bookmark');
         });
+
+        $(document).on('mouseenter mouseleave', '.poem-line', (e) => {
+            const $line = $(e.currentTarget);
+            const $card = $line.closest('.poem-card');
+            if (!$card[0]?.querySelector('.poem-parallel-container')) return;
+
+            const $pair = this.getLinePair($card, $line);
+            $pair.toggleClass('hover', e.type === 'mouseenter');
+        });
+    }
+
+     getLinePair($card, $line) {
+        if (!$card[0]?.querySelector('.poem-parallel-container')) return $line;
+
+        const lineIndex = Number($line.data('line-index'));
+        if (isNaN(lineIndex)) return $line;
+
+        const isTranslation = $line.hasClass('poem-line--translation');
+        const targetClass = isTranslation ? '.poem-line--original' : '.poem-line--translation';
+
+        const $target = $card.find(
+            `${targetClass}[data-line-index="${lineIndex}"], ` +
+            `${targetClass}[data-line-index="${lineIndex + 1}"], ` +
+            `${targetClass}[data-line-index="${lineIndex - 1}"]`
+        ).first();
+
+        return $target.length ? $line.add($target) : $line;
     }
 
     /**
@@ -684,6 +723,7 @@ class PoemApp {
         $(document).on('change', 'input[name="columns"]', (e) => {
             localStorage.setItem('columns', $(e.target).val());
             this.applyColumns();
+            this.refresh();
         });
     }
 

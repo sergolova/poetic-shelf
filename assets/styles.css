@@ -778,8 +778,33 @@ a.view-all {
     content: '↵';
 }
 
-.poem-content .poem-line:hover {
+.poem-content .poem-line:hover,
+.poem-content .poem-line.hover
+{
     background-color: #fff3cd;
+}
+
+.poem-line--translation {
+    font-style: italic;
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+
+/* Параллельный вид (оригинал | перевод) */
+.poem-parallel-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.poem-parallel-col {
+    min-width: 0;
+}
+
+.poem-parallel-col .poem-content {
+    column-count: 1 !important;
+    column-rule: none !important;
 }
 
 .poem-content .poem-line.active-bookmark {
@@ -1276,4 +1301,8 @@ a.view-all {
 
 .bg-accent{
     background-color: var(--accent-color);
+}
+
+article:last-child {
+    margin-bottom: 5px !important;
 }

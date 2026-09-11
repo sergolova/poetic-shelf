@@ -335,17 +335,66 @@ class PoemUI {
      * @returns {string}
      */
     createPoemCardHtml(post, author, query = '') {
+        // Распознавание перевода (оригинал + перевод)
+        let detectText = post.content || '';
+        if (!detectText && post.contentHtml) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = post.contentHtml;
+            detectText = tmp.textContent || '';
+        }
+        const translation = detectTranslationPattern(detectText);
+        const isParallel = translation.isTranslation && localStorage.getItem('columns') === 'parallel';
+
+        // Форматирует одну строку с учётом перевода
+        const formatLine = (line, idx) => {
+            if (!line.trim()) return '';
+            const processed = query ? this.highlightText(line, query) : line;
+            const extraClass = translation.isTranslation && translation.lineTypes[idx] === 'translate'
+                ? ' poem-line--translation' : ' poem-line--original';
+            return `<span class="poem-line${extraClass}" data-line-index="${idx}">${processed}</span>`;
+        };
+
+        // Обычный режим: все строки подряд
         const formatLines = (text) => {
             if (!text) return '';
-            return text.split('\n').map((line, idx) => {
-                if (!line.trim()) return '';
-                const processed = query ? this.highlightText(line, query) : line;
-                return `<span class="poem-line" data-line-index="${idx}">${processed}</span>`;
-            }).join('\n');
+            return text.split('\n').map((line, idx) => formatLine(line, idx)).join('\n');
+        };
+
+        // Параллельный режим: оригинал слева, перевод справа
+        const buildParallelColumns = (text) => {
+            if (!text) return { left: '', right: '' };
+            const lines = text.split('\n');
+            const leftCol = [], rightCol = [];
+
+            lines.forEach((line, idx) => {
+                if (!line.trim()) return;
+                const span = formatLine(line, idx);
+                const type = translation.lineTypes[idx];
+                if (type === 'translate') {
+                    rightCol.push(span);
+                } else {
+                    leftCol.push(span);
+                }
+            });
+
+            return {
+                left: `<pre class="poem-content">${leftCol.join('\n')}</pre>`,
+                right: `<pre class="poem-content">${rightCol.join('\n')}</pre>`
+            };
         };
 
         const rawContent = post.contentHtml ? post.contentHtml : escapeHtml(post.content);
-        const bodyContent = `<pre class="poem-content">${formatLines(rawContent)}</pre>`;
+        let bodyHtml;
+        if (isParallel) {
+            const cols = buildParallelColumns(rawContent);
+            bodyHtml = `
+                <div class="poem-parallel-container">
+                    <div class="poem-text-container poem-parallel-col">${cols.left}</div>
+                    <div class="poem-text-container poem-parallel-col">${cols.right}</div>
+                </div>`;
+        } else {
+            bodyHtml = `<div class="poem-text-container mt-4"><pre class="poem-content">${formatLines(rawContent)}</pre></div>`;
+        }
         const titleHtml = query ? this.highlightText(escapeHtml(post.title), query) : escapeHtml(post.title);
         const noteHtml = (post.note && query) ? this.highlightText(escapeHtml(post.note), query) : escapeHtml(post.note);
         const isYoutube = (url) => /(youtube\.com|youtu\.be)/i.test(url);
@@ -381,7 +430,7 @@ class PoemUI {
               <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" data-post-id="${post.id}" title="Редактировать">✏️</button>
             </div>
           </div>
-          <div class="poem-text-container mt-4">${bodyContent}</div>
+          ${bodyHtml}
           ${post.note ? `<div class="poem-note-box mt-4"><span class="note-icon">💡</span> <pre class="poem-note-content">${noteHtml}</pre></div>` : ''}
           ${linksHtml}
         </div>
@@ -723,4 +772,104 @@ class PoemUI {
         const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
         return (match && match[2].length === 11) ? match[2] : null;
     }
+}
+
+
+/* ==========================================================================
+   Хелпер: распознавание перевода (оригинал + русский перевод)
+   ========================================================================== */
+
+/**
+ * Анализирует текст и определяет, является ли он переводом
+ * (оригинал + русский перевод построчно).
+ *
+ * Алгоритм:
+ *   1. Классифицирует каждую непустую строку как 'original' (латиница),
+ *      'translate' (кириллица) или 'mixed'.
+ *   2. Считает долю строк 'original', за которыми сразу идёт 'translate'.
+ *   3. Вычисляет уверенность (confidence) на основе этого коэффициента.
+ *
+ * @param {string} text - Исходный текст произведения.
+ * @returns {{ isTranslation: boolean, lineTypes: string[], confidence: number }}
+ *   - isTranslation:  true, если уверенность >= порога (0.4)
+ *   - lineTypes:      массив типов для каждой строки (совпадает с split('\n'))
+ *   - confidence:     число от 0 до 1
+ */
+function detectTranslationPattern(text) {
+    const result = { isTranslation: false, lineTypes: [], confidence: 0 };
+    if (!text) return result;
+
+    const lines = text.split('\n');
+    result.lineTypes = new Array(lines.length).fill('empty');
+
+    // Индексы непустых строк для анализа последовательности
+    const nonEmpty = [];
+
+    // 1. Классификация строк
+    lines.forEach((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            result.lineTypes[i] = 'empty';
+            return;
+        }
+
+        nonEmpty.push(i);
+
+        const letters = trimmed.replace(/[^a-zA-Zа-яА-ЯёЁ]/g, '');
+        if (!letters.length) {
+            result.lineTypes[i] = 'mixed';
+            return;
+        }
+
+        const cyrillic = (trimmed.match(/[а-яА-ЯёЁ]/g) || []).length;
+        const latin    = (trimmed.match(/[a-zA-Z]/g) || []).length;
+
+        if (cyrillic > latin && cyrillic > 0) {
+            const ratio = cyrillic / letters.length;
+            result.lineTypes[i] = ratio >= 0.65 ? 'translate' : 'mixed';
+        } else if (latin > cyrillic && latin > 0) {
+            const ratio = latin / letters.length;
+            result.lineTypes[i] = ratio >= 0.65 ? 'original' : 'mixed';
+        } else {
+            result.lineTypes[i] = 'mixed';
+        }
+    });
+
+    // 2. Анализ последовательности
+    if (nonEmpty.length < 4) return result;
+
+    // Сколько original-строк имеют следующей непустой строкой translate
+    let originalFollowedByTranslate = 0;
+    let originalCount = 0;
+
+    for (let j = 0; j < nonEmpty.length - 1; j++) {
+        const curIdx = nonEmpty[j];
+        if (result.lineTypes[curIdx] === 'original') {
+            originalCount++;
+            const nextIdx = nonEmpty[j + 1];
+            if (result.lineTypes[nextIdx] === 'translate') {
+                originalFollowedByTranslate++;
+            }
+        }
+    }
+
+    // Сколько пар (original → translate) среди всех непустых строк
+    let pairCount = 0;
+    for (let j = 0; j < nonEmpty.length - 1; j++) {
+        const cur  = result.lineTypes[nonEmpty[j]];
+        const next = result.lineTypes[nonEmpty[j + 1]];
+        if (cur === 'original' && next === 'translate') {
+            pairCount++;
+            j++; // перешагиваем translate, т.к. она уже учтена в паре
+        }
+    }
+
+    const followRatio     = originalCount > 0 ? originalFollowedByTranslate / originalCount : 0;
+    const alternatingRatio = nonEmpty.length > 0 ? (pairCount * 2) / nonEmpty.length : 0;
+
+    // 3. Уверенность
+    result.confidence = followRatio * 0.7 + alternatingRatio * 0.3;
+    result.isTranslation = result.confidence >= 0.4;
+
+    return result;
 }
