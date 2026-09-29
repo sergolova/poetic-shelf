@@ -469,8 +469,9 @@ class PoemStore {
 
     /**
      * Экспортирует библиотеку в формат EPUB.
+     * @param {string[]} [selectedAuthorIds] - ID выбранных авторов. Если не указано — экспортируются все.
      */
-    async exportToEpub() {
+    async exportToEpub(selectedAuthorIds) {
         const data = JSON.parse(JSON.stringify(this.data));
         const zip = new JSZip();
         const mainTitle = 'Буквы по центру';
@@ -487,7 +488,13 @@ class PoemStore {
 </container>`);
 
         const oebps = zip.folder('OEBPS');
-        const sortedAuthors = (data.authors || []).sort(sortAZ);
+        let sortedAuthors = (data.authors || []).sort(sortAZ);
+
+        // Фильтруем авторов, если передан список выбранных ID
+        if (Array.isArray(selectedAuthorIds) && selectedAuthorIds.length > 0) {
+            const selectedSet = new Set(selectedAuthorIds);
+            sortedAuthors = sortedAuthors.filter(a => selectedSet.has(a.id));
+        }
 
         const manifestItems = [
             '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>',

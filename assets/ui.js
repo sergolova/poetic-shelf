@@ -806,10 +806,9 @@ function detectTranslationPattern(text) {
     const lines = text.split('\n');
     result.lineTypes = new Array(lines.length).fill('empty');
 
-    // Индексы непустых строк для анализа последовательности
     const nonEmpty = [];
 
-    // 1. Классификация строк
+    // 1. Классификация строк (с поддержкой кириллицы UA/RU)
     lines.forEach((line, i) => {
         const trimmed = line.trim();
         if (!trimmed) {
@@ -819,13 +818,13 @@ function detectTranslationPattern(text) {
 
         nonEmpty.push(i);
 
-        const letters = trimmed.replace(/[^a-zA-Zа-яА-ЯёЁ]/g, '');
+        const letters = trimmed.replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ]/g, '');
         if (!letters.length) {
             result.lineTypes[i] = 'mixed';
             return;
         }
 
-        const cyrillic = (trimmed.match(/[а-яА-ЯёЁ]/g) || []).length;
+        const cyrillic = (trimmed.match(/[а-яА-ЯёЁіІїЇєЄґҐ]/g) || []).length;
         const latin    = (trimmed.match(/[a-zA-Z]/g) || []).length;
 
         if (cyrillic > latin && cyrillic > 0) {
@@ -839,10 +838,22 @@ function detectTranslationPattern(text) {
         }
     });
 
-    // 2. Анализ последовательности
-    if (nonEmpty.length < 4) return result;
+    // Изменение 1: Порог снижен до 2 непустых строк
+    if (nonEmpty.length < 2) return result;
 
-    // Сколько original-строк имеют следующей непустой строкой translate
+    // Изменение 2: Спец-обработка для короткого текста из 2-3 непустых строк
+    if (nonEmpty.length <= 3) {
+        const firstType = result.lineTypes[nonEmpty[0]];
+        const secondType = result.lineTypes[nonEmpty[1]];
+
+        if (firstType === 'original' && secondType === 'translate') {
+            result.confidence = 1.0;
+            result.isTranslation = true;
+        }
+        return result;
+    }
+
+    // 2. Анализ последовательности для длинных текстов (>= 4 строк)
     let originalFollowedByTranslate = 0;
     let originalCount = 0;
 
@@ -857,18 +868,17 @@ function detectTranslationPattern(text) {
         }
     }
 
-    // Сколько пар (original → translate) среди всех непустых строк
     let pairCount = 0;
     for (let j = 0; j < nonEmpty.length - 1; j++) {
         const cur  = result.lineTypes[nonEmpty[j]];
         const next = result.lineTypes[nonEmpty[j + 1]];
         if (cur === 'original' && next === 'translate') {
             pairCount++;
-            j++; // перешагиваем translate, т.к. она уже учтена в паре
+            j++;
         }
     }
 
-    const followRatio     = originalCount > 0 ? originalFollowedByTranslate / originalCount : 0;
+    const followRatio      = originalCount > 0 ? originalFollowedByTranslate / originalCount : 0;
     const alternatingRatio = nonEmpty.length > 0 ? (pairCount * 2) / nonEmpty.length : 0;
 
     // 3. Уверенность

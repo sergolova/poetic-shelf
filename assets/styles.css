@@ -1131,6 +1131,27 @@ a.view-all {
     border-color: var(--accent-color) !important;
 }
 
+/* Модальное окно выбора авторов для EPUB */
+.epub-author-item {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.15s ease;
+}
+
+.epub-author-item:hover {
+    background-color: var(--bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.epub-author-item .form-check-input {
+    margin-top: 0.15rem;
+}
+
+.epub-author-item .form-check-label {
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
 /* Автокомплит выбора автора в модалке */
 .author-search-wrapper {
     position: relative;

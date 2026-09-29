@@ -1175,7 +1175,7 @@ class PoemApp {
             this.store.markAsExported();
         });
 
-        $('#exportEpubBtn').on('click', () => this.store.exportToEpub());
+        $('#exportEpubBtn').on('click', () => this.openEpubAuthorsModal());
 
         $('#importBtn').on('click', () => $('#importFileInput').click());
 
@@ -1193,6 +1193,93 @@ class PoemApp {
             };
             reader.readAsText(file);
         });
+    }
+
+    /* ==========================================================================
+       6.1 Модальное окно выбора авторов для EPUB
+       ========================================================================== */
+
+    /**
+     * Открывает модальное окно выбора авторов для экспорта в EPUB.
+     * Загружает сохранённый выбор из localStorage.
+     */
+    openEpubAuthorsModal() {
+        const STORAGE_KEY = 'epubSelectedAuthors';
+        const allAuthors = this.store.data.authors || [];
+
+        // Загружаем сохранённый выбор
+        let savedSelection = null;
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) savedSelection = JSON.parse(raw);
+        } catch { /* ignore */ }
+
+        // Если сохранённый выбор есть и это массив — используем его, иначе все авторы
+        const selectedIds = (Array.isArray(savedSelection) && savedSelection.length > 0)
+            ? new Set(savedSelection)
+            : new Set(allAuthors.map(a => a.id));
+
+        // Формируем список авторов с чекбоксами
+        const listEl = $('#epubAuthorsList');
+        listEl.empty();
+
+        allAuthors.forEach(author => {
+            const fullName = `${author.lastName} ${author.firstName} ${author.surName || ''}`.trim();
+            const postsCount = (author.posts || []).length;
+            const isChecked = selectedIds.has(author.id) ? 'checked' : '';
+
+            const item = $(`
+                <div class="form-check epub-author-item">
+                    <input class="form-check-input epub-author-checkbox" type="checkbox"
+                           id="epub_author_${author.id}" value="${author.id}" ${isChecked}>
+                    <label class="form-check-label d-flex justify-content-between align-items-center w-100"
+                           for="epub_author_${author.id}">
+                        <span>${escapeHtml(fullName)}</span>
+                        <span class="badge bg-secondary rounded-pill">${postsCount} стих.</span>
+                    </label>
+                </div>
+            `);
+            listEl.append(item);
+        });
+
+        // Обработчик «Выбрать всех»
+        $('#epubSelectAllBtn').off('click').on('click', () => {
+            $('.epub-author-checkbox').prop('checked', true);
+        });
+
+        // Обработчик «Снять всех»
+        $('#epubDeselectAllBtn').off('click').on('click', () => {
+            $('.epub-author-checkbox').prop('checked', false);
+        });
+
+        // Обработчик «Скачать»
+        $('#epubDownloadBtn').off('click').on('click', () => {
+            // Собираем выбранных авторов
+            const checkedIds = [];
+            $('.epub-author-checkbox:checked').each(function () {
+                checkedIds.push($(this).val());
+            });
+
+            if (checkedIds.length === 0) {
+                alert('Выберите хотя бы одного автора для экспорта.');
+                return;
+            }
+
+            // Сохраняем выбор в localStorage
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedIds));
+
+            // Закрываем модалку и запускаем экспорт
+            const modalEl = document.getElementById('epubAuthorsModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            this.store.exportToEpub(checkedIds);
+        });
+
+        // Показываем модалку
+        const modalEl = document.getElementById('epubAuthorsModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
     }
 
 
