@@ -2,4 +2,5 @@ stih_backup_*
 /node_modules
 /.idea
 mcp_server.log
-
+stih*.json
+*.epub

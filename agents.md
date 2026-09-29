@@ -13,15 +13,19 @@
 | Класс | Файл | Роль |
 |---|---|---|
 | `PoemApp` | `assets/app.js` | Контроллер. Инициализация, привязка событий, координация Store и UI |
-| `PoemStore` | `assets/store.js` | Модель. CRUD авторов/произведений, localStorage, импорт/экспорт, закладки |
+| `PoemStore` | `assets/store.js` | Модель. CRUD авторов/произведений, localStorage, импорт/экспорт, закладки, поиск дубликатов |
 | `PoemUI` | `assets/ui.js` | Представление. Рендеринг списков, карточек, модальных окон, навигация |
 | `TimelineBar` | `assets/timebar.js` | Компонент временной шкалы (годы, точки, выпадающие меню) |
+| `DuplicateDetector` | `assets/DuplicateDetector.js` | Поиск дубликатов авторов и произведений |
 
 Глобальные утилиты без привязки к классам — в `assets/utilities.js`:
 - `escapeHtml()` — экранирование HTML (используется повсеместно)
 - `compressImage()` / `imageUrlToBase64()` — сжатие фото авторов
 - `normalizeUnicode()` / `cleanPastedText()` — очистка вставленного текста
 - `convertEngToRus()` — конвертация английской раскладки в русскую для поиска
+- `getAgeString()` — форматирование возраста/годов жизни
+- `stripTags()` — удаление HTML-тегов (используется в EPUB-экспорте)
+- `cropImageToCircle()` / `convertToGrayscale()` — обработка фото авторов для EPUB
 
 Хелперы поиска `isAuthorMatch()` / `isPostMatch()` объявлены в `store.js` вне класса — используются и в Store, и в UI.
 
@@ -30,7 +34,7 @@
 Структура в localStorage (`stih_app_data`):
 
 ```
-{ data: { authors: [Author] } }
+{ data: { authors: [Author], meta: { version, lastModified, authorsCount, postsCount } } }
 ```
 
 **Author:**
@@ -53,7 +57,11 @@
   contentHtml,                    // HTML разметка (если включён HTML-режим)
   year,                           // number | null
   note,                           // заметка/контекст
-  links: [{ title, url }]        // внешние ссылки
+  links: [{ title, url }],        // внешние ссылки
+  translation: {                  // опционально
+    content,                      // plain text перевод
+    contentHtml                   // HTML перевод
+  }
 }
 ```
 
@@ -71,7 +79,7 @@
 ## Порядок подключения скриптов
 
 ```
-jquery → bootstrap → timebar.js → utilities.js → store.js → ui.js → app.js → JSZip → FileSaver
+jquery → bootstrap → DuplicateDetector.js → timebar.js → utilities.js → store.js → ui.js → app.js → JSZip → FileSaver
 ```
 
 Порядок важен: каждый следующий файл зависит от предыдущих.
@@ -91,10 +99,12 @@ $(document).ready(() => {
 
 - **Нет сборщика** — все файлы загружаются как обычные `<script>`. При добавлении нового файла его нужно подключить в `index.html` в правильном порядке
 - **jQuery для DOM** — используется `$()` для выборки, событий, анимаций. Не смешивать с React/Vue
-- **Bootstrap модалки** — `bootstrap.Modal` для форм авторов и произведений
-- **localStorage как БД** — все данные в одном ключе `stih_app_data`. Настройки в отдельных ключах: `appTheme`, `fontSize`, `columns`, `authorSortMode`, `postBookmarks`, `lastViewed`, `selectedAuthorId`, `selectedPostId`, `authorsSidebarWidth`
+- **Bootstrap модалки** — `bootstrap.Modal` для форм авторов, произведений, выбора авторов для EPUB, поиска дубликатов
+- **localStorage как БД** — все данные в одном ключе `stih_app_data`. Настройки в отдельных ключах: `appTheme`, `fontSize`, `columns`, `authorSortMode`, `postBookmarks`, `lastViewed`, `selectedAuthorId`, `selectedPostId`, `authorsSidebarWidth`, `epubSelectedAuthors`, `poeticTitleIndex`, `poeticSubtitleIndex`
 - **Счётчик изменений** — `unsavedChangesCount` в localStorage, отображается бейджем на кнопке "Данные". Сбрасывается при экспорте
 - **Случайные заголовки** — массивы `PoemApp.poeticTitles` и `PoemApp.poeticSubtitles` ротируются каждые 30 секунд в шапке
+- **Выбор авторов для EPUB** — модальное окно `epubAuthorsModal` позволяет пользователю выбрать авторов для экспорта. Выбор сохраняется в `localStorage` под ключом `epubSelectedAuthors`
+- **Поиск дубликатов** — `DuplicateDetector` ищет дубликаты по ФИО авторов и названиям произведений. Результаты отображаются в модальном окне `duplicatesModal` с вкладками
 
 ## MCP Server и интеграция с AI
 
@@ -140,3 +150,6 @@ $(document).ready(() => {
 - Комментарии в коде на русском языке
 - JSDoc используется для документации функций
 - `npm install` для загрузки `node_modules/` (jQuery, Bootstrap)
+- При добавлении новых модальных окон — использовать существующий паттерн Bootstrap 5 модалок
+- При добавлении новых настроек — сохранять в `localStorage` с префиксом проекта
+- При изменении модели данных — обновлять раздел «Модель данных» и обратную совместимость в `importJson()`
