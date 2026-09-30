@@ -783,19 +783,59 @@ class PoemUI {
    Хелпер: распознавание перевода (оригинал + русский перевод)
    ========================================================================== */
 
+/* Пороги распознавания перевода. Каждый закрывает свою ложную срабатывающую
+   ситуацию; менять их по одному нельзя — они работают только вместе. */
+const TRANSLATION_MIN_LINE_LETTERS = 5;   // короче — 'skip', см. ниже
+const TRANSLATION_DOMINANCE        = 0.5;  // доля букв доминирующего алфавита
+const TRANSLATION_MIN_PAIRS        = 2;   // минимум полных пар original->translate
+const TRANSLATION_MIN_COVERAGE     = 0.25;// доля непустых строк, охваченных парами
+const TRANSLATION_THRESHOLD        = 0.5; // порог confidence
+
 /**
  * Анализирует текст и определяет, является ли он переводом
  * (оригинал + русский перевод построчно).
  *
  * Алгоритм:
- *   1. Классифицирует каждую непустую строку как 'original' (латиница),
- *      'translate' (кириллица) или 'mixed'.
- *   2. Считает долю строк 'original', за которыми сразу идёт 'translate'.
- *   3. Вычисляет уверенность (confidence) на основе этого коэффициента.
+ *   1. Классифицирует каждую строку как 'original' (латиница),
+ *      'translate' (кириллица), 'mixed', 'skip' или 'empty'.
+ *   2. Для 2-3 непустых строк проверяет пару и требование чистоты алфавита.
+ *   3. Для остальных текстов считает долю строк 'original', за которыми
+ *      сразу идёт 'translate', и долю строк, охваченных такими парами.
+ *   4. Вычисляет уверенность (confidence) из этих двух долей.
+ *
+ * Решения, важные для понимания (каждое закрывает найденный на реальной
+ * библиотеке ложный случай):
+ *
+ *   - MIN_LINE_LETTERS: строка короче 5 букв получает тип 'skip' и не
+ *     участвует ни в одном счётчике, и не разрывает соседство строк.
+ *     Без этого римские цифры в переносках станс («XIII», «XIV») проходили
+ *     как 'original': у «XIII» все 4 буквы латинские, т.е. доля 100%,
+ *     и порог доминирования их не отсекал. Это ломало «Ответ Онегина
+ *     на письмо Татьяны» — followRatio доходил до 1.0.
+ *
+ *   - DOMINANCE = 0.5 (а не 0.65): если букв одного алфавита строго
+ *     больше, строка считается принадлежащей ему. Порог 0.65 отправлял
+ *     строку Блока «Чем quantum satis Бранда воли,» (13 кириллических
+ *     против 12 латинских) в 'mixed', то есть двуязычной. При 0.5 она
+ *     однозначно 'translate' — это русская строка с латинской вставкой.
+ *
+ *   - Гейты MIN_PAIRS и MIN_COVERAGE проверяются ДО вычисления confidence
+ *     и обнуляют его. Перевод требует минимум две полные пары, покрывающие
+ *     не менее четверти непустых строк. Это отсекает одиночную
+ *     латинскую строку внутри русского стихотворения — «In vino veritas!»
+ *     в «Незнакомке» давала пару, но покрывала 4% текста.
+ *
+ *   - Спецслучай 2-3 строк не смотрит на порядок (раньше распознавался
+ *     только original->translate, но не translate->original) и требует
+ *     ЧИСТОГО алфавита в каждой строке: у 'original' не должно быть ни
+ *     одной кириллической буквы, у 'translate' — ни одной латинской.
+ *     Иначе «Кто там? кричат. / «In vino veritas!» кричат.» сочлось бы
+ *     переводом: строка с цитатой набирает 13 латинских против 6
+ *     кириллических и выглядит 'original', но кириллица в ней есть.
  *
  * @param {string} text - Исходный текст произведения.
  * @returns {{ isTranslation: boolean, lineTypes: string[], confidence: number }}
- *   - isTranslation:  true, если уверенность >= порога (0.4)
+ *   - isTranslation:  true, если уверенность >= TRANSLATION_THRESHOLD
  *   - lineTypes:      массив типов для каждой строки (совпадает с split('\n'))
  *   - confidence:     число от 0 до 1
  */
@@ -807,6 +847,18 @@ function detectTranslationPattern(text) {
     result.lineTypes = new Array(lines.length).fill('empty');
 
     const nonEmpty = [];
+    const CYR_RE = /[а-яА-ЯёЁіІїЇєЄґҐ]/g;
+    const LAT_RE = /[a-zA-Z]/g;
+
+    /** Количество кириллических и латинских букв в строке. */
+    const countLetters = (line) => {
+        const trimmed = line.trim();
+        return {
+            cyrillic: (trimmed.match(CYR_RE) || []).length,
+            latin:    (trimmed.match(LAT_RE) || []).length,
+            total:    (trimmed.replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ]/g, '')).length
+        };
+    };
 
     // 1. Классификация строк (с поддержкой кириллицы UA/RU)
     lines.forEach((line, i) => {
@@ -816,44 +868,58 @@ function detectTranslationPattern(text) {
             return;
         }
 
-        nonEmpty.push(i);
+        const { cyrillic, latin, total } = countLetters(line);
 
-        const letters = trimmed.replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ]/g, '');
-        if (!letters.length) {
-            result.lineTypes[i] = 'mixed';
+        // Слишком короткая строка: римские цифры, отдельные слова-вставки.
+        // Тип 'skip' — она не считается ни оригиналом, ни переводом, но и
+        // не разрывает соседство, в отличие от 'mixed'.
+        if (total < TRANSLATION_MIN_LINE_LETTERS) {
+            result.lineTypes[i] = 'skip';
             return;
         }
 
-        const cyrillic = (trimmed.match(/[а-яА-ЯёЁіІїЇєЄґҐ]/g) || []).length;
-        const latin    = (trimmed.match(/[a-zA-Z]/g) || []).length;
+        nonEmpty.push(i);
 
-        if (cyrillic > latin && cyrillic > 0) {
-            const ratio = cyrillic / letters.length;
-            result.lineTypes[i] = ratio >= 0.65 ? 'translate' : 'mixed';
-        } else if (latin > cyrillic && latin > 0) {
-            const ratio = latin / letters.length;
-            result.lineTypes[i] = ratio >= 0.65 ? 'original' : 'mixed';
+        if (cyrillic > latin) {
+            const ratio = cyrillic / total;
+            result.lineTypes[i] = ratio >= TRANSLATION_DOMINANCE ? 'translate' : 'mixed';
+        } else if (latin > cyrillic) {
+            const ratio = latin / total;
+            result.lineTypes[i] = ratio >= TRANSLATION_DOMINANCE ? 'original' : 'mixed';
         } else {
             result.lineTypes[i] = 'mixed';
         }
     });
 
-    // Изменение 1: Порог снижен до 2 непустых строк
     if (nonEmpty.length < 2) return result;
 
-    // Изменение 2: Спец-обработка для короткого текста из 2-3 непустых строк
+    // 2. Короткий текст из 2-3 непустых строк: переводом считается ровно
+    //    одна пара из строк на разных алфавитах, в любом порядке, причём
+    //    каждая строка должна быть ЧИСТОЙ (см. комментарий выше).
     if (nonEmpty.length <= 3) {
-        const firstType = result.lineTypes[nonEmpty[0]];
-        const secondType = result.lineTypes[nonEmpty[1]];
+        const first  = nonEmpty[0];
+        const second = nonEmpty[1];
+        const firstType  = result.lineTypes[first];
+        const secondType = result.lineTypes[second];
 
-        if (firstType === 'original' && secondType === 'translate') {
+        if (firstType === secondType) return result;
+
+        const isCleanPair = [
+            { index: first,  type: firstType },
+            { index: second, type: secondType }
+        ].every(({ index, type }) => {
+            const { cyrillic, latin } = countLetters(lines[index]);
+            return type === 'original' ? cyrillic === 0 : latin === 0;
+        });
+
+        if (isCleanPair) {
             result.confidence = 1.0;
             result.isTranslation = true;
         }
         return result;
     }
 
-    // 2. Анализ последовательности для длинных текстов (>= 4 строк)
+    // 3. Анализ последовательности для длинных текстов (>= 4 строк)
     let originalFollowedByTranslate = 0;
     let originalCount = 0;
 
@@ -881,9 +947,15 @@ function detectTranslationPattern(text) {
     const followRatio      = originalCount > 0 ? originalFollowedByTranslate / originalCount : 0;
     const alternatingRatio = nonEmpty.length > 0 ? (pairCount * 2) / nonEmpty.length : 0;
 
-    // 3. Уверенность
-    result.confidence = followRatio * 0.7 + alternatingRatio * 0.3;
-    result.isTranslation = result.confidence >= 0.4;
+    // Абсолютные требования к структуре. Одиночная латинская строка
+    // (цитата, римская цифра) даёт пару, но почти не покрывает текст.
+    if (pairCount < TRANSLATION_MIN_PAIRS || alternatingRatio < TRANSLATION_MIN_COVERAGE) {
+        return result;
+    }
+
+    // 4. Уверенность: равные веса, т.к. структура уже проверена гейтами
+    result.confidence = followRatio * 0.5 + alternatingRatio * 0.5;
+    result.isTranslation = result.confidence >= TRANSLATION_THRESHOLD;
 
     return result;
 }
