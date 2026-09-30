@@ -715,7 +715,7 @@ class PoemStore {
         const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(normalizedData, null, 2));
         const a = document.createElement('a');
         a.href = dataStr;
-        a.download = `stih_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `poetic_shelf_backup_${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
     }
 
@@ -736,5 +736,22 @@ class PoemStore {
         }
         this.selectedAuthorId = this.data.authors.length > 0 ? this.data.authors[0].id : null;
         this.save();
+    }
+
+    /**
+     * Полностью очищает библиотеку: удаляет всех авторов и произведения.
+     *
+     * Настройки (тема, шрифт, колонки, ширина сайдбара) не трогает —
+     * они не являются данными библиотеки. Счётчик несохранённых
+     * изменений сбрасывается: после очистки экспортировать нечего.
+     */
+    clearAll() {
+        this.data = { authors: [] };
+        this.selectedAuthorId = null;
+        this.selectedPostId = null;
+        this.postBookmarks = {};
+        this.lastViewed = {};
+        this.save();
+        this.markAsExported();
     }
 }

@@ -130,7 +130,8 @@ class PoemApp {
         this.timeline.render(allPosts, this.store.selectedAuthorId, authors, this.store.selectedPostId);
 
         const currentAuthor = this.store.getAuthorById(this.store.selectedAuthorId);
-        this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId);
+        this.ui.renderAuthorMain(currentAuthor, searchQuery, this.store.selectedPostId,
+            this.store.data.authors.length === 0);
 
         this.applyColumns();
         this.initPoemLineBreakMarkers();
@@ -1183,6 +1184,42 @@ class PoemApp {
         $('#exportEpubBtn').on('click', () => this.openEpubAuthorsModal());
 
         $('#importBtn').on('click', () => $('#importFileInput').click());
+
+        // Очистка хранилища с предупреждением
+        $('#clearStorageBtn').on('click', () => {
+            const authors = this.store.data.authors.length;
+            const posts = this.store.data.authors.reduce((s, a) => s + (a.posts?.length || 0), 0);
+
+            if (authors === 0) {
+                alert('Хранилище уже пусто.');
+                return;
+            }
+
+            const msg = 'Удалить всех авторов и произведения из хранилища?\n\n'
+                + `Будёт удалено: авторов — ${authors}, произведений — ${posts}.\n`
+                + 'Действие нельзя отменить. Рекомендуем сначала сохранить копию («Сохранить...»).';
+
+            if (!confirm(msg)) return;
+
+            this.store.clearAll();
+            this.refresh();
+        });
+
+        // Загрузка демонстрационного файла из подсказки пустого хранилища.
+        // Кнопка перерисовывается при каждом refresh, поэтому делегируем на document.
+        $(document).on('click', '#loadExampleBtn', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch('example.json');
+                if (!res.ok) throw new Error('not found');
+                this.store.importJson(await res.json());
+                this.refresh();
+            } catch {
+                alert('Не удалось загрузить example.json.\n\n'
+                    + 'Откройте приложение через локальный сервер (npx serve .) '
+                    + 'или загрузите файл вручную через «Данные → Загрузить...».');
+            }
+        });
 
         $('#importFileInput').on('change', (e) => {
             const file = e.target.files[0];

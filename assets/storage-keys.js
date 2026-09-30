@@ -18,7 +18,7 @@
 /** Ключи, под которыми приложение пишет в localStorage. */
 const STORAGE_KEYS = {
     /** Основные данные библиотеки (авторы + произведения). */
-    DATA: 'stih_app_data',
+    DATA: 'poetic_shelf_data',
 
     /** Тема оформления: значения THEME.DARK / THEME.LIGHT. */
     THEME: 'appTheme',

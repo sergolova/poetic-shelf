@@ -6,8 +6,8 @@
 /.claude/settings.local.json
 
 # Данные библиотеки: бэкапы и экспортированные книги
-stih_backup_*
-stih*.json
+poetic_shelf_backup_*
+poetic_shelf*.json
 *.epub
 
 # Логи MCP-сервера (могут содержать текст стихотворений)

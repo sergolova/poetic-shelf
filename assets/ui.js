@@ -181,7 +181,17 @@ class PoemUI {
         q ? $sidebar.addClass('query-selection') : $sidebar.removeClass('query-selection');
 
         if (authors.length === 0) {
-            this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены&nbsp;&nbsp;&nbsp;<a class="view-all" href="#">Сбросить поиск</a></div>');
+            // Пустой результат поиска и пустая библиотека — разные подсказки.
+            // q непустой значит, что поиск уже идёт и авторы просто не нашлись.
+            if (q) {
+                this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены&nbsp;&nbsp;&nbsp;<a class="view-all" href="#">Сбросить поиск</a></div>');
+            } else {
+                this.$authorsList.html(`
+                    <div class="p-3 small">
+                        <div class="text-muted mb-1">Библиотека пуста.</div>
+                        <div class="text-muted">Загрузите демонстрационный файл <code>example.json</code> через меню <b>Данные → Загрузить...</b></div>
+                    </div>`);
+            }
             return;
         }
 
@@ -250,13 +260,21 @@ class PoemUI {
      * @param {string} searchQuery
      * @param {string|null} selectedPostId
      */
-    renderAuthorMain(author, searchQuery = '', selectedPostId = null) {
+    renderAuthorMain(author, searchQuery = '', selectedPostId = null, isEmptyLibrary = false) {
         if (!author) {
-            this.$mainContent.html(`
-        <div class="text-center text-muted my-5 py-5">
-          <span class="display-1">📚</span>
-          <h4 class="mt-3">Выберите автора из списка слева или добавьте нового</h4>
-        </div>`);
+            // Два разных пустых состояния: библиотека пуста целиком
+            // или автор просто не выбран (например, после поиска).
+            this.$mainContent.html(isEmptyLibrary
+                ? `<div class="text-center text-muted my-5 py-5">
+                     <span class="display-1">📚</span>
+                     <h4 class="mt-3">Библиотека пуста</h4>
+                     <p class="mt-2 mb-3">Добавьте автора вручную<br>или загрузите демонстрационный файл <code>example.json</code>.</p>
+                     <button class="btn btn-vintage-outline btn-sm" type="button" id="loadExampleBtn">Загрузить example.json</button>
+                   </div>`
+                : `<div class="text-center text-muted my-5 py-5">
+                     <span class="display-1">📚</span>
+                     <h4 class="mt-3">Выберите автора из списка слева или добавьте нового</h4>
+                   </div>`);
             return;
         }
 

@@ -56,7 +56,7 @@ function describeArgs(array $args): string {
 }
 
 function getLatestBackupFile(string $dir): ?string {
-    $files = glob($dir . '/stih_backup_*.json');
+    $files = glob($dir . '/poetic_shelf_backup_*.json');
     if (empty($files)) return null;
     usort($files, function($a, $b) {
         return filemtime($a) <=> filemtime($b);
@@ -108,7 +108,7 @@ function saveData(string $dir, array $data): bool {
 
     // Формируем имя файла с текущей датой
     $dateStr = date('Y-m-d');
-    $fileName = $dir . "/stih_backup_{$dateStr}.json";
+    $fileName = $dir . "/poetic_shelf_backup_{$dateStr}.json";
 
     $success = file_put_contents($fileName, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) !== false;
     if ($success) {
@@ -154,7 +154,7 @@ while (($line = fgets(STDIN)) !== false) {
         sendResponse($id, [
             'protocolVersion' => '2024-11-05',
             'capabilities' => ['tools' => (object)[]],
-            'serverInfo' => ['name' => 'stih-mcp-server', 'version' => '1.0.0']
+            'serverInfo' => ['name' => 'poetic-shelf-mcp-server', 'version' => '1.0.0']
         ]);
     }
     elseif ($method === 'tools/list') {

@@ -1,5 +1,5 @@
 {
-  "name": "stih",
+  "name": "poetic-shelf",
   "version": "1.0.0",
   "description": "Поэтическая Полка — SPA для хранения и чтения поэзии (без бэкенда, данные в localStorage)",
   "private": true,
