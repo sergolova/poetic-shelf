@@ -161,16 +161,29 @@ function convertEngToRus(str) {
     return str;
 }
 
+/**
+ * Сравнивает двух авторов по ФИО для алфавитной сортировки.
+ * Используется в PoemStore.getAuthors() и при сборке EPUB.
+ * @param {Object} a - Первый автор.
+ * @param {Object} b - Второй автор.
+ * @returns {number} Результат localeCompare.
+ */
 function sortAZ(a, b) {
-    return `${a.lastName} ${a.firstName} ${a.surName || ''}`.toLowerCase().localeCompare(`${b.lastName} ${b.firstName} ${a.surName || ''}`.toLowerCase(), 'ru');
+    const nameOf = (author) =>
+        `${author.lastName || ''} ${author.firstName || ''} ${author.surName || ''}`.trim().toLowerCase();
+    return nameOf(a).localeCompare(nameOf(b), 'ru');
 }
 
+/**
+ * Сортирует произведения: по автору, затем по названию.
+ * Требует глобальный `app` (PoemApp) для разрешения автора по authorId.
+ * @param {Array<Object>} posts - Массив произведений (сортируется на месте).
+ */
 function sortPosts(posts) {
     posts.sort((a, b) => {
-            if (a.authorId === b.authorId) {
-                return (a.title || '').localeCompare(b.title || '', 'ru');
-            }
-            return sortAZ(app.store.getAuthorById(a.authorId), app.store.getAuthorById(b.authorId))
+        if (a.authorId === b.authorId) {
+            return (a.title || '').localeCompare(b.title || '', 'ru');
         }
-    );
+        return sortAZ(app.store.getAuthorById(a.authorId), app.store.getAuthorById(b.authorId));
+    });
 }

@@ -55,7 +55,7 @@ class PoemStore {
         this.data = { authors: [] };
         this.selectedAuthorId = null;
         this.selectedPostId = null;
-        this.authorSortMode = 'none';  // none | az | birthday | len | recent
+        this.authorSortMode = SORT_AUTHORS.NONE;  // см. SORT_AUTHORS в storage-keys.js
         this.lastViewed = {};           // { authorId: timestamp }
         this.postBookmarks = {};        // { postId: true }
     }
@@ -64,19 +64,19 @@ class PoemStore {
      * Инициализирует хранилище из localStorage.
      */
     async init() {
-        this.authorSortMode = localStorage.getItem('authorSortMode') || 'none';
+        this.authorSortMode = localStorage.getItem(STORAGE_KEYS.AUTHOR_SORT) || SORT_AUTHORS.NONE;
 
         try {
-            const v = JSON.parse(localStorage.getItem('lastViewed'));
+            const v = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_VIEWED));
             this.lastViewed = (v && typeof v === 'object') ? v : {};
         } catch { this.lastViewed = {}; }
 
         try {
-            const v = JSON.parse(localStorage.getItem('postBookmarks'));
+            const v = JSON.parse(localStorage.getItem(STORAGE_KEYS.POST_BOOKMARKS));
             this.postBookmarks = (v && typeof v === 'object') ? v : {};
         } catch { this.postBookmarks = {}; }
 
-        const local = localStorage.getItem('stih_app_data');
+        const local = localStorage.getItem(STORAGE_KEYS.DATA);
         if (local) {
             try {
                 const parsed = JSON.parse(local);
@@ -93,10 +93,22 @@ class PoemStore {
 
     /**
      * Загружает данные по умолчанию из data.json.
+     *
+     * Файла data.json в проекте нет — он необязателен, и его отсутствие
+     * это норма (в репозиторий бэкапы не попадают). Проверяем статус
+     * ответа явно: иначе при 404 попытались бы разобрать HTML-страницу
+     * ошибки как JSON. Ошибка ответа — ожидаемый путь, а не сбой,
+     * поэтому в консоль не пишем.
+     *
+     * @returns {Promise<void>}
      */
     async loadDefaultJson() {
         try {
             const res = await fetch('data.json');
+            if (!res.ok) {
+                this.data = { authors: [] };
+                return;
+            }
             this.data = await res.json();
             this.saveData();
         } catch {
@@ -126,7 +138,7 @@ class PoemStore {
         this.data.meta.authorsCount = (this.data.authors || []).length;
         this.data.meta.postsCount = postsCount;
 
-        localStorage.setItem('stih_app_data', JSON.stringify({ data: this.data }));
+        localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify({ data: this.data }));
         this.markAsChanged();
         this.updateExportWarningStatus();
     }
@@ -139,44 +151,43 @@ class PoemStore {
 
     /** Сохраняет пользовательские настройки и состояние просмотров. */
     saveSettings() {
-        localStorage.setItem('postBookmarks', JSON.stringify(this.postBookmarks));
-        localStorage.setItem('lastViewed',    JSON.stringify(this.lastViewed));
-        localStorage.setItem('authorSortMode', this.authorSortMode);
+        localStorage.setItem(STORAGE_KEYS.POST_BOOKMARKS, JSON.stringify(this.postBookmarks));
+        localStorage.setItem(STORAGE_KEYS.LAST_VIEWED,    JSON.stringify(this.lastViewed));
+        localStorage.setItem(STORAGE_KEYS.AUTHOR_SORT,    this.authorSortMode);
     }
 
     /** Сохраняет ширину сайдбара. */
     saveSidebar(width) {
-        localStorage.setItem('authorsSidebarWidth', width);
+        localStorage.setItem(STORAGE_KEYS.SIDEBAR_WIDTH, width);
     }
 
     /** Загружает ширину сайдбара. */
     loadSidebar() {
-        return parseInt(localStorage.getItem('authorsSidebarWidth'), 10);
+        return parseInt(localStorage.getItem(STORAGE_KEYS.SIDEBAR_WIDTH), 10);
     }
 
     /** Помечает данные как изменённые. */
     markAsChanged() {
-        const count = parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
-        localStorage.setItem('unsavedChangesCount', count + 1);
-        localStorage.setItem('lastChangeTimestamp', Date.now());
+        localStorage.setItem(STORAGE_KEYS.UNSAVED_COUNT, this.getUnsavedChangesCount() + 1);
+        localStorage.setItem(STORAGE_KEYS.LAST_CHANGE, Date.now());
         this.updateExportWarningStatus();
     }
 
     /** Помечает данные как экспортированные (сбрасывает счётчик). */
     markAsExported() {
-        localStorage.setItem('unsavedChangesCount', '0');
-        localStorage.setItem('lastExportTimestamp', Date.now());
+        localStorage.setItem(STORAGE_KEYS.UNSAVED_COUNT, '0');
+        localStorage.setItem(STORAGE_KEYS.LAST_EXPORT, Date.now());
         this.updateExportWarningStatus();
     }
 
     /** Возвращает true, если есть несохранённые изменения. */
     hasUnsavedChanges() {
-        return parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10) > 0;
+        return this.getUnsavedChangesCount() > 0;
     }
 
     /** Возвращает количество несохранённых изменений. */
     getUnsavedChangesCount() {
-        return parseInt(localStorage.getItem('unsavedChangesCount') || '0', 10);
+        return parseInt(localStorage.getItem(STORAGE_KEYS.UNSAVED_COUNT) || '0', 10) || 0;
     }
 
     /** Обновляет бейдж несохранённых изменений в шапке. */
@@ -237,23 +248,23 @@ class PoemStore {
             : [...this.data.authors];
 
         switch (this.authorSortMode) {
-            case 'birthday':
+            case SORT_AUTHORS.BIRTHDAY:
                 authors.sort((a, b) => {
                     if (!a.birthYear && !b.birthYear) return sortAZ(a, b);
                     return (a.birthYear || 9999) - (b.birthYear || 9999) || sortAZ(a, b);
                 });
                 break;
-            case 'len':
+            case SORT_AUTHORS.POSTS_COUNT:
                 authors.sort((a, b) => {
                     const la = a.posts?.length || 0;
                     const lb = b.posts?.length || 0;
                     return lb - la || sortAZ(a, b);
                 });
                 break;
-            case 'az':
+            case SORT_AUTHORS.ALPHABET:
                 authors.sort(sortAZ);
                 break;
-            case 'recent':
+            case SORT_AUTHORS.RECENT:
                 authors.sort((a, b) => {
                     const ta = this.lastViewed[a.id] || 0;
                     const tb = this.lastViewed[b.id] || 0;
@@ -630,8 +641,8 @@ class PoemStore {
         oebps.file('content.opf', `<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <dc:title>${mainTitle}</dc:title>
-    <dc:language>uk</dc:language>
+    <dc:title>${escapeHtml(mainTitle)}</dc:title>
+    <dc:language>ru</dc:language>
     <dc:identifier id="BookId">urn:uuid:${Date.now()}</dc:identifier>
   </metadata>
   <manifest>${manifestItems.join('\n    ')}</manifest>

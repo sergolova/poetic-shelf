@@ -33,8 +33,8 @@ class PoemApp {
     async init() {
         await this.store.init();
 
-        this.store.selectedPostId = localStorage.getItem('selectedPostId') ?? null;
-        this.store.selectedAuthorId = localStorage.getItem('selectedAuthorId') ?? null;
+        this.store.selectedPostId = localStorage.getItem(STORAGE_KEYS.SELECTED_POST) ?? null;
+        this.store.selectedAuthorId = localStorage.getItem(STORAGE_KEYS.SELECTED_AUTHOR) ?? null;
 
         this.updateTheme();
         this.applyFontSize();
@@ -63,6 +63,11 @@ class PoemApp {
                 this.ui.scrollToPost(foundAuthor?.id, postId);
             }
         });
+
+        // Ленивая подгрузка превью YouTube. Делегирование на document, а не
+        // наведение на каждый контейнер: карточки произведений перерисовываются
+        // при каждом refresh, и обработчики пришлось бы вешать заново.
+        $(document).on('mouseenter focusin', '.link-yt-tooltip', (e) => this.ui.loadYouTubeThumbnails(e));
 
         this.bindEvents();
         this.refresh(true);
@@ -131,14 +136,14 @@ class PoemApp {
         this.initPoemLineBreakMarkers();
 
         if (this.store.selectedPostId) {
-            localStorage.setItem('selectedPostId', this.store.selectedPostId);
+            localStorage.setItem(STORAGE_KEYS.SELECTED_POST, this.store.selectedPostId);
         } else {
-            localStorage.removeItem('selectedPostId');
+            localStorage.removeItem(STORAGE_KEYS.SELECTED_POST);
         }
         if (this.store.selectedAuthorId) {
-            localStorage.setItem('selectedAuthorId', this.store.selectedAuthorId);
+            localStorage.setItem(STORAGE_KEYS.SELECTED_AUTHOR, this.store.selectedAuthorId);
         } else {
-            localStorage.removeItem('selectedAuthorId');
+            localStorage.removeItem(STORAGE_KEYS.SELECTED_AUTHOR);
         }
     }
 
@@ -166,29 +171,29 @@ class PoemApp {
         const $themeIcon = $('#themeIcon');
 
         const setTheme = (theme) => {
-            if (theme === 'dark') {
-                $('body').attr('data-theme', 'dark');
+            if (theme === THEME.DARK) {
+                $('body').attr('data-theme', THEME.DARK);
                 $themeIcon.text('☀️');
-                localStorage.setItem('appTheme', 'dark');
+                localStorage.setItem(STORAGE_KEYS.THEME, THEME.DARK);
             } else {
                 $('body').removeAttr('data-theme');
                 $themeIcon.text('🌙');
-                localStorage.setItem('appTheme', 'light');
+                localStorage.setItem(STORAGE_KEYS.THEME, THEME.LIGHT);
             }
         };
 
-        const saved = localStorage.getItem('appTheme') ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const saved = localStorage.getItem(STORAGE_KEYS.THEME) ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? THEME.DARK : THEME.LIGHT);
         setTheme(saved);
 
         $themeBtn.on('click', function () {
-            setTheme($('body').attr('data-theme') === 'dark' ? 'light' : 'dark');
+            setTheme($('body').attr('data-theme') === THEME.DARK ? THEME.LIGHT : THEME.DARK);
         });
     }
 
     /** Применяет сохранённый размер шрифта. */
     applyFontSize() {
-        const fontSize = localStorage.getItem('fontSize') || 'normal';
+        const fontSize = localStorage.getItem(STORAGE_KEYS.FONT_SIZE) || STORAGE_DEFAULTS.FONT_SIZE;
         $('body').removeClass('font-small font-normal font-large').addClass(`font-${fontSize}`);
         $(`input[name="fontSize"][value="${fontSize}"]`).prop('checked', true);
     }
@@ -205,12 +210,12 @@ class PoemApp {
     }
 
     /**
-     * Применяет количество колонок к карточкам стихов.
+     * Применяет количество колонок к карточкам произведений.
      * Число колонок определяется по длине произведения, но не превышает максимум.
-     * Значение "parallel" переключает в режим оригинал|перевод.
+     * Значение COLUMNS.PARALLEL переключает в режим оригинал|перевод.
      */
     applyColumns() {
-        const columns = localStorage.getItem('columns') || '1';
+        const columns = localStorage.getItem(STORAGE_KEYS.COLUMNS) || STORAGE_DEFAULTS.COLUMNS;
         $(`input[name="columns"][value="${columns}"]`).prop('checked', true);
 
         // Parallel-режим — стандартные колонки не применяются
@@ -244,8 +249,8 @@ class PoemApp {
      * Применяет случайный заголовок и подзаголовок из встроенных массивов.
      */
     applyRandomPoeticTitle() {
-        const title = this._randomFromArray(PoemApp.poeticTitles, 'poeticTitleIndex');
-        const subtitle = this._randomFromArray(PoemApp.poeticSubtitles, 'poeticSubtitleIndex');
+        const title = this._randomFromArray(PoemApp.poeticTitles, STORAGE_KEYS.TITLE_INDEX);
+        const subtitle = this._randomFromArray(PoemApp.poeticSubtitles, STORAGE_KEYS.SUBTITLE_INDEX);
         this._rollText($('.brand-title'), title, 500);
         this._rollText($('.small-subtitle'), subtitle, 500);
     }
@@ -401,7 +406,7 @@ class PoemApp {
 
 
     /* ==========================================================================
-       5. Маркеры переноса строк стихов / Poem Line Break Markers
+       5. Маркеры переноса строк произведений / Poem Line Break Markers
        ========================================================================== */
 
     /**
@@ -539,7 +544,7 @@ class PoemApp {
 
     /**
      * Глобальные события: Esc, «наверх», хедер при скролле,
-     * меню закладок, клики по строкам стихов.
+     * меню закладок, клики по строкам произведений.
      */
     bindGlobalEvents() {
         const scrollTopBtn = document.getElementById('scrollTopBtn');
@@ -605,7 +610,7 @@ class PoemApp {
             }
         });
 
-        // Меню закладок и навигация по стихам из дропдауна
+        // Меню закладок и навигация по произведениям из дропдауна
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.js-toggle-bookmarks');
             const wrapper = e.target.closest('.bookmark-dropdown-wrapper');
@@ -635,7 +640,7 @@ class PoemApp {
             }
         });
 
-        // Закладка на строку стиха (click toggle) с синхронизацией колонок
+        // Закладка на строку произведения (click toggle) с синхронизацией колонок
         $(document).on('click', '.poem-line', (e) => {
             const $line = $(e.target).closest('.poem-line');
             const $card = $line.closest('.poem-card');
@@ -711,19 +716,19 @@ class PoemApp {
         });
 
         $(document).on('change', 'input[name="fontSize"]', (e) => {
-            localStorage.setItem('fontSize', $(e.target).val());
+            localStorage.setItem(STORAGE_KEYS.FONT_SIZE, $(e.target).val());
             this.applyFontSize();
         });
 
         $(document).on('change', 'input[name="columns"]', (e) => {
-            localStorage.setItem('columns', $(e.target).val());
+            localStorage.setItem(STORAGE_KEYS.COLUMNS, $(e.target).val());
             this.applyColumns();
             this.refresh();
         });
     }
 
     /**
-     * События сайдбара: выбор автора, переход по стиху, сортировка.
+     * События сайдбара: выбор автора, переход к произведению, сортировка.
      */
     bindSidebarEvents() {
         $(document).on('click', '.author-card', (e) => {
@@ -999,7 +1004,7 @@ class PoemApp {
 
     /**
      * События произведений: добавление, редактирование, удаление,
-     * ссылки, закладки, HTML-режим, случайный стих.
+     * ссылки, закладки, HTML-режим, случайное произведение.
      */
     bindPostEvents() {
         $(document).on('click', '#addPostBtn', () => {
@@ -1204,7 +1209,7 @@ class PoemApp {
      * Загружает сохранённый выбор из localStorage.
      */
     openEpubAuthorsModal() {
-        const STORAGE_KEY = 'epubSelectedAuthors';
+        const STORAGE_KEY = STORAGE_KEYS.EPUB_AUTHORS;
         const allAuthors = this.store.data.authors || [];
 
         // Загружаем сохранённый выбор
@@ -1235,7 +1240,7 @@ class PoemApp {
                     <label class="form-check-label d-flex justify-content-between align-items-center w-100"
                            for="epub_author_${author.id}">
                         <span>${escapeHtml(fullName)}</span>
-                        <span class="badge bg-secondary rounded-pill">${postsCount} стих.</span>
+                        <span class="badge bg-secondary rounded-pill">${postsCount} ${this.ui.getPostWord(postsCount)}.</span>
                     </label>
                 </div>
             `);

@@ -1,6 +1,22 @@
 {
+  "name": "stih",
+  "version": "1.0.0",
+  "description": "Поэтическая Полка — SPA для хранения и чтения поэзии (без бэкенда, данные в localStorage)",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "poetry",
+    "localstorage",
+    "epub",
+    "spa"
+  ],
+  "license": "MIT",
   "dependencies": {
     "bootstrap": "^5.3.8",
-    "jquery": "^4.0.0"
+    "file-saver": "^2.0.5",
+    "jquery": "^4.0.0",
+    "jszip": "^3.10.1"
   }
 }

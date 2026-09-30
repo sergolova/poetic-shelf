@@ -2,7 +2,7 @@
  * ==========================================================================
  * assets/timebar.js
  * Компонент временной шкалы (TimelineBar).
- * Отрисовывает точки лет, плашку жизни автора, выпадающие меню стихов.
+ * Отрисовывает точки лет, плашку жизни автора, выпадающие меню произведений.
  * ==========================================================================
  */
 
@@ -30,7 +30,7 @@ class TimelineBar {
 
     /**
      * Рендерит временную шкалу.
-     * @param {Array} allPosts - Все стихотворения (с полем authorId).
+     * @param {Array} allPosts - Все произведения (с полем authorId).
      * @param {string|null} activeAuthorId - Выбранный автор.
      * @param {Array} authors - Список всех авторов.
      * @param {string|null} activePostId - Выбранное произведение.
@@ -41,7 +41,7 @@ class TimelineBar {
         const validPosts = (allPosts || []).filter(p => p.year && !isNaN(p.year));
         if (validPosts.length === 0) { this.container.innerHTML = ''; return; }
 
-        // Группируем стихи по годам
+        // Группируем произведения по годам
         const postsByYear = validPosts.reduce((acc, post) => {
             if (!acc[post.year]) acc[post.year] = { posts: [], authorIds: new Set() };
             acc[post.year].posts.push(post);
@@ -185,7 +185,7 @@ class TimelineBar {
     bindEvents() {
         const container = this.container;
 
-        // Клик по конкретному стихотворению в выпадающем меню
+        // Клик по конкретному произведению в выпадающем меню
         container.querySelectorAll('.timeline-post-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();

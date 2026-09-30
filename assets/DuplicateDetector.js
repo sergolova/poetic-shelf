@@ -1,13 +1,36 @@
 /**
- * Класс детектора дубликатов
+ * ==========================================================================
+ * assets/DuplicateDetector.js
+ * Класс детектора дубликатов (DuplicateDetector).
+ *
+ * Ищет два вида дубликатов:
+ *   - авторы с почти одинаковым ФИО (порог по умолчанию 0.90);
+ *   - произведения с почти одинаковым текстом (в т.ч. внутри одного
+ *     автора — частый случай при импорте библиотеки).
+ *
+ * Сравнение строк — расстояние Левенштейна по нормализованному тексту.
+ * Рендер результатов работает с DOM и требует глобальной escapeHtml()
+ * из assets/utilities.js (вызывается на этапе работы, не загрузки,
+ * поэтому порядок подключения файлов на это не влияет).
+ * ==========================================================================
  */
 class DuplicateDetector {
+    /**
+     * @param {Object} [options] - Настройки детектора.
+     * @param {number} [options.threshold=0.90] - Порог сходства 0..1,
+     *        при котором пара считается дубликатом.
+     */
     constructor(options = {}) {
         this.threshold = options.threshold || 0.90; // Порог совпадения 90%
     }
 
+
+
     /**
-     * Очистка текста от мусора, знаков препинания, ударений
+     * Очистка текста от мусора, знаков препинания, ударений.
+     * Приводит к нижнему регистру, убирает «ё» и комбинирующие диакритики.
+     * @param {string} str - Исходная строка.
+     * @returns {string} Нормализованная строка ('' для пустого входа).
      */
     normalizeText(str) {
         if (!str) return '';
@@ -20,22 +43,42 @@ class DuplicateDetector {
             .trim();
     }
 
+    /**
+     * Считает сходство двух строк в диапазоне 0..1.
+     * Пустые строки всегда дают 0: иначе два произведения без текста
+     * выглядели бы как дубликаты друг друга.
+     * @param {string} str1 - Первая строка.
+     * @param {string} str2 - Вторая строка.
+     * @returns {number} Сходство 0..1.
+     */
     calculateSimilarity(str1, str2) {
         const s1 = this.normalizeText(str1);
         const s2 = this.normalizeText(str2);
 
-        if (s1 === s2) return 1.0;
+        // Пустые тексты проверяем ДО сравнения на равенство, иначе два
+        // произведения без текста дают сходство 1.0 («100 %») и
+        // показываются в отчёте как дубликаты друг друга.
         if (!s1 || !s2) return 0.0;
+        if (s1 === s2) return 1.0;
 
         const maxLength = Math.max(s1.length, s2.length);
         const minLength = Math.min(s1.length, s2.length);
 
+        // Дешёвый выход: при большой разнице длин точного сходства
+        // выше порога уже не получить, Левенштейн можно не считать.
         if (minLength / maxLength < (this.threshold - 0.15)) return 0.0;
 
         const distance = this._levenshteinDistance(s1, s2);
         return 1 - (distance / maxLength);
     }
 
+    /**
+     * Расстояние Левенштейна между двумя строками (число правок:
+     * вставка, удаление, замена). Считается в две строки по памяти.
+     * @param {string} a - Первая строка.
+     * @param {string} b - Вторая строка.
+     * @returns {number} Расстояние (0 для равных строк).
+     */
     _levenshteinDistance(a, b) {
         if (a === b) return 0;
         if (a.length === 0) return b.length;
@@ -62,6 +105,12 @@ class DuplicateDetector {
         return row1[a.length];
     }
 
+    /**
+     * Запускает оба поиска и сообщает прогресс.
+     * @param {Object} data - Данные библиотеки ({ authors: [...] }).
+     * @param {function(number): void} [onProgress] - Колбэк прогресса 0..100.
+     * @returns {Promise<{authorDuplicates: Array, postDuplicates: Array}>}
+     */
     async detectAsync(data, onProgress = () => {}) {
         const authors = data?.authors || [];
 
@@ -80,6 +129,12 @@ class DuplicateDetector {
         return { authorDuplicates, postDuplicates };
     }
 
+    /**
+     * Ищет авторов с почти одинаковым ФИО. Сравнивает все пары
+     * (не только соседние), поэтому три одинаковых автора дают три пары.
+     * @param {Array<Object>} authors - Список авторов.
+     * @returns {Array<{similarityPercentage: number, authorA: Object, authorB: Object}>}
+     */
     detectAuthorDuplicates(authors) {
         const duplicates = [];
         for (let i = 0; i < authors.length; i++) {
@@ -102,6 +157,14 @@ class DuplicateDetector {
         return duplicates;
     }
 
+    /**
+     * Ищет произведения с почти одинаковым текстом — в том числе
+     * внутри одного автора. Асинхронная, потому что каждые N сравнений
+     * уступает поток браузеру, чтобы progress-бар успевал перерисоваться.
+     * @param {Array<Object>} authors - Список авторов с их posts.
+     * @param {function(number): void} onProgress - Колбэк прогресса 0..100.
+     * @returns {Promise<Array<Object>>} Найденные пары дубликатов.
+     */
     async detectPostDuplicatesAsync(authors, onProgress) {
         const allPosts = [];
         authors.forEach(author => {
@@ -144,8 +207,12 @@ class DuplicateDetector {
             }
 
             // Каждую итерацию по первому циклу даем браузеру паузу (0 мс),
-            // чтобы он перерисовал ProgressBar и обновляем процент
-            const currentPercent = Math.round((processedComparisons / totalComparisons) * 100);
+            // чтобы он перерисовал ProgressBar и обновим процент.
+            // При одном произведении сравнений нет (0/0), и без этой
+            // проверки прогрессбар получал NaN% и зависал.
+            const currentPercent = totalComparisons > 0
+                ? Math.round((processedComparisons / totalComparisons) * 100)
+                : 100;
             onProgress(currentPercent);
             await new Promise(resolve => setTimeout(resolve, 0));
         }
@@ -153,6 +220,12 @@ class DuplicateDetector {
         return duplicates;
     }
 
+    /**
+     * Рендерит результаты поиска в модальное окно.
+     * Все данные пользователя экранируются: они попадают в innerHTML.
+     * @param {{authorDuplicates: Array, postDuplicates: Array}} results -
+     *        Результат detectAsync().
+     */
     renderDuplicateResults(results) {
         const authorListEl = document.getElementById('authorDuplicatesList');
         const postListEl = document.getElementById('postDuplicatesList');
@@ -172,15 +245,15 @@ class DuplicateDetector {
                     </div>
                     <div class="row align-items-center g-2">
                         <div class="col-5 border-end pe-2">
-                            <div class="fw-bold text-truncate">${item.authorA.name}</div>
-                            <small class="posts-count-badge">Стихов: ${item.authorA.postsCount}</small>
+                            <div class="fw-bold text-truncate">${escapeHtml(item.authorA.name)}</div>
+                            <small class="posts-count-badge">Произведений: ${item.authorA.postsCount}</small>
                         </div>
                         <div class="col-2 text-center text-muted">
                             <i class="bi bi-arrow-left-right"></i>
                         </div>
                         <div class="col-5 ps-2">
-                            <div class="fw-bold text-truncate">${item.authorB.name}</div>
-                            <small class="posts-count-badge">Стихов: ${item.authorB.postsCount}</small>
+                            <div class="fw-bold text-truncate">${escapeHtml(item.authorB.name)}</div>
+                            <small class="posts-count-badge">Произведений: ${item.authorB.postsCount}</small>
                         </div>
                     </div>
                 </div>
@@ -190,7 +263,7 @@ class DuplicateDetector {
 
         // 2. Отрисовка постов
         if (results.postDuplicates.length === 0) {
-            postListEl.innerHTML = `<div class="alert alert-success m-0">Дубликатов стихотворений не найдено.</div>`;
+            postListEl.innerHTML = `<div class="alert alert-success m-0">Дубликатов произведений не найдено.</div>`;
         } else {
             postListEl.innerHTML = results.postDuplicates.map(item => `
             <div class="card shadow-sm border">
@@ -203,14 +276,14 @@ class DuplicateDetector {
                     </div>
                     <div class="row g-2">
                         <div class="col-6 border-end pe-2">
-                            <div class="fw-bold text-truncate">${item.postA.title}</div>
-                            <h6 class="author-name mb-0 text-truncate">${item.postA.authorName}</h6>
-                            <div class="bg-light p-2 rounded text-muted small" style="max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${item.postA.content.substring(0, 150)}...</div>
+                            <div class="fw-bold text-truncate">${escapeHtml(item.postA.title)}</div>
+                            <h6 class="author-name mb-0 text-truncate">${escapeHtml(item.postA.authorName)}</h6>
+                            <div class="bg-light p-2 rounded text-muted small" style="max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(item.postA.content.substring(0, 150))}...</div>
                         </div>
                         <div class="col-6 ps-2">
-                            <div class="fw-bold text-truncate">${item.postB.title}</div>
-                            <h6 class="author-name mb-0 text-truncate">${item.postB.authorName}</h6>
-                            <div class="bg-light p-2 rounded text-muted small" style="max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${item.postB.content.substring(0, 150)}...</div>
+                            <div class="fw-bold text-truncate">${escapeHtml(item.postB.title)}</div>
+                            <h6 class="author-name mb-0 text-truncate">${escapeHtml(item.postB.authorName)}</h6>
+                            <div class="bg-light p-2 rounded text-muted small" style="max-height: 80px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(item.postB.content.substring(0, 150))}...</div>
                         </div>
                     </div>
                 </div>

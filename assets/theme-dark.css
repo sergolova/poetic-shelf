@@ -241,7 +241,7 @@
     border-bottom-color: var(--border-color);
 }
 
-/* Ссылки на стихи во временной шкале */
+/* Ссылки на произведения во временной шкале */
 [data-theme="dark"] .timeline-post-link {
     color: var(--text-main);
 }

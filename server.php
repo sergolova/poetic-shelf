@@ -16,10 +16,43 @@ if (!is_dir($projectDir)) {
     exit(1);
 }
 
+/**
+ * Записывает сообщение в лог-файл операций.
+ * @param string $dir Каталог проекта.
+ * @param string $message Текст сообщения.
+ */
 function logMessage(string $dir, string $message): void {
     $logFile = $dir . '/mcp_server.log';
     $timestamp = date('Y-m-d H:i:s');
     file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+}
+
+/**
+ * Описывает аргументы вызова инструмента для лога БЕЗ их содержимого.
+ *
+ * Лог не гимгинается и попадает в репозиторий вместе с бэкапами, поэтому
+ * текст произведений и переводов в него не пишется: для отладки достаточно
+ * знать, какие поля пришли и какого они размера. Раньше здесь был
+ * json_encode($args), который выкладывал в открытый файл весь текст.
+ *
+ * @param array $args Аргументы инструмента.
+ * @return string Компактное описание вида: {title: 42 симв., content: 1200 симв.}
+ */
+function describeArgs(array $args): string {
+    if (empty($args)) return '[]';
+    $parts = [];
+    foreach ($args as $key => $value) {
+        if (is_string($value)) {
+            $parts[] = $key . ': ' . mb_strlen($value) . ' симв.';
+        } elseif (is_scalar($value)) {
+            $parts[] = $key . ': ' . var_export($value, true);
+        } elseif (is_array($value)) {
+            $parts[] = $key . ': ' . count($value) . ' эл.';
+        } else {
+            $parts[] = $key . ': (' . gettype($value) . ')';
+        }
+    }
+    return '{' . implode(', ', $parts) . '}';
 }
 
 function getLatestBackupFile(string $dir): ?string {
@@ -140,7 +173,7 @@ while (($line = fgets(STDIN)) !== false) {
                 ],
                 [
                     'name' => 'search_poems',
-                    'description' => 'Ищет стихотворения по тексту или заголовку.',
+                    'description' => 'Ищет произведения по тексту или заголовку.',
                     'inputSchema' => [
                         'type' => 'object',
                         'properties' => [
@@ -151,11 +184,11 @@ while (($line = fgets(STDIN)) !== false) {
                 ],
                 [
                     'name' => 'get_poem',
-                    'description' => 'Возвращает полное стихотворение по ID.',
+                    'description' => 'Возвращает полное произведение по ID.',
                     'inputSchema' => [
                         'type' => 'object',
                         'properties' => [
-                            'post_id' => ['type' => 'string', 'description' => 'ID стихотворения']
+                            'post_id' => ['type' => 'string', 'description' => 'ID произведения']
                         ],
                         'required' => ['post_id']
                     ]
@@ -177,7 +210,7 @@ while (($line = fgets(STDIN)) !== false) {
                 ],
                 [
                     'name' => 'add_poem',
-                    'description' => 'Добавляет стихотворение существующему автору.',
+                    'description' => 'Добавляет произведение существующему автору.',
                     'inputSchema' => [
                         'type' => 'object',
                         'properties' => [
@@ -192,7 +225,7 @@ while (($line = fgets(STDIN)) !== false) {
                 ],
                 [
                     'name' => 'update_poem',
-                    'description' => 'Обновляет существующее стихотворение.',
+                    'description' => 'Обновляет существующее произведение.',
                     'inputSchema' => [
                         'type' => 'object',
                         'properties' => [
@@ -209,7 +242,7 @@ while (($line = fgets(STDIN)) !== false) {
     elseif ($method === 'tools/call') {
         $toolName = $request['params']['name'] ?? '';
         $args = $request['params']['arguments'] ?? [];
-        logMessage($projectDir, "JSON-RPC: Вызов инструмента '$toolName' | Аргументы: " . json_encode($args, JSON_UNESCAPED_UNICODE));
+        logMessage($projectDir, "JSON-RPC: Вызов инструмента '$toolName' | Аргументы: " . describeArgs($args));
         $db = loadData($projectDir);
 
         switch ($toolName) {
@@ -268,7 +301,7 @@ while (($line = fgets(STDIN)) !== false) {
                     sendToolResult($id, $found);
                 } else {
                     logMessage($projectDir, "get_poem: Ошибка - произведение с ID '{$args['post_id']}' не найдено.");
-                    sendError($id, 404, "Стихотворение не найдено");
+                    sendError($id, 404, "Произведение не найдено");
                 }
                 break;
 
@@ -321,10 +354,10 @@ while (($line = fgets(STDIN)) !== false) {
 
                 if (saveData($projectDir, $db)) {
                     $authorName = trim(($db['authors'][$targetIndex]['lastName'] ?? '') . ' ' . ($db['authors'][$targetIndex]['firstName'] ?? ''));
-                    logMessage($projectDir, "add_poem: Добавлено стихотворение '{$args['title']}' автору '$authorName' (ID стихотворения: {$newPost['id']})");
+                    logMessage($projectDir, "add_poem: Добавлено произведение '{$args['title']}' автору '$authorName' (ID произведения: {$newPost['id']})");
                     sendToolResult($id, ["status" => "success", "post_id" => $newPost['id']]);
                 } else {
-                    logMessage($projectDir, "add_poem: Ошибка сохранения при добавлении стихотворения '{$args['title']}'");
+                    logMessage($projectDir, "add_poem: Ошибка сохранения при добавлении произведения '{$args['title']}'");
                     sendError($id, 500, "Ошибка сохранения");
                 }
                 break;
@@ -344,11 +377,11 @@ while (($line = fgets(STDIN)) !== false) {
                     }
                 }
                 if ($updated && saveData($projectDir, $db)) {
-                    logMessage($projectDir, "update_poem: Обновлено стихотворение '{$args['title']}' автора '$authorName' (ID: {$args['post_id']})");
+                    logMessage($projectDir, "update_poem: Обновлено произведение '{$args['title']}' автора '$authorName' (ID: {$args['post_id']})");
                     sendToolResult($id, ["status" => "success"]);
                 } else {
-                    logMessage($projectDir, "update_poem: Ошибка - стихотворение с ID '{$args['post_id']}' не найдено или ошибка сохранения.");
-                    sendError($id, 404, "Стихотворение не найдено или ошибка сохранения");
+                    logMessage($projectDir, "update_poem: Ошибка - произведение с ID '{$args['post_id']}' не найдено или ошибка сохранения.");
+                    sendError($id, 404, "Произведение не найдено или ошибка сохранения");
                 }
                 break;
 

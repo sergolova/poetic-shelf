@@ -226,7 +226,7 @@ class PoemUI {
         <div class="author-card-wrapper">
           <span class="list-group-item list-group-item-action author-card ${isActive ? 'active' : ''} d-flex align-items-center gap-3 py-3 border-bottom" data-id="${author.id}">
             <div class="author-avatar-wrapper">
-              <img src="${avatar}" class="author-avatar-img avatar-style" alt="${author.lastName}">
+              <img src="${avatar}" class="author-avatar-img avatar-style" alt="${escapeHtml(author.lastName)}">
             </div>
             <div class="author-info flex-grow-1 overflow-hidden">
               <h6 class="author-name mb-0 text-truncate">${authorName}</h6>
@@ -279,7 +279,7 @@ class PoemUI {
         const postsHtml = !emptyHtml
             ? displayPosts.map(p => this.createPoemCardHtml(p, author, q)).join('')
             : `<div class="alert alert-light text-center border py-4 text-muted">
-          ${searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых стихов'}
+          ${searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых произведений'}
          </div>`;
 
         const hideYears = !author.birthYear && !author.deathYear;
@@ -296,7 +296,7 @@ class PoemUI {
       <div class="author-profile-hero border-0">
         <div class="card-body pb-4 pt-4 d-flex align-items-center justify-content-between flex-wrap gap-4">
           <div class="d-flex align-items-center gap-4">
-            <img src="${avatar}" class="hero-avatar-img avatar-style" alt="${author.lastName}">
+            <img src="${avatar}" class="hero-avatar-img avatar-style" alt="${escapeHtml(author.lastName)}">
             <div>
               <div class="hero-author-wrapper">
                 <h2 class="hero-author-name mb-1">
@@ -304,7 +304,7 @@ class PoemUI {
                 </h2>
                 <div>
                   <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="editAuthorBtn" title="Редактировать">✏️</button>
-                  <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="addPostBtn" title="Добавить стих">
+                  <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="addPostBtn" title="Добавить произведение">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line>
                     </svg>
@@ -343,7 +343,7 @@ class PoemUI {
             detectText = tmp.textContent || '';
         }
         const translation = detectTranslationPattern(detectText);
-        const isParallel = translation.isTranslation && localStorage.getItem('columns') === 'parallel';
+        const isParallel = translation.isTranslation && localStorage.getItem(STORAGE_KEYS.COLUMNS) === COLUMNS.PARALLEL;
 
         // Форматирует одну строку с учётом перевода
         const formatLine = (line, idx, dataIndex = null) => {
@@ -413,7 +413,12 @@ class PoemUI {
          ${post.links.map(l => {
                 const icon = isYoutube(l.url) ? '▶️' : '🔗';
                 const ytId = this.getYouTubeId(l.url);
-                const thumb = ytId ? `<span class="link-yt-tooltip"><img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="thumbnail"></span>` : '';
+                // Превью не вставляем сразу: img.src тянет сеть при каждом
+                // рендере, а приложение должно работать офлайн. Адрес
+                // кладём в data-атрибут, картинку подгружает
+                // loadYouTubeThumbnails() по наведению; без сети элемент
+                // тихо исчезает (см. onerror в ui.js).
+                const thumb = ytId ? `<span class="link-yt-tooltip" data-yt-thumb="https://img.youtube.com/vi/${ytId}/hqdefault.jpg"></span>` : '';
                 return `<span class="link-tooltip-container position-relative d-inline-block">
                  <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="poem-link-badge">${icon} ${escapeHtml(l.title || l.url)} ↗</a>
                  ${thumb}
@@ -656,7 +661,7 @@ class PoemUI {
        ========================================================================== */
 
     /**
-     * Генерирует HTML выпадающего меню со списком стихов.
+     * Генерирует HTML выпадающего меню со списком произведений.
      * @param {Array}  posts
      * @param {string} title
      * @param {string} customClass
@@ -751,6 +756,22 @@ class PoemUI {
     }
 
     /**
+     * Склоняет слово «произведение/произведения/произведений» по числу.
+     * Используется в бейджах, где рядом стоит само число: «3 произведения».
+     * @param {number} n
+     * @returns {string}
+     */
+    getPostWord(n) {
+        const abs = Math.abs(Number(n) || 0);
+        const mod = abs % 100;
+        const last = abs % 10;
+        if (mod >= 11 && mod <= 14) return 'произведений';
+        if (last === 1) return 'произведение';
+        if (last >= 2 && last <= 4) return 'произведения';
+        return 'произведений';
+    }
+
+    /**
      * Склоняет слово «год/года/лет» по числу.
      * @param {number} age
      * @returns {string}
@@ -771,10 +792,41 @@ class PoemUI {
      * @param {string} url
      * @returns {string|null}
      */
+    /**
+     * Извлекает ID видео YouTube из ссылки.
+     * @param {string} url - Ссылка на YouTube.
+     * @returns {string|null} 11-символьный ID видео или null.
+     */
     getYouTubeId(url) {
         if (!url) return null;
         const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
         return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    /**
+     * Подгружает превью YouTube по наведению на ссылку.
+     *
+     * Превью — единственное место в приложении, где нужна сеть, и оно
+     * необязательное: при первом наведении (или фокусе с клавиатуры) в
+     * контейнер вставляется <img>. Если сети нет или превью недоступно,
+     * контейнер удаляется, ссылка продолжает работать как обычная.
+     *
+     * @param {Event} e - Событие наведения (mouseover или focusin).
+     */
+    loadYouTubeThumbnails(e) {
+        const container = e.target.closest('.link-yt-tooltip');
+        if (!container || container.dataset.loaded) return;
+
+        const src = container.dataset.ytThumb;
+        if (!src) return;
+        container.dataset.loaded = '1';
+
+        const img = document.createElement('img');
+        img.alt = 'Превью видео';
+        img.loading = 'lazy';
+        img.onerror = () => container.remove();  // нет сети — убираем молча
+        img.src = src;
+        container.appendChild(img);
     }
 }
 
@@ -822,7 +874,7 @@ const TRANSLATION_THRESHOLD        = 0.5; // порог confidence
  *   - Гейты MIN_PAIRS и MIN_COVERAGE проверяются ДО вычисления confidence
  *     и обнуляют его. Перевод требует минимум две полные пары, покрывающие
  *     не менее четверти непустых строк. Это отсекает одиночную
- *     латинскую строку внутри русского стихотворения — «In vino veritas!»
+ *     латинскую строку внутри русского произведения — «In vino veritas!»
  *     в «Незнакомке» давала пару, но покрывала 4% текста.
  *
  *   - Спецслучай 2-3 строк не смотрит на порядок (раньше распознавался

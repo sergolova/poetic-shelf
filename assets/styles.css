@@ -154,7 +154,7 @@ body.vintage-app {
 
 
 /* ==========================================================================
-   4. Типографика и Колонки стихов / Typography & Verse Column System
+   4. Типографика и Колонки произведений / Typography & Verse Column System
    ========================================================================== */
 
 /* Динамические размеры шрифта */
@@ -701,7 +701,7 @@ a.view-all {
     border: 1px solid var(--border-color);
 }
 
-/* Текст стиха */
+/* Текст произведения */
 .poem-text-container {
     position: relative;
     padding-left: 1rem;
@@ -812,7 +812,7 @@ a.view-all {
     box-shadow: inset 0 0 3px #c8a12c;
 }
 
-/* Управление закладками стихотворения */
+/* Управление закладками произведения */
 .post-header-wrapper {
     display: flex;
     gap: 12px;
@@ -959,7 +959,7 @@ a.view-all {
     z-index: 20;
 }
 
-/* Неактивная точка (у текущего автора нет стихов) */
+/* Неактивная точка (у текущего автора нет произведений) */
 .timeline-dot {
     width: 12px;
     height: 12px;
@@ -974,7 +974,7 @@ a.view-all {
     transform: scale(1.3);
 }
 
-/* Активный год (у текущего автора есть стихи) */
+/* Активный год (у текущего автора есть произведения) */
 .timeline-dot-wrapper.active .timeline-dot {
     width: 12px;
     height: 12px;
@@ -983,7 +983,7 @@ a.view-all {
     z-index: 999999;
 }
 
-/* Счётчик стихов внутри кружка */
+/* Счётчик произведений внутри кружка */
 /* Объединение .timeline-dot-count и .timeline-dot-wrapper .timeline-dot-count */
 .timeline-dot-count {
     position: absolute;
@@ -1035,7 +1035,7 @@ a.view-all {
     border: 1px solid color-mix(in srgb, var(--accent-color), red 70%) !important;
 }
 
-/* Выпадающее меню со стихами на таймлайне */
+/* Выпадающее меню с произведениями на таймлайне */
 .timeline-dropdown-menu {
     display: none;
     position: absolute;

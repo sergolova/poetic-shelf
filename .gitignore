@@ -1,6 +1,18 @@
-stih_backup_*
+# Зависимости
 /node_modules
+
+# IDE
 /.idea
-mcp_server.log
+/.claude/settings.local.json
+
+# Данные библиотеки: бэкапы и экспортированные книги
+stih_backup_*
 stih*.json
 *.epub
+
+# Логи MCP-сервера (могут содержать текст стихотворений)
+/mcp_server.log
+
+# Локальная конфигурация агентов: содержит абсолютные пути к этому
+# каталогу на конкретной машине. Образец — в mcp.example.json
+/opencode.json

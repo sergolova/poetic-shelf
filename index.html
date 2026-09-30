@@ -135,7 +135,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <span class="sidebar-heading">Авторы <span class="badge rounded-pill bg-accent ms-1" id="authorsCount">0</span></span>
                             <span class="sidebar-heading">•</span>
-                            <span class="sidebar-heading">Стихов <span class="badge rounded-pill bg-secondary ms-1" id="postsCount">0</span></span>
+                            <span class="sidebar-heading">Произведений <span class="badge rounded-pill bg-secondary ms-1" id="postsCount">0</span></span>
                         </div>
                         <button class="btn btn-link text-muted p-0 ms-2 edit-post-btn svg-button" id="addAuthorBtn" title="Добавить автора">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,12 +196,12 @@
 
         <div class="sidebar-resizer"></div>
         
-        <!-- Главное поле: Профиль автора и стихи -->
+        <!-- Главное поле: Профиль автора и произведения -->
         <main class="main-content">
             <div id="mainContent">
-                <!-- Лента стихов -->
+                <!-- Лента произведений -->
                 <div class="posts-feed space-y-4">
-                    <!-- Карточка стиха -->
+                    <!-- Карточка произведения -->
                 </div>
             </div>
         </main>
@@ -229,7 +229,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link fw-semibold" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts-tab-pane" type="button" role="tab">
-                            Стихотворения <span class="posts-count-badge" id="dupPostsCount">0</span>
+                            Произведения <span class="posts-count-badge" id="dupPostsCount">0</span>
                         </button>
                     </li>
                 </ul>
@@ -375,7 +375,7 @@
     </div>
 </div>
 
-<!-- Модальное окно: Стих (Создание / Редактирование) -->
+<!-- Модальное окно: Произведение (Создание / Редактирование) -->
 <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -449,7 +449,7 @@
 
                 </div>
                 <div class="modal-footer border-top bg-light py-2 px-4 d-flex justify-content-between">
-                    <button type="button" class="btn btn-outline-danger btn-sm d-none" id="deletePostBtn">Удалить стих</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm d-none" id="deletePostBtn">Удалить произведение</button>
                     <div class="ms-auto d-flex gap-2">
                         <button type="button" class="btn btn-vintage-outline btn-sm" data-bs-dismiss="modal">Отмена</button>
                         <button type="submit" class="btn btn-accent btn-sm rounded-pill px-4">Сохранить</button>
@@ -493,6 +493,7 @@
     </svg>
 </button>
 
+<script src="assets/storage-keys.js"></script>
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/DuplicateDetector.js"></script>
@@ -501,7 +502,7 @@
 <script src="assets/store.js"></script>
 <script src="assets/ui.js"></script>
 <script src="assets/app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="node_modules/jszip/dist/jszip.min.js"></script>
+<script src="node_modules/file-saver/dist/FileSaver.min.js"></script>
 </body>
 </html>
