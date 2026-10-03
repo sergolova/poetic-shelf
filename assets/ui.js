@@ -436,7 +436,7 @@ class PoemUI {
                 // кладём в data-атрибут, картинку подгружает
                 // loadYouTubeThumbnails() по наведению; без сети элемент
                 // тихо исчезает (см. onerror в ui.js).
-                const thumb = ytId ? `<span class="link-yt-tooltip" data-yt-thumb="https://img.youtube.com/vi/${ytId}/hqdefault.jpg"></span>` : '';
+                const thumb = ytId ? `<span class="link-yt-tooltip" data-yt-thumb="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg"></span>` : '';
                 return `<span class="link-tooltip-container position-relative d-inline-block">
                  <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="poem-link-badge">${icon} ${escapeHtml(l.title || l.url)} ↗</a>
                  ${thumb}
@@ -832,7 +832,8 @@ class PoemUI {
      * @param {Event} e - Событие наведения (mouseover или focusin).
      */
     loadYouTubeThumbnails(e) {
-        const container = e.target.closest('.link-yt-tooltip');
+        const tooltipContainer = e.target.closest('.link-tooltip-container');
+        const container = tooltipContainer ? tooltipContainer.querySelector('.link-yt-tooltip') : null;
         if (!container || container.dataset.loaded) return;
 
         const src = container.dataset.ytThumb;
@@ -842,7 +843,13 @@ class PoemUI {
         const img = document.createElement('img');
         img.alt = 'Превью видео';
         img.loading = 'lazy';
-        img.onerror = () => container.remove();  // нет сети — убираем молча
+        img.onerror = () => {
+            console.warn('[YouTubeThumb] Failed to load preview:', src);
+            container.remove();
+        };
+        img.onload = () => {
+            console.log('[YouTubeThumb] Preview loaded:', src);
+        };
         img.src = src;
         container.appendChild(img);
     }

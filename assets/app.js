@@ -67,7 +67,7 @@ class PoemApp {
         // Ленивая подгрузка превью YouTube. Делегирование на document, а не
         // наведение на каждый контейнер: карточки произведений перерисовываются
         // при каждом refresh, и обработчики пришлось бы вешать заново.
-        $(document).on('mouseenter focusin', '.link-yt-tooltip', (e) => this.ui.loadYouTubeThumbnails(e));
+        $(document).on('mouseenter focusin', '.link-tooltip-container', (e) => this.ui.loadYouTubeThumbnails(e));
 
         this.bindEvents();
         this.refresh(true);
