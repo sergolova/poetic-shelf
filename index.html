@@ -125,9 +125,16 @@
                 </ul>
             </div>
             <input type="file" id="importFileInput" accept=".json" class="d-none">
-            <button class="btn btn-vintage-outline btn-sm" id="themeToggleBtn" title="Сменить тему">
-                <span id="themeIcon">🌙</span>
-            </button>
+            <div class="dropdown">
+                <button class="btn btn-vintage-outline btn-sm dropdown-toggle" id="themeToggleBtn" title="Тема оформления" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" id="themeMenu">
+                    <li><button class="dropdown-item" type="button" data-theme-value="light">☀️ Светлая</button></li>
+                    <li><button class="dropdown-item" type="button" data-theme-value="dark">🌙 Тёмная</button></li>
+                    <li><button class="dropdown-item" type="button" data-theme-value="auto">💻 Авто</button></li>
+                </ul>
+            </div>
         </div>
     </div>
 </header>

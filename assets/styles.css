@@ -1304,8 +1304,13 @@ a.view-all {
     transform: translateY(-3px);
 }
 
-.dropdown-item:active {
+.dropdown-item:hover:not(.active) {
+    background-color: var(--highlight-bg);
+}
+
+.dropdown-item.active {
     background-color: var(--accent-color);
+    color: #fff;
 }
 
 .nav-link {

@@ -315,10 +315,15 @@
     color: var(--text-main) !important;
 }
 
-[data-theme="dark"] .dropdown-item:hover,
-[data-theme="dark"] .dropdown-item:focus {
+[data-theme="dark"] .dropdown-item:hover:not(.active),
+[data-theme="dark"] .dropdown-item:focus:not(.active) {
     background-color: var(--highlight-bg) !important;
     color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .dropdown-item.active {
+    background-color: var(--accent-color) !important;
+    color: #fff !important;
 }
 
 [data-theme="dark"] .author-search-dropdown {

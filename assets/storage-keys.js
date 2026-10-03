@@ -71,7 +71,8 @@ const STORAGE_KEYS = {
 /** Допустимые значения THEME. */
 const THEME = {
     DARK: 'dark',
-    LIGHT: 'light'
+    LIGHT: 'light',
+    AUTO: 'auto'
 };
 
 /** Допустимые значения FONT_SIZE. */

@@ -165,30 +165,53 @@ class PoemApp {
        ========================================================================== */
 
     /**
-     * Инициализирует тему оформления (тёмная/светлая) и обработчик переключения.
+     * Инициализирует тему оформления (светлая/тёмная/авто) и обработчики переключения.
      */
     updateTheme() {
-        const $themeBtn = $('#themeToggleBtn');
         const $themeIcon = $('#themeIcon');
+        const $themeMenuItems = $('#themeMenu [data-theme-value]');
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-        const setTheme = (theme) => {
-            if (theme === THEME.DARK) {
+        const applyTheme = (theme) => {
+            const isDark = theme === THEME.DARK ||
+                (theme === THEME.AUTO && mediaQuery.matches);
+
+            if (isDark) {
                 $('body').attr('data-theme', THEME.DARK);
                 $themeIcon.text('☀️');
-                localStorage.setItem(STORAGE_KEYS.THEME, THEME.DARK);
             } else {
                 $('body').removeAttr('data-theme');
                 $themeIcon.text('🌙');
-                localStorage.setItem(STORAGE_KEYS.THEME, THEME.LIGHT);
             }
+
+            // Подсвечиваем активный пункт меню
+            $themeMenuItems.removeClass('active');
+            const activeValue = theme === THEME.AUTO
+                ? THEME.AUTO
+                : (isDark ? THEME.DARK : THEME.LIGHT);
+            $themeMenuItems.filter(`[data-theme-value="${activeValue}"]`).addClass('active');
         };
 
-        const saved = localStorage.getItem(STORAGE_KEYS.THEME) ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? THEME.DARK : THEME.LIGHT);
+        const setTheme = (theme) => {
+            localStorage.setItem(STORAGE_KEYS.THEME, theme);
+            applyTheme(theme);
+        };
+
+        // Загружаем сохранённую тему или используем авто по умолчанию
+        const saved = localStorage.getItem(STORAGE_KEYS.THEME) || THEME.AUTO;
         setTheme(saved);
 
-        $themeBtn.on('click', function () {
-            setTheme($('body').attr('data-theme') === THEME.DARK ? THEME.LIGHT : THEME.DARK);
+        // Обработчики пунктов меню
+        $themeMenuItems.on('click', function () {
+            setTheme($(this).data('theme-value'));
+        });
+
+        // Следим за изменением системной темы в режиме "Авто"
+        mediaQuery.addEventListener('change', () => {
+            const current = localStorage.getItem(STORAGE_KEYS.THEME) || THEME.AUTO;
+            if (current === THEME.AUTO) {
+                applyTheme(THEME.AUTO);
+            }
         });
     }
 
