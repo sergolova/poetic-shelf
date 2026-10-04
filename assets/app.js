@@ -36,6 +36,10 @@ class PoemApp {
         this.store.selectedPostId = localStorage.getItem(STORAGE_KEYS.SELECTED_POST) ?? null;
         this.store.selectedAuthorId = localStorage.getItem(STORAGE_KEYS.SELECTED_AUTHOR) ?? null;
 
+        // Ссылка вида #author=...&post=... приоритетнее сохранённого состояния:
+        // так можно отправить другому человеку адрес конкретного стихотворения.
+        this.applyUrlState();
+
         this.updateTheme();
         this.applyFontSize();
         this.applyColumns();
@@ -45,6 +49,14 @@ class PoemApp {
         this.resetTitleChangeTimer();
         this.toggleClearButton();
         this.store.updateExportWarningStatus();
+        this.initFullscreen();
+
+        // Кнопки «назад»/«вперёд» браузера должны листать историю просмотра
+        $(window).on('hashchange', () => {
+            if (this._hashSyncGuard) return;
+            this.applyUrlState();
+            this.refresh();
+        });
 
         this.timeline = new TimelineBar('timeline-bar', this.store, {
             onPostClick: (postId) => {
@@ -71,6 +83,11 @@ class PoemApp {
 
         this.bindEvents();
         this.refresh(true);
+
+        // Прокрутка восстанавливается после отрисовки, иначе высота документа
+        // ещё нулевая и браузер игнорирует scrollTo.
+        this.restoreScrollPosition();
+        this.initScrollPositionTracking();
     }
 
 
@@ -136,6 +153,12 @@ class PoemApp {
         this.applyColumns();
         this.initPoemLineBreakMarkers();
 
+        // Инициализация навигации между стихотворениями
+        this.initPoemNav();
+
+        // Хеш URL держим в синхроне с текущим просмотром
+        this.updateUrlState();
+
         if (this.store.selectedPostId) {
             localStorage.setItem(STORAGE_KEYS.SELECTED_POST, this.store.selectedPostId);
         } else {
@@ -157,6 +180,220 @@ class PoemApp {
         const $titleSpan = $postItem.find('.author-post-title-wrapper');
         $titleSpan.find('.bookmark-icon').remove();
         if (isBookmarked) $titleSpan.append(this.ui.renderBookmarkIcon(postId, true));
+    }
+
+    /**
+     * Обновляет URL хеш в соответствии с текущим выбранным автором и произведением.
+     */
+    updateUrlState() {
+        const authorId = this.store.selectedAuthorId;
+        const postId = this.store.selectedPostId;
+
+        const hash = [];
+        if (authorId) hash.push(`author=${authorId}`);
+        if (postId) hash.push(`post=${postId}`);
+
+        const newHash = hash.length > 0 ? `#${hash.join('&')}` : '';
+        if (newHash === window.location.hash) return;
+
+        // replaceState, а не присваивание location.hash: иначе каждое
+        // открытие стихотворения создавало бы запись в истории браузера.
+        window.history.replaceState(null, '', newHash || window.location.pathname + window.location.search);
+    }
+
+    /**
+     * Читает состояние из хеша (#author=...&post=...) в модель.
+     * Пустой хеш означает «ничего не выбрано» — сбрасываем и автора, и пост.
+     */
+    applyUrlState() {
+        const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+        const authorId = params.get('author');
+        const postId = params.get('post');
+
+        this.store.selectedAuthorId = (authorId && this.store.getAuthorById(authorId)) ? authorId : null;
+        this.store.selectedPostId = postId || null;
+    }
+
+    /**
+     * Возвращает прокрутку туда, где пользователь остановился в этом стихотворении.
+     */
+    restoreScrollPosition() {
+        const postId = this.store.selectedPostId;
+        if (!postId) return;
+
+        const top = this.getScrollPosition(postId);
+        if (top > 0) {
+            window.scrollTo(0, top);
+        }
+    }
+
+    /**
+     * Запоминает позицию прокрутки открытого стихотворения (с задержкой).
+     */
+    initScrollPositionTracking() {
+        let saveTimeout = null;
+
+        $(window).on('scroll', () => {
+            const postId = this.store.selectedPostId;
+            if (!postId) return;
+
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => this.saveScrollPosition(postId, window.scrollY), 300);
+        });
+    }
+
+    /**
+     * Сохраняет позицию прокрутки стихотворения в localStorage.
+     * @param {string} postId
+     * @param {number} top
+     */
+    saveScrollPosition(postId, top) {
+        let positions = {};
+
+        try {
+            positions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SCROLL_POSITIONS) || '{}');
+        } catch {
+            // Повреждённые данные — начинаем с чистого объекта
+            positions = {};
+        }
+
+        positions[postId] = top;
+        localStorage.setItem(STORAGE_KEYS.SCROLL_POSITIONS, JSON.stringify(positions));
+    }
+
+    /**
+     * Читает сохранённую позицию прокрутки стихотворения.
+     * @param {string} postId
+     * @returns {number} 0, если позиция не найдена или данные повреждены.
+     */
+    getScrollPosition(postId) {
+        try {
+            const positions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SCROLL_POSITIONS) || '{}');
+            const top = positions[postId];
+            return typeof top === 'number' ? top : 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * Инициализация навигации между стихотворениями текущего автора.
+     * Добавляет обработчики кнопок Предыдущее/Следующее.
+     */
+    initPoemNav() {
+        const $navPrev = $('.poem-nav-prev');
+        const $navNext = $('.poem-nav-next');
+
+        if (!$navPrev.length || !$navNext.length) return;
+
+        $navPrev.on('click', () => this.navigatePoem(-1));
+        $navNext.on('click', () => this.navigatePoem(1));
+
+        // На краях списка кнопку глушим, а не оставляем кликабельной вхолостую:
+        // видно, где конец, и не гадать, почему ничего не происходит.
+        const currentIndex = this.getCurrentPostIndex();
+
+        if (currentIndex !== null) {
+            $navPrev.prop('disabled', currentIndex <= 0);
+            $navNext.prop('disabled', currentIndex >= this.getAuthorPosts().length - 1);
+        }
+    }
+
+    /**
+     * Список стихотворений текущего автора в том же порядке, что и на экране.
+     * _sortPostsDefault мутирует массив на месте, поэтому возвращаем копию.
+     * @returns {Array}
+     */
+    getAuthorPosts() {
+        const author = this.store.getAuthorById(this.store.selectedAuthorId);
+        if (!author || !author.posts) return [];
+
+        const posts = [...author.posts];
+        this.ui._sortPostsDefault(posts);
+        return posts;
+    }
+
+    /**
+     * Индекс открытого стихотворения в отсортированном списке автора.
+     * @returns {number|null} null, если пост не открыт или не найден.
+     */
+    getCurrentPostIndex() {
+        const postId = this.store.selectedPostId;
+        if (!postId) return null;
+
+        const index = this.getAuthorPosts().findIndex(p => p.id === postId);
+        return index === -1 ? null : index;
+    }
+
+    /**
+     * Переключение стихотворения на prev/next внутри текущего автора.
+     * @param {number} direction -1 для предыдущего, 1 для следующего
+     * @returns {boolean} true, если переход состоялся (нужно, чтобы
+     *   горячая клавиша не блокировала прокрутку страницы впустую).
+     */
+    navigatePoem(direction) {
+        const posts = this.getAuthorPosts();
+        if (posts.length === 0) return false;
+
+        const postId = this.store.selectedPostId;
+
+        // Стихотворение ещё не открыто — на экране список всех. Тогда
+        // «назад» открывает последнее, «вперёд» — первое: переход в
+        // середину списка был бы неожиданным.
+        if (!postId) {
+            this.store.selectedPostId = direction > 0
+                ? posts[0].id
+                : posts[posts.length - 1].id;
+            this.refresh();
+            return true;
+        }
+
+        const currentIndex = posts.findIndex(p => p.id === postId);
+        if (currentIndex === -1) return false;
+
+        const newIndex = currentIndex + direction;
+
+        // У краёв списка останавливаемся, а не зацикливаем: иначе «назад»
+        // от первого стихотворения молча уводит в конец, и найти начало
+        // обратно можно только через список авторов.
+        if (newIndex < 0 || newIndex >= posts.length) return false;
+
+        this.store.selectedPostId = posts[newIndex].id;
+        this.refresh();
+        return true;
+    }
+
+    /**
+     * Ставит или снимает закладку на открытом стихотворении.
+     * @returns {boolean} true, если стихотворение было открыто.
+     */
+    toggleCurrentPostBookmark() {
+        const postId = this.store.selectedPostId;
+        if (!postId) return false;
+
+        this.store.toggleBookmark(postId, !this.store.getPostBookmark(postId));
+        this.refresh();
+        return true;
+    }
+
+    /**
+     * Показывает случайное стихотворение из библиотеки.
+     * @returns {boolean} true, если переход состоялся.
+     */
+    showRandomPoem() {
+        const withPosts = (this.store.data.authors || []).filter(a => (a.posts || []).length > 0);
+        if (!withPosts.length) return false;
+
+        // Выбираем среди авторов, у которых есть хотя бы одно стихотворение:
+        // иначе половина нажатий «случайное» не делала бы ничего.
+        const author = withPosts[Math.floor(Math.random() * withPosts.length)];
+        const post = author.posts[Math.floor(Math.random() * author.posts.length)];
+
+        this.store.selectedAuthorId = author.id;
+        this.store.selectedPostId = post.id;
+        this.refresh();
+        return true;
     }
 
 
@@ -547,6 +784,13 @@ class PoemApp {
         let isResizing = false;
 
         $resizer.on('mousedown', function (e) {
+            // В свёрнутом виде ширина сайдбара задана CSS, а перетаскивание
+            // перезаписывало бы её inline-стилем и записало в localStorage
+            // значение, близкое к 44px. После восстановления ширина
+            // оказывалась неадекватной, поэтому здесь разделитель только
+            // принимает двойной клик (initFullscreen) и не перетаскивается.
+            if ($('body').hasClass('fullscreen-mode')) return;
+
             e.preventDefault();
             isResizing = true;
             $('body').addClass('is-resizing');
@@ -586,10 +830,54 @@ class PoemApp {
         window.addEventListener('resize', () => this.updateSidebarHeight());
 
         $(document).on('keydown', (e) => {
+            // Горячие клавиши — только «голая» клавиша, без модификаторов.
+            // Иначе мы перехватываем системные сочетания: Ctrl+R — перезагрузка
+            // страницы, Alt+←/→ — история браузера, Ctrl+F — поиск. Набирать
+            // клавиши можно и в русской раскладке, но всегда без Ctrl/Alt/
+            // Shift/Super — они принадлежат браузеру и системе.
+            if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+
             if ((e.key === 'Escape' || e.keyCode === 27) && $('#searchInput').val() !== '') {
                 e.preventDefault();
                 this.resetSearchQuery();
                 this.refresh(true);
+            }
+
+            // Не мешаем вводу: пропускаем любой редактируемый элемент,
+            // а не только строку поиска — иначе «B» в поле заметки
+            // не поставил бы закладку, а переписал букву.
+            const $target = $(e.target);
+            const isEditing = $target.is('input, textarea, select, [contenteditable="true"]');
+
+            if (isEditing || $('.modal.show').length) return;
+
+            switch (e.key) {
+                case 'ArrowRight':
+                    if (this.navigatePoem(1)) e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (this.navigatePoem(-1)) e.preventDefault();
+                    break;
+                case 'b':
+                case 'B':
+                case 'ь':
+                case 'Ь':
+                    // Русская раскладка: B идёт по той же физической клавише
+                    if (this.toggleCurrentPostBookmark()) e.preventDefault();
+                    break;
+                case 'r':
+                case 'R':
+                case 'к':
+                case 'К':
+                    if (this.showRandomPoem()) e.preventDefault();
+                    break;
+                case 'f':
+                case 'F':
+                case 'а':
+                case 'А':
+                    e.preventDefault();
+                    $('#searchInput').focus();
+                    break;
             }
         });
 
@@ -1091,7 +1379,7 @@ class PoemApp {
             const postId = $btn.data('post-id');
             if (!postId) return;
             const isBookmarked = $btn.toggleClass('active').hasClass('active');
-            $btn.attr('title', isBookmarked ? 'Убрать закладку' : 'Поставить закладку');
+            $btn.attr('title', isBookmarked ? 'Убрать закладку (B)' : 'Поставить закладку (B)');
             $btn.find('.bookmark-empty').toggleClass('d-none', isBookmarked);
             $btn.find('.bookmark-filled').toggleClass('d-none', !isBookmarked);
             this.store.toggleBookmark(postId, isBookmarked);
@@ -1269,20 +1557,23 @@ class PoemApp {
      * Загружает сохранённый выбор из localStorage.
      */
     openEpubAuthorsModal() {
-        const STORAGE_KEY = STORAGE_KEYS.EPUB_AUTHORS;
         const allAuthors = this.store.data.authors || [];
 
         // Загружаем сохранённый выбор
         let savedSelection = null;
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const raw = localStorage.getItem(STORAGE_KEYS.EPUB_AUTHORS);
             if (raw) savedSelection = JSON.parse(raw);
-        } catch { /* ignore */ }
+        } catch { /* повреждённое значение — считаем, что выбора не было */ }
 
         // Если сохранённый выбор есть и это массив — используем его, иначе все авторы
         const selectedIds = (Array.isArray(savedSelection) && savedSelection.length > 0)
             ? new Set(savedSelection)
             : new Set(allAuthors.map(a => a.id));
+
+        // Название и подзаголовок из прошлого экспорта
+        $('#epubBookTitle').val(localStorage.getItem(STORAGE_KEYS.EPUB_TITLE) || EPUB_DEFAULT_TITLE);
+        $('#epubBookSubtitle').val(localStorage.getItem(STORAGE_KEYS.EPUB_SUBTITLE) || EPUB_DEFAULT_SUBTITLE);
 
         // Формируем список авторов с чекбоксами
         const listEl = $('#epubAuthorsList');
@@ -1330,12 +1621,17 @@ class PoemApp {
                 return;
             }
 
-            // Сохраняем выбор в localStorage
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedIds));
+            // Название и подзаголовок — поля модалки, а не prompt(): два
+            // системных диалога подряд выглядят как ошибка, да и отмену
+            // второго не отличить от отмены первого.
+            const title = $('#epubBookTitle').val().trim() || EPUB_DEFAULT_TITLE;
+            const subtitle = $('#epubBookSubtitle').val().trim() || EPUB_DEFAULT_SUBTITLE;
 
-            // Закрываем модалку и запускаем экспорт
-            const modalEl = document.getElementById('epubAuthorsModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
+            localStorage.setItem(STORAGE_KEYS.EPUB_TITLE, title);
+            localStorage.setItem(STORAGE_KEYS.EPUB_SUBTITLE, subtitle);
+            localStorage.setItem(STORAGE_KEYS.EPUB_AUTHORS, JSON.stringify(checkedIds));
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('epubAuthorsModal'));
             if (modal) modal.hide();
 
             this.store.exportToEpub(checkedIds);
@@ -1482,6 +1778,50 @@ class PoemApp {
         'Вход по пропускам, выход по рифме',
         'Качество метафор гарантировано только автором'
     ];
+
+    /**
+     * Переключение полноэкранного режима чтения.
+     *
+     * Сайдбар не скрывается через .hide(), потому что карточки авторов
+     * перерисовываются на каждом refresh() и скрытие слетело бы. Вместо
+     * этого вешается класс на <body>, а ширину сайдбара описано в CSS
+     * (см. .fullscreen-mode).
+     *
+     * Состояние намеренно НЕ сохраняется в localStorage: режим включается
+     * двойным кликом по разделителю как действие на текущий сеанс, и после
+     * перезагрузки схлопнутый сайдбар был бы неожиданностью.
+     *
+     * @param {boolean} state - true = войти в полноэкранный режим, false = выйти
+     */
+    toggleFullscreen(state) {
+        $('body').toggleClass('fullscreen-mode', Boolean(state));
+    }
+
+    /**
+     * Полноэкранный режим включается двойным кликом по разделителю
+     * и выключается кликом по самой свёрнутой полосе.
+     */
+    initFullscreen() {
+        $('.sidebar-resizer').on('dblclick', (e) => {
+            // Не срабатывает в начале перетаскивания: двойной клик там —
+            // это не намерение свернуть, а случайность.
+            if (e.detail > 2) return;
+
+            e.preventDefault();
+            this.toggleFullscreen(!$('body').hasClass('fullscreen-mode'));
+        });
+
+        // Свёрнутый сайдбар — узкая полоса, клик по ней возвращает список.
+        // stopPropagation обязателен: в обычном режиме по этому же элементу
+        // выбирается автор, и без остановки клик ушёл бы дальше по цепочке.
+        $('.authors-sidebar').on('click', (e) => {
+            if (!$('body').hasClass('fullscreen-mode')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleFullscreen(false);
+        });
+    }
 }
 
 
@@ -1492,4 +1832,11 @@ class PoemApp {
 $(document).ready(() => {
     window.app = new PoemApp();
     window.app.init();
+
 });
+
+
+
+
+
+

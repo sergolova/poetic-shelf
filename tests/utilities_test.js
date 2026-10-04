@@ -64,8 +64,8 @@ test('escapeHtml закрывает главный вектор XSS в разм�
 test('escapeHtml не даёт вырваться из атрибута — регрессия', () => {
     // Фамилия автора подставлялась в alt="..." без экранирования.
     // Кавычка закрывала атрибут, и «onerror=...» становился обработчиком:
-    //   <img src="..." alt="Пушкин" onerror="alert(1)">
-    const hostile = 'Пушкин" onerror="alert(1)';
+    //   <img src="..." alt="Иванов" onerror="alert(1)">
+    const hostile = 'Иванов" onerror="alert(1)';
     const escaped = utils.escapeHtml(hostile);
     assert.ok(!escaped.includes('"'), 'кавычка не экранирована — атрибут рвётся');
     assert.ok(escaped.includes('&quot;'));

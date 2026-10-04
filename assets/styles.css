@@ -440,6 +440,57 @@ body.is-resizing {
     overflow: hidden;
 }
 
+/* ==========================================================================
+   Полноэкранный режим чтения
+   --------------------------------------------------------------------------
+   Сайдбар не исчезает, а сжимается до узкой полосы с кнопкой
+   восстановления: иначе единственный способ вернуть список авторов —
+   перезагрузка страницы. Ширина задаётся здесь, а не в JS, потому что
+   карточки авторов перерисовываются на каждом refresh().
+   ========================================================================== */
+
+body.fullscreen-mode .authors-sidebar {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    overflow: hidden;
+}
+
+/* Свёрнутый сайдбар не перетаскивается, поэтому и курсор col-resize здесь
+   врёт — разделитель работает только как кнопка возврата (двойной клик). */
+body.fullscreen-mode .sidebar-resizer {
+    cursor: pointer;
+}
+
+body.fullscreen-mode .sidebar-resizer::after {
+    width: 3px;
+    background-color: var(--accent-color);
+    opacity: 0.5;
+}
+
+body.fullscreen-mode .sidebar-resizer:hover::after {
+    opacity: 1;
+}
+
+/* Полоса кликабельна — по ней возвращают список авторов (см.
+   initFullscreen), поэтому у неё курсор-указатель. Внутренности, наоборот,
+   отключены: разглядывать нечего, иначе клик ушёл бы на невидимый элемент. */
+body.fullscreen-mode .authors-sidebar {
+    cursor: pointer;
+}
+
+body.fullscreen-mode .authors-sidebar .authors-sidebar,
+body.fullscreen-mode .authors-sidebar #authorsList {
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.fullscreen-mode .main-content {
+    /* Читать без отвлечения на поля */
+    max-width: none;
+}
+
 #authorsList {
     flex: 1;
     overflow-y: auto;
@@ -642,6 +693,67 @@ body.is-resizing {
 
 a.view-all {
     color: var(--accent-color) !important;
+}
+
+/* Переход между стихотворениями: та же строка, что и «Ещё N >>» */
+.poem-footer-nav {
+    flex-wrap: wrap;
+}
+
+/* Тихая навигация в шапке автора («5 произведений << >>»): приглушена,
+   чтобы не спорить с названием, и подсвечивается при наведении. */
+.poem-nav-inline {
+    display: inline-flex;
+    gap: 0.15rem;
+}
+
+.poem-nav-arrow {
+    padding: 0 0.15rem;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.poem-nav-arrow:hover {
+    color: var(--accent-color);
+    opacity: 1;
+}
+
+.poem-nav-arrow:disabled {
+    opacity: 0.12;
+    cursor: default;
+}
+
+.poem-nav-arrow:disabled:hover {
+    color: var(--text-muted);
+    opacity: 0.12;
+}
+
+.poem-nav-btn {
+    color: var(--accent-color) !important;
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+.poem-nav-btn:hover {
+    color: var(--accent-hover) !important;
+    text-decoration: underline;
+}
+
+/* Края списка: кнопка остаётся видимой, но не выглядит рабочей */
+.poem-nav-btn:disabled {
+    color: var(--text-muted) !important;
+    opacity: 0.45;
+    cursor: default;
+}
+
+.poem-nav-btn:disabled:hover {
+    text-decoration: none;
 }
 
 /* Стилизация аватаров */

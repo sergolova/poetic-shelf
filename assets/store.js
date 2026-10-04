@@ -485,8 +485,8 @@ class PoemStore {
     async exportToEpub(selectedAuthorIds) {
         const data = JSON.parse(JSON.stringify(this.data));
         const zip = new JSZip();
-        const mainTitle = 'Буквы по центру';
-        const mainSubtitle = 'Eщё буквы';
+        const mainTitle = localStorage.getItem(STORAGE_KEYS.EPUB_TITLE) || EPUB_DEFAULT_TITLE;
+        const mainSubtitle = localStorage.getItem(STORAGE_KEYS.EPUB_SUBTITLE) || EPUB_DEFAULT_SUBTITLE;
 
         zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 

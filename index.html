@@ -26,7 +26,7 @@
         <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0 header-search-box">
             <div class="input-group input-group-sm search-input-wrapper">
                 <span class="input-group-text border-0 bg-white">🔍</span>
-                <input type="search" id="searchInput" class="form-control border-0 shadow-none" placeholder="Поиск по авторам и строкам...">
+                <input type="search" id="searchInput" class="form-control border-0 shadow-none" placeholder="Поиск по авторам и строкам... (F)" title="Поиск по авторам и строкам (F)">
                 <button class="btn btn-clear-search border-0 bg-white d-none" id="clearSearchBtn" type="button" title="Очистить">✕</button>
             </div>
         </div>
@@ -71,7 +71,7 @@
                 <input type="radio" class="btn-check" name="columns" id="col4" value="4">
                 <label class="btn btn-vintage-outline" for="col4" title="В четыре колонки">4</label>
             </div>
-            <button class="btn btn-vintage-outline btn-sm" id="randBtn">
+            <button class="btn btn-vintage-outline btn-sm" id="randBtn" title="Случайное стихотворение (R)">
                 <span>🎲</span> Случайное
             </button>
             <!-- Выпадающее меню: Данные / Действия -->
@@ -212,7 +212,7 @@
             </div>
         </aside>
 
-        <div class="sidebar-resizer"></div>
+        <div class="sidebar-resizer" title="Потяните, чтобы изменить ширину. Двойной клик — свернуть список авторов"></div>
         
         <!-- Главное поле: Профиль автора и произведения -->
         <main class="main-content">
@@ -491,6 +491,19 @@
             <div class="modal-body p-4">
                 <p class="text-muted small mb-3">Отметьте авторов, которые будут включены в EPUB-файл:</p>
                 <div id="epubAuthorsList" class="d-flex flex-column gap-2"></div>
+
+                <hr class="my-4">
+                <h6 class="fw-bold mb-3">Данные книги</h6>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="epubBookTitle" class="form-label small fw-bold text-muted mb-1">Название</label>
+                        <input type="text" id="epubBookTitle" class="form-control" placeholder="Буквы по центру">
+                    </div>
+                    <div class="col-12">
+                        <label for="epubBookSubtitle" class="form-label small fw-bold text-muted mb-1">Подзаголовок</label>
+                        <input type="text" id="epubBookSubtitle" class="form-control" placeholder="Ещё буквы">
+                    </div>
+                </div>
             </div>
             <div class="modal-footer border-top">
                 <button type="button" class="btn btn-outline-secondary btn-sm" id="epubSelectAllBtn">Выбрать всех</button>

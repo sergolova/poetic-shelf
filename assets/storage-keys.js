@@ -61,6 +61,15 @@ const STORAGE_KEYS = {
     /** ID авторов, отобранных для экспорта в EPUB: string[]. */
     EPUB_AUTHORS: 'epubSelectedAuthors',
 
+    /** Название книги для EPUB. */
+    EPUB_TITLE: 'epubBookTitle',
+
+    /** Подзаголовок для EPUB. */
+    EPUB_SUBTITLE: 'epubBookSubtitle',
+
+    /** Позиции прокрутки по стихотворениям: { postId: scrollY }. */
+    SCROLL_POSITIONS: 'poemScrollPositions',
+
     /** Индекс последнего показанного поэтического заголовка. */
     TITLE_INDEX: 'poeticTitleIndex',
 
@@ -101,10 +110,14 @@ const SORT_AUTHORS = {
     RECENT: 'recent'
 };
 
-/** Значение по умолчанию для ключа, когда он ещё не записан. */
+/** Значение по умолчанию для ключа, когда оно ещё не записано. */
 const STORAGE_DEFAULTS = {
     THEME: THEME.LIGHT,
     FONT_SIZE: FONT_SIZE.NORMAL,
     COLUMNS: COLUMNS.ONE,
     AUTHOR_SORT: SORT_AUTHORS.NONE
 };
+
+/** Название и подзаголовок книги по умолчанию (прежние захардкоженные). */
+const EPUB_DEFAULT_TITLE = 'Буквы по центру';
+const EPUB_DEFAULT_SUBTITLE = 'Ещё буквы';

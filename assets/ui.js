@@ -307,8 +307,19 @@ class PoemUI {
         let authorName = `${author.lastName || ''} ${author.firstName || ''} ${author.surName || ''}`.trim();
         authorName = this.highlightText(authorName, q);
 
-        const moreCount = allPostsCount - 1;
-        const morePosts = (!emptyHtml && allPostsCount > 1 && selectedPostId !== null)  ? `<div class="mb-2"><a class="view-all" href="#">Ещё ${moreCount} >></a></div>` : '';
+        const showPostNav = !emptyHtml && allPostsCount > 1 && selectedPostId !== null;
+
+        // Навигация и ссылка «Ещё» живут в одной строке: раньше кнопки
+        // «Предыдущий/Следующий» стояли отдельным блоком под карточкой, а
+        // «Ещё» — над ней, и читалось это как два несвязанных элемента.
+        const morePosts = showPostNav ? `
+      <div class="poem-footer-nav d-flex align-items-center gap-3 mb-2">
+        <div class="poem-nav d-flex align-items-center gap-3" role="navigation" aria-label="Переход между стихотворениями">
+          <button class="poem-nav-btn poem-nav-prev btn btn-link p-0" type="button" title="Предыдущее стихотворение (←)">Предыдущий</button>
+          <button class="poem-nav-btn poem-nav-next btn btn-link p-0" type="button" title="Следующее стихотворение (→)">Следующий</button>
+        </div>
+        <a class="view-all" href="#">Ещё ${allPostsCount - 1} &gt;&gt;</a>
+      </div>` : '';
 
         this.$mainContent.html(`
       <div class="author-profile-hero border-0">
@@ -333,6 +344,10 @@ class PoemUI {
                 <span ${hideYears ? 'style="display:none"' : ''}>📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} ${ageString}&nbsp;&nbsp;•</span>
                 📖
                 <a class="view-all" href="#">${author.posts?.length || 0} произведений</a>
+                <span class="poem-nav-inline" role="navigation" aria-label="Переход между стихотворениями">
+                  <button class="poem-nav-arrow poem-nav-prev" type="button" title="Предыдущее стихотворение (←)" aria-label="Предыдущее стихотворение"> &lt;&lt; </button>
+                  <button class="poem-nav-arrow poem-nav-next" type="button" title="Следующее стихотворение (→)" aria-label="Следующее стихотворение"> &gt;&gt; </button>
+                </span>
                 <span>${q ? `(найдено: ${posts.length})` : ''}</span>
               </div>
             </div>
@@ -478,7 +493,7 @@ class PoemUI {
     renderBookmarkButton(postId, state) {
         const active = Boolean(state);
         return `
-      <button class="btn btn-link text-muted p-0 ms-2 bookmark-btn svg-button ${active ? 'active' : ''}" title="${active ? 'Убрать закладку' : 'Поставить закладку'}" data-post-id="${postId}">
+      <button class="btn btn-link text-muted p-0 ms-2 bookmark-btn svg-button ${active ? 'active' : ''}" title="${active ? 'Убрать закладку (B)' : 'Поставить закладку (B)'}" data-post-id="${postId}">
         <svg class="bookmark-icon bookmark-empty ${active ? 'd-none' : ''}" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
         </svg>
@@ -885,30 +900,30 @@ const TRANSLATION_THRESHOLD        = 0.5; // порог confidence
  *
  *   - MIN_LINE_LETTERS: строка короче 5 букв получает тип 'skip' и не
  *     участвует ни в одном счётчике, и не разрывает соседство строк.
- *     Без этого римские цифры в переносках станс («XIII», «XIV») проходили
- *     как 'original': у «XIII» все 4 буквы латинские, т.е. доля 100%,
- *     и порог доминирования их не отсекал. Это ломало «Ответ Онегина
- *     на письмо Татьяны» — followRatio доходил до 1.0.
+ *     Без этого короткие латинские вставки в переносках стансов (римские
+ *     цифры вида «XIII») проходили как 'original': у них все буквы
+ *     латинские, т.е. доля 100%, и порог доминирования их не отсекал.
+ *     На текстах с нумерацией стансов followRatio доходил до 1.0.
  *
  *   - DOMINANCE = 0.5 (а не 0.65): если букв одного алфавита строго
  *     больше, строка считается принадлежащей ему. Порог 0.65 отправлял
- *     строку Блока «Чем quantum satis Бранда воли,» (13 кириллических
- *     против 12 латинских) в 'mixed', то есть двуязычной. При 0.5 она
- *     однозначно 'translate' — это русская строка с латинской вставкой.
+ *     в 'mixed' русскую строку с латинской вставкой внутри (13 кириллических
+ *     против 12 латинских), то есть считал её двуязычной. При 0.5 она
+ *     однозначно 'translate' — это русский текст с вставкой.
  *
  *   - Гейты MIN_PAIRS и MIN_COVERAGE проверяются ДО вычисления confidence
  *     и обнуляют его. Перевод требует минимум две полные пары, покрывающие
  *     не менее четверти непустых строк. Это отсекает одиночную
- *     латинскую строку внутри русского произведения — «In vino veritas!»
- *     в «Незнакомке» давала пару, но покрывала 4% текста.
+ *     латинскую строку внутри русского текста: она давала пару, но
+ *     покрывала лишь 4% текста.
  *
  *   - Спецслучай 2-3 строк не смотрит на порядок (раньше распознавался
  *     только original->translate, но не translate->original) и требует
  *     ЧИСТОГО алфавита в каждой строке: у 'original' не должно быть ни
  *     одной кириллической буквы, у 'translate' — ни одной латинской.
- *     Иначе «Кто там? кричат. / «In vino veritas!» кричат.» сочлось бы
- *     переводом: строка с цитатой набирает 13 латинских против 6
- *     кириллических и выглядит 'original', но кириллица в ней есть.
+ *     Иначе русская строка с цитатой внутри набирает больше латинских
+ *     букв, чем кириллических, и выглядит 'original' — при том что
+ *     кириллица в ней есть.
  *
  * @param {string} text - Исходный текст произведения.
  * @returns {{ isTranslation: boolean, lineTypes: string[], confidence: number }}
