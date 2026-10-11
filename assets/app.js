@@ -183,6 +183,23 @@ class PoemApp {
     }
 
     /**
+     * Обновляет счётчик закладок в карточке автора, которому принадлежит
+     * произведение. Список авторов при этом не перерисовывается.
+     * @param {string} postId
+     */
+    updateSidebarBookmarksCount(postId) {
+        const author = (this.store.data.authors || [])
+            .find(a => (a.posts || []).some(p => p.id === postId));
+        if (!author) return;
+
+        const $badges = $(`.author-card[data-id="${author.id}"] .author-card-badges`);
+        if (!$badges.length) return;
+
+        $badges.find('.bookmarks-count-badge').remove();
+        $badges.prepend(this.ui.renderBookmarksCountBadge(this.ui.countAuthorBookmarks(author)));
+    }
+
+    /**
      * Обновляет URL хеш в соответствии с текущим выбранным автором и произведением.
      */
     updateUrlState() {
@@ -1384,6 +1401,7 @@ class PoemApp {
             $btn.find('.bookmark-filled').toggleClass('d-none', !isBookmarked);
             this.store.toggleBookmark(postId, isBookmarked);
             this.updateSidebarBookmarkIcon(postId, isBookmarked);
+            this.updateSidebarBookmarksCount(postId);
         });
 
         // Сохранение формы произведения

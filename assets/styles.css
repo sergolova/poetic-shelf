@@ -555,6 +555,19 @@ body.fullscreen-mode .main-content {
     border: 1px solid var(--border-color);
 }
 
+/* Счётчик закладок слева от счётчика произведений.
+   Рамка — тем же цветом, что и заполненная закладка (.item-bookmark-filled),
+   иначе бейдж теряется среди серых цифр. */
+.bookmarks-count-badge {
+    font-size: 0.75rem;
+    background-color: var(--bg-main);
+    color: #e5a051;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #e5a051;
+    line-height: 1.2;
+}
+
 .matched-author {
     background-color: var(--accent-color) !important;
 }

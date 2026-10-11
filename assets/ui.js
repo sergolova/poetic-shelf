@@ -163,6 +163,25 @@ class PoemUI {
     }
 
     /**
+     * Считает закладки автора по всем его произведениям.
+     * @param {Object} author
+     * @returns {number}
+     */
+    countAuthorBookmarks(author) {
+        return (author.posts || []).filter(p => app.store.getPostBookmark(p.id)).length;
+    }
+
+    /**
+     * HTML счётчика закладок для карточки автора. Пустая строка, если закладок нет.
+     * @param {number} count
+     * @returns {string}
+     */
+    renderBookmarksCountBadge(count) {
+        if (!count) return '';
+        return `<span class="bookmarks-count-badge" title="Закладок: ${count}">${count}</span>`;
+    }
+
+    /**
      * Отрисовывает список авторов в левом сайдбаре.
      * @param {Array}  authors
      * @param {string} selectedId
@@ -210,6 +229,10 @@ class PoemUI {
                 ? author.posts.length
                 : authorPosts.length;
 
+            // Счётчик закладок считаем по всем произведениям автора,
+            // а не по отфильтрованным поиском, — иначе бейдж «моргает» при вводе запроса.
+            const bookmarksBadgeHtml = this.renderBookmarksCountBadge(this.countAuthorBookmarks(author));
+
             let postsListHtml = '';
             const showPosts = q ? authorPosts.length > 0 : (isActive && authorPosts.length > 0);
 
@@ -242,7 +265,10 @@ class PoemUI {
               <h6 class="author-name mb-0 text-truncate">${authorName}</h6>
               <span class="author-years text-muted" ${hideYears ? 'style="display:none"' : ''}>${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'}</span>
             </div>
-            <span class="posts-count-badge">${postsCount}</span>
+            <span class="author-card-badges d-flex align-items-center gap-2 flex-shrink-0">
+              ${bookmarksBadgeHtml}
+              <span class="posts-count-badge">${postsCount}</span>
+            </span>
           </span>
           ${postsListHtml}
         </div>`);
