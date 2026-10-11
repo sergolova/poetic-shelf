@@ -553,6 +553,7 @@ body.fullscreen-mode .main-content {
     padding: 2px 8px;
     border-radius: 12px;
     border: 1px solid var(--border-color);
+    line-height: 1.2;
 }
 
 /* Счётчик закладок слева от счётчика произведений.
