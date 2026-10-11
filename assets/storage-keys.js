@@ -117,7 +117,7 @@ const STORAGE_DEFAULTS = {
     THEME: THEME.LIGHT,
     FONT_SIZE: FONT_SIZE.NORMAL,
     COLUMNS: COLUMNS.ONE,
-    AUTHOR_SORT: SORT_AUTHORS.NONE
+    AUTHOR_SORT: SORT_AUTHORS.ALPHABET
 };
 
 /** Название и подзаголовок книги по умолчанию (прежние захардкоженные). */

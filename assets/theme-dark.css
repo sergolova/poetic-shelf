@@ -397,3 +397,8 @@
 [data-theme="dark"] .paper-bg-light {
     background-image: none;
 }
+
+[data-theme="dark"] .bookmarks-count-badge {
+    color: #8e7b52;
+    border: 1px solid #8e7b52;
+}
