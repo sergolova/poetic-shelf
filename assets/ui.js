@@ -163,15 +163,6 @@ class PoemUI {
     }
 
     /**
-     * Считает закладки автора по всем его произведениям.
-     * @param {Object} author
-     * @returns {number}
-     */
-    countAuthorBookmarks(author) {
-        return (author.posts || []).filter(p => app.store.getPostBookmark(p.id)).length;
-    }
-
-    /**
      * HTML счётчика закладок для карточки автора. Пустая строка, если закладок нет.
      * @param {number} count
      * @returns {string}
@@ -231,7 +222,7 @@ class PoemUI {
 
             // Счётчик закладок считаем по всем произведениям автора,
             // а не по отфильтрованным поиском, — иначе бейдж «моргает» при вводе запроса.
-            const bookmarksBadgeHtml = this.renderBookmarksCountBadge(this.countAuthorBookmarks(author));
+            const bookmarksBadgeHtml = this.renderBookmarksCountBadge(app.store.countAuthorBookmarks(author));
 
             let postsListHtml = '';
             const showPosts = q ? authorPosts.length > 0 : (isActive && authorPosts.length > 0);

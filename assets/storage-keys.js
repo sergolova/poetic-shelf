@@ -107,7 +107,9 @@ const SORT_AUTHORS = {
     ALPHABET: 'az',
     BIRTHDAY: 'birthday',
     POSTS_COUNT: 'len',
-    RECENT: 'recent'
+    RECENT: 'recent',
+    /** По количеству закладок среди произведений автора. */
+    BOOKMARKS_COUNT: 'bm'
 };
 
 /** Значение по умолчанию для ключа, когда оно ещё не записано. */

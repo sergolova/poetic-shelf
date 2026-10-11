@@ -228,6 +228,15 @@ class PoemStore {
         return Boolean(this.postBookmarks[postId]);
     }
 
+    /**
+     * Считает закладки автора по всем его произведениям.
+     * @param {Object} author
+     * @returns {number}
+     */
+    countAuthorBookmarks(author) {
+        return (author.posts || []).filter(p => this.getPostBookmark(p.id)).length;
+    }
+
 
     /* ==========================================================================
        4. Операции с Авторами / Author CRUD
@@ -259,6 +268,13 @@ class PoemStore {
                     const la = a.posts?.length || 0;
                     const lb = b.posts?.length || 0;
                     return lb - la || sortAZ(a, b);
+                });
+                break;
+            case SORT_AUTHORS.BOOKMARKS_COUNT:
+                authors.sort((a, b) => {
+                    const ba = this.countAuthorBookmarks(a);
+                    const bb = this.countAuthorBookmarks(b);
+                    return bb - ba || sortAZ(a, b);
                 });
                 break;
             case SORT_AUTHORS.ALPHABET:

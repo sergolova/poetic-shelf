@@ -196,7 +196,7 @@ class PoemApp {
         if (!$badges.length) return;
 
         $badges.find('.bookmarks-count-badge').remove();
-        $badges.prepend(this.ui.renderBookmarksCountBadge(this.ui.countAuthorBookmarks(author)));
+        $badges.prepend(this.ui.renderBookmarksCountBadge(this.store.countAuthorBookmarks(author)));
     }
 
     /**
@@ -1401,7 +1401,10 @@ class PoemApp {
             $btn.find('.bookmark-filled').toggleClass('d-none', !isBookmarked);
             this.store.toggleBookmark(postId, isBookmarked);
             this.updateSidebarBookmarkIcon(postId, isBookmarked);
-            this.updateSidebarBookmarksCount(postId);
+            // При сортировке по закладкам порядок авторов меняется сразу,
+            // иначе список остался бы в устаревшем порядке до перерисовки.
+            if (this.store.authorSortMode === SORT_AUTHORS.BOOKMARKS_COUNT) this.refresh(false);
+            else this.updateSidebarBookmarksCount(postId);
         });
 
         // Сохранение формы произведения
