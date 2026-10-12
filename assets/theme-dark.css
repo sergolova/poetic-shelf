@@ -72,7 +72,7 @@
     filter:
             brightness(0.78)
             contrast(1.08)
-            saturate(0.55)
+            saturate(0.01)
             sepia(0.42);
 }
 
@@ -376,6 +376,7 @@
 
 [data-theme="dark"] .badge.bg-secondary {
     background-color: #465362 !important;
+    color: var(--text-main);
 }
 
 [data-theme="dark"] .btn-scroll-top {
@@ -405,4 +406,9 @@
 [data-theme="dark"] .bookmarks-count-badge {
     color: #8e7b52;
     border: 1px solid #8e7b52;
+}
+
+[data-theme="dark"] .trans {
+    color: rgba(0, 0, 0, 0.7);
+    filter: saturate(0.8) sepia(0.3);
 }

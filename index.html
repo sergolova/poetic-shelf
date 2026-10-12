@@ -25,7 +25,7 @@
 
         <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0 header-search-box">
             <div class="input-group input-group-sm search-input-wrapper">
-                <span class="input-group-text border-0 bg-white">🔍</span>
+                <span class="input-group-text border-0 bg-white trans">🔍</span>
                 <input type="search" id="searchInput" class="form-control border-0 shadow-none" placeholder="Поиск по авторам и строкам... (F)" title="Поиск по авторам и строкам (F)">
                 <button class="btn btn-clear-search border-0 bg-white d-none" id="clearSearchBtn" type="button" title="Очистить">✕</button>
             </div>
@@ -72,12 +72,12 @@
                 <label class="btn btn-vintage-outline" for="col4" title="В четыре колонки">4</label>
             </div>
             <button class="btn btn-vintage-outline btn-sm" id="randBtn" title="Случайное стихотворение (R)">
-                <span>🎲</span> Случайное
+                <span class="monochrome-emoji">🎲</span>&nbsp;Случайное
             </button>
             <!-- Выпадающее меню: Данные / Действия -->
             <div class="dropdown">
                 <button class="btn btn-vintage-outline btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" id="dataActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span>⚙️</span> Данные
+                    <span class="monochrome-emoji">⚙️</span>&nbsp;Данные
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="dataActionsDropdown" style="font-size: 0.85rem;">
                     <li>
@@ -102,13 +102,13 @@
                     </li>
                     <li>
                         <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="findDuplicatesBtn">
-                            <span class="fs-5 lh-1 text-primary">❐</span> Найти дубликаты
+                            <span class="fs-5 lh-1 monochrome-emoji">❐</span> Найти дубликаты
                         </button>
                     </li>
                     <li><hr class="dropdown-divider my-1"></li>
                     <li>
                         <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="exportEpubBtn">
-                            <span>📖</span> Скачать EPUB
+                            <span class="monochrome-emoji">📖</span> Скачать EPUB
                         </button>
                     </li>
                     <li>
@@ -178,7 +178,7 @@
                                     for="sortRecent"
                                     style="font-size: 0.8rem;"
                                     title="По дате последнего просмотра"
-                            >🕐</label>
+                            ><span class="trans">🕐</span></label>
 
                             <input type="radio" class="btn-check" name="authorSort" id="sortLen" value="len">
                             <label
@@ -186,7 +186,7 @@
                                     for="sortLen"
                                     style="font-size: 0.8rem;"
                                     title="По количеству произведений"
-                            >📚</label>
+                            ><span class="trans">📚</span></label>
 
                             <input type="radio" class="btn-check" name="authorSort" id="sortBirsday" value="birthday">
                             <label
@@ -194,7 +194,7 @@
                                     for="sortBirsday"
                                     style="font-size: 0.8rem;"
                                     title="По дате рождения"
-                            >📅</label>
+                            ><span class="trans">📅</span></label>
 
                             <input type="radio" class="btn-check" name="authorSort" id="sortBookmarks" value="bm">
                             <label
@@ -202,7 +202,7 @@
                                     for="sortBookmarks"
                                     style="font-size: 0.8rem;"
                                     title="По количеству закладок"
-                            >🔖</label>
+                            ><span class="trans">🔖</span></label>
                         </div>
                     </div>
                 </div>

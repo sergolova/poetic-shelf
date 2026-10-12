@@ -358,8 +358,8 @@ class PoemUI {
                 </div>
               </div>
               <div class="hero-author-meta d-flex align-items-center gap-2 text-muted">
-                <span ${hideYears ? 'style="display:none"' : ''}>📅 ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} ${ageString}&nbsp;&nbsp;•</span>
-                📖
+                <span ${hideYears ? 'style="display:none"' : ''}><span class="trans">📅</span> ${author.birthYear || '?'} — ${author.deathYear || 'наст. вр.'} ${ageString}&nbsp;&nbsp;•</span>
+                <span class="trans">📖</span>
                 <a class="view-all" href="#">${author.posts?.length || 0} произведений</a>
                 <span class="poem-nav-inline" role="navigation" aria-label="Переход между стихотворениями">
                   <button class="poem-nav-arrow poem-nav-prev" type="button" title="Предыдущее стихотворение (←)" aria-label="Предыдущее стихотворение"> &lt;&lt; </button>

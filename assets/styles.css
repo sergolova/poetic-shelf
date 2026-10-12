@@ -708,6 +708,7 @@ body.fullscreen-mode .main-content {
 a.view-all {
     color: var(--accent-color) !important;
     font-size: 0.95rem;
+    text-decoration: none;
 }
 
 /* Переход между стихотворениями: та же строка, что и «Ещё N >>» */
@@ -755,7 +756,7 @@ a.view-all {
     text-decoration: none;
 }
 
-.poem-nav-btn:hover {
+.view-all:hover, .poem-nav-btn:hover {
     color: var(--accent-hover) !important;
     text-decoration: underline;
 }
@@ -1466,4 +1467,13 @@ body.fullscreen-mode .authors-sidebar.query-selection {
 
 .bookmark-border {
     color: var(--accent-color) !important;
+}
+
+.monochrome-emoji {
+    filter: grayscale(0.5) sepia(0.52);
+}
+
+.trans {
+    color: rgba(0, 0, 0, 0.9);
+    filter: saturate(0.7) sepia(0.2);
 }
