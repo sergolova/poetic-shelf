@@ -233,7 +233,7 @@ class PoemUI {
                     const bookmarkIcon = this.renderBookmarkIcon(p.id, app.store.getPostBookmark(p.id));
                     return `<span class="author-post-item d-flex align-items-center justify-content-between py-2 px-3 ${isPostActive ? 'active' : ''}" data-post-id="${p.id}">
             <span class="author-post-title-wrapper">
-                <span class="author-post-title text-truncate">${escapeHtml(p.title)}</span>
+                <span class="author-post-title text-truncate">${this.highlightText(escapeHtml(p.title), q)}</span>
                 ${bookmarkIcon}
             </span>
             ${p.year ? `<span class="author-post-year text-muted flex-shrink-0 ms-2">${p.year}</span>` : ''}
@@ -510,7 +510,7 @@ class PoemUI {
     renderBookmarkButton(postId, state) {
         const active = Boolean(state);
         return `
-      <button class="btn btn-link text-muted p-0 ms-2 bookmark-btn svg-button ${active ? 'active' : ''}" title="${active ? 'Убрать закладку (B)' : 'Поставить закладку (B)'}" data-post-id="${postId}">
+      <button class="btn btn-link bookmark-border p-0 ms-2 bookmark-btn svg-button ${active ? 'active' : ''}" title="${active ? 'Убрать закладку (B)' : 'Поставить закладку (B)'}" data-post-id="${postId}">
         <svg class="bookmark-icon bookmark-empty ${active ? 'd-none' : ''}" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
         </svg>

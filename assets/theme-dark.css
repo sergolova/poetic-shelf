@@ -51,6 +51,10 @@
     color: var(--text-muted) !important;
 }
 
+[data-theme="dark"] .bookmark-border {
+    color: #e5a051 !important;
+}
+
 [data-theme="dark"] .border,
 [data-theme="dark"] .border-bottom,
 [data-theme="dark"] .border-top {

@@ -707,6 +707,7 @@ body.fullscreen-mode .main-content {
 
 a.view-all {
     color: var(--accent-color) !important;
+    font-size: 0.95rem;
 }
 
 /* Переход между стихотворениями: та же строка, что и «Ещё N >>» */
@@ -1457,4 +1458,12 @@ a.view-all {
 
 article:last-child {
     margin-bottom: 5px !important;
+}
+
+body.fullscreen-mode .authors-sidebar.query-selection {
+    outline: none !important;
+}
+
+.bookmark-border {
+    color: var(--accent-color) !important;
 }
