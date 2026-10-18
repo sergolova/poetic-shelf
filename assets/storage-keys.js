@@ -37,8 +37,11 @@ const STORAGE_KEYS = {
     /** Метки времени последнего просмотра: { authorId: timestamp }. */
     LAST_VIEWED: 'lastViewed',
 
-    /** Закладки произведений: { postId: true }. */
+    /** Устаревший ключ закладок; читается только для переноса в данные библиотеки. */
     POST_BOOKMARKS: 'postBookmarks',
+
+    /** Выбранный фильтр тегов произведений. */
+    POST_TAG_FILTER: 'postTagFilter',
 
     /** Выбранный автор (id). */
     SELECTED_AUTHOR: 'selectedAuthorId',

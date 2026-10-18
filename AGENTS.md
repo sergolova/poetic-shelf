@@ -13,7 +13,7 @@
 | Класс | Файл | Роль |
 |---|---|---|
 | `PoemApp` | `assets/app.js` | Контроллер. Инициализация, привязка событий, координация Store и UI |
-| `PoemStore` | `assets/store.js` | Модель. CRUD авторов/произведений, localStorage, импорт/экспорт, закладки, поиск дубликатов |
+| `PoemStore` | `assets/store.js` | Модель. CRUD авторов/произведений, localStorage, импорт/экспорт, закладки и теги, поиск дубликатов |
 | `PoemUI` | `assets/ui.js` | Представление. Рендеринг списков, карточек, модальных окон, навигация |
 | `TimelineBar` | `assets/timebar.js` | Компонент временной шкалы (годы, точки, выпадающие меню) |
 | `DuplicateDetector` | `assets/DuplicateDetector.js` | Поиск дубликатов авторов и произведений |
@@ -70,9 +70,14 @@
   contentHtml,                    // HTML разметка (если включён HTML-режим)
   year,                           // number | null
   note,                           // заметка/контекст
-  links: [{ title, url }]         // внешние ссылки
+  links: [{ title, url }],        // внешние ссылки
+  tags: string[],                 // необязательные теги произведения
+  bookmarked: true                // необязательная закладка
 }
 ```
+
+Теги хранятся в `Post.tags`; один тег может быть назначен нескольким произведениям.
+Закладки хранятся в `Post.bookmarked` и переносятся при импорте/экспорте библиотеки.
 
 **Поля `translation` у `Post` нет.** Раньше оно было описано здесь, но код его
 нигде не читает и не пишет, а в реальной библиотеке (194 произведения) оно
@@ -120,7 +125,7 @@ $(document).ready(() => {
 - **Нет сборщика** — все файлы загружаются как обычные `<script>`. При добавлении нового файла его нужно подключить в `index.html` в правильном порядке
 - **jQuery для DOM** — используется `$()` для выборки, событий, анимаций. Не смешивать с React/Vue
 - **Bootstrap модалки** — `bootstrap.Modal` для форм авторов, произведений, выбора авторов для EPUB, поиска дубликатов
-- **localStorage как БД** — все данные в одном ключе `STORAGE_KEYS.DATA` (`poetic_shelf_data`). Настройки лежат в отдельных ключах, объявленных в `storage-keys.js`: `THEME`, `FONT_SIZE`, `COLUMNS`, `AUTHOR_SORT`, `POST_BOOKMARKS`, `LAST_VIEWED`, `SELECTED_AUTHOR`, `SELECTED_POST`, `SIDEBAR_WIDTH`, `EPUB_AUTHORS`, `TITLE_INDEX`, `SUBTITLE_INDEX`
+- **localStorage как БД** — все данные в одном ключе `STORAGE_KEYS.DATA` (`poetic_shelf_data`). Настройки лежат в отдельных ключах, объявленных в `storage-keys.js`: `THEME`, `FONT_SIZE`, `COLUMNS`, `AUTHOR_SORT`, `POST_TAG_FILTER`, `LAST_VIEWED`, `SELECTED_AUTHOR`, `SELECTED_POST`, `SIDEBAR_WIDTH`, `EPUB_AUTHORS`, `TITLE_INDEX`, `SUBTITLE_INDEX`. Старый `POST_BOOKMARKS` читается только при миграции закладок в `Post.bookmarked`.
 - **Счётчик изменений** — ключ `STORAGE_KEYS.UNSAVED_COUNT`, отображается бейджем на кнопке "Данные". Сбрасывается при экспорте
 - **Распознавание переводов** — `detectTranslationPattern()` в `ui.js` решает, показывать ли произведение в две колонки «оригинал | перевод» (кнопка `⇆`). Пороги — константы `TRANSLATION_*` рядом с функцией. Гейты `MIN_PAIRS` и `MIN_COVERAGE` обнуляют confidence ДО вычисления, поэтому неверные значения там дают тихое «не перевод», а не исключение
 - **XSS** — любые пользовательские данные, попадающие в `innerHTML`, обязательно проходят через `escapeHtml()`. Правило проверяется тестами

@@ -162,7 +162,7 @@
                         </button>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <label class="form-label small text-muted mb-0" style="font-size: 0.75rem;">Сортировка:</label>
+                        <label class="form-label small text-muted mb-0 post-authors-label">Сортировка</label>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="authorSort" id="sortAZ" value="az">
                             <label
@@ -204,6 +204,13 @@
                                     title="По количеству закладок"
                             ><span class="trans">🔖</span></label>
                         </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <label class="form-label small text-muted mb-0 post-authors-label" for="postTagFilter">Теги</label>
+                        <select class="form-select form-select-sm post-tag-filter" id="postTagFilter" aria-label="Фильтр по тегам">
+                            <option value="">Все теги</option>
+                        </select>
+                        <div id="clearPostTagFilter" class="post-tag-filter-clear d-none" role="button" tabindex="0" title="Сбросить фильтр тегов" aria-label="Сбросить фильтр тегов">×</div>
                     </div>
                 </div>
 
@@ -478,32 +485,56 @@
     </div>
 </div>
 
-<!-- Модальное окно: Выбор авторов для EPUB -->
+<!-- Модальное окно: Выбор дополнительных данных библиотеки при сохранении и загрузке -->
+<div class="modal fade" id="libraryTransferModal" tabindex="-1" aria-labelledby="libraryTransferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title font-display fw-bold mb-0" id="libraryTransferModalLabel">Сохранение библиотеки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-3" id="libraryTransferHelp">Выберите, включать ли теги и закладки в файл библиотеки.</p>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="transferTagsCheckbox" checked>
+                    <label class="form-check-label" for="transferTagsCheckbox" id="transferTagsLabel">Включить теги в файл</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="transferBookmarksCheckbox" checked>
+                    <label class="form-check-label" for="transferBookmarksCheckbox" id="transferBookmarksLabel">Включить закладки в файл</label>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-2 px-4">
+                <button type="button" class="btn btn-vintage-outline btn-sm" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-accent btn-sm rounded-pill px-4" id="confirmLibraryTransferBtn">Сохранить файл</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно: Настройка экспорта библиотеки в EPUB -->
 <div class="modal fade" id="epubAuthorsModal" tabindex="-1" aria-labelledby="epubAuthorsLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom py-3 d-flex justify-content-between align-items-center">
                 <h5 class="modal-title font-display fw-bold mb-0" id="epubAuthorsLabel">
-                    <i class="bi bi-book me-2"></i>Выбор авторов для EPUB
+                    <i class="bi bi-book me-2"></i>Настройка экспорта в EPUB
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body p-4">
-                <p class="text-muted small mb-3">Отметьте авторов, которые будут включены в EPUB-файл:</p>
-                <div id="epubAuthorsList" class="d-flex flex-column gap-2"></div>
-
-                <hr class="my-4">
-                <h6 class="fw-bold mb-3">Данные книги</h6>
-                <div class="row g-3">
-                    <div class="col-12">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
                         <label for="epubBookTitle" class="form-label small fw-bold text-muted mb-1">Название</label>
                         <input type="text" id="epubBookTitle" class="form-control" placeholder="Буквы по центру">
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-6">
                         <label for="epubBookSubtitle" class="form-label small fw-bold text-muted mb-1">Подзаголовок</label>
                         <input type="text" id="epubBookSubtitle" class="form-control" placeholder="Ещё буквы">
                     </div>
                 </div>
+                <div class="small text-muted mb-3" id="epubSelectionSummary" aria-live="polite"></div>
+                <div id="epubAuthorsList" class="d-flex flex-column gap-2"></div>
             </div>
             <div class="modal-footer border-top">
                 <button type="button" class="btn btn-outline-secondary btn-sm" id="epubSelectAllBtn">Выбрать всех</button>

@@ -25,6 +25,9 @@ class PoemApp {
         this.searchTimer = null;
         this.poemResizeObserver = null;
         this._prevSearchQuery = '';
+        this.pendingLibraryImport = null;
+        this.libraryTransferMode = null;
+        this.libraryTransferModal = null;
     }
 
     /**
@@ -103,6 +106,11 @@ class PoemApp {
         let searchQuery = $('#searchInput').val();
         searchQuery = convertEngToRus(searchQuery);
 
+        if (this.store.selectedPostTag && !this.store.getPostTagCounts().some(([tag]) => tag.toLocaleLowerCase() === this.store.selectedPostTag.toLocaleLowerCase())) {
+            this.store.selectedPostTag = '';
+            this.store.saveSettings();
+        }
+
         const authors = this.store.getAuthors(searchQuery);
         const prevSearchQuery = this._prevSearchQuery || '';
         const searchChanged = searchQuery !== prevSearchQuery;
@@ -112,8 +120,19 @@ class PoemApp {
             this.store.selectedAuthorId = authors[0].id;
         }
 
-        if (searchQuery && !authors.some(a => a.id === this.store.selectedAuthorId) && authors.length > 0) {
+        if (this.store.selectedAuthorId && !authors.some(a => a.id === this.store.selectedAuthorId) && authors.length > 0) {
             this.store.selectedAuthorId = authors[0].id;
+            this.store.selectedPostId = null;
+        } else if (authors.length === 0) {
+            this.store.selectedAuthorId = null;
+            this.store.selectedPostId = null;
+        }
+
+        if (this.store.selectedPostId && this.store.selectedPostTag) {
+            const selectedPost = (this.store.data.authors || []).flatMap(a => a.posts || []).find(p => p.id === this.store.selectedPostId);
+            if (!selectedPost || !this.store.getPostTags(selectedPost).some(tag => tag.toLocaleLowerCase() === this.store.selectedPostTag.toLocaleLowerCase())) {
+                this.store.selectedPostId = null;
+            }
         }
 
         // При изменении поиска — переходим к первому совпавшему посту
@@ -123,7 +142,7 @@ class PoemApp {
 
             for (const author of authors) {
                 if (author.posts?.length > 0) {
-                    const found = author.posts.find(post => isPostMatch(post, q));
+                    const found = author.posts.find(post => isPostMatch(post, q) && (!this.store.selectedPostTag || this.store.getPostTags(post).some(tag => tag.toLocaleLowerCase() === this.store.selectedPostTag.toLocaleLowerCase())));
                     if (found) {
                         firstFoundPostId = found.id;
                         this.store.selectedAuthorId = author.id;
@@ -304,8 +323,14 @@ class PoemApp {
 
         if (!$navPrev.length || !$navNext.length) return;
 
-        $navPrev.on('click', () => this.navigatePoem(-1));
-        $navNext.on('click', () => this.navigatePoem(1));
+        $navPrev.on('click', () => {
+            this.clearPostTagFilter();
+            this.navigatePoem(-1);
+        });
+        $navNext.on('click', () => {
+            this.clearPostTagFilter();
+            this.navigatePoem(1);
+        });
 
         // На краях списка кнопку глушим, а не оставляем кликабельной вхолостую:
         // видно, где конец, и не гадать, почему ничего не происходит.
@@ -315,6 +340,14 @@ class PoemApp {
             $navPrev.prop('disabled', currentIndex <= 0);
             $navNext.prop('disabled', currentIndex >= this.getAuthorPosts().length - 1);
         }
+    }
+
+    /** Снимает фильтр тегов и сохраняет его состояние. */
+    clearPostTagFilter() {
+        if (!this.store.selectedPostTag) return false;
+        this.store.selectedPostTag = '';
+        this.store.saveSettings();
+        return true;
     }
 
     /**
@@ -1120,6 +1153,7 @@ class PoemApp {
         // «Смотреть все» — сброс поиска и фокус в сайдбаре
         $(document).on('click', 'a.view-all', (e) => {
             e.preventDefault();
+            this.clearPostTagFilter();
             this.resetSearchQuery();
             this.store.selectedPostId = null;
             this.refresh(false);
@@ -1407,6 +1441,61 @@ class PoemApp {
             else this.updateSidebarBookmarksCount(postId);
         });
 
+        $('#postTagFilter').on('change', (e) => {
+            this.store.selectedPostTag = $(e.currentTarget).val() || '';
+            this.store.selectedPostId = null;
+            this.store.saveSettings();
+            this.refresh(false);
+        });
+
+        $(document).on('click keydown', '#clearPostTagFilter', (e) => {
+            if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            if (!this.clearPostTagFilter()) return;
+            this.store.selectedPostId = null;
+            this.refresh(false);
+        });
+
+        $(document).on('click', '.clear-post-tag-filter', () => {
+            this.store.selectedPostTag = '';
+            this.store.selectedPostId = null;
+            this.store.saveSettings();
+            this.refresh(false);
+        });
+
+        $(document).on('click', '.post-tag-add', (e) => {
+            e.stopPropagation();
+            const $control = $(e.currentTarget).closest('.post-tags-control');
+            $control.find('.post-tag-form').toggleClass('d-none');
+            $control.find('.post-tag-input').trigger('focus');
+        });
+
+        $(document).on('click', '.post-tag-remove', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const $button = $(e.currentTarget);
+            if (this.store.updatePostTag($button.data('post-id'), $button.data('tag'), false)) this.refresh(false);
+        });
+
+        $(document).on('change', '.post-tag-existing', (e) => {
+            const $form = $(e.currentTarget).closest('.post-tag-form');
+            if ($(e.currentTarget).val()) $form.find('.post-tag-input').val('');
+        });
+
+        $(document).on('input', '.post-tag-input', (e) => {
+            if ($(e.currentTarget).val()) $(e.currentTarget).closest('.post-tag-form').find('.post-tag-existing').val('');
+        });
+
+        $(document).on('submit', '.post-tag-form', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const $form = $(e.currentTarget);
+            const tag = $form.find('.post-tag-existing').val() || $form.find('.post-tag-input').val();
+            const postId = $form.closest('.post-tags-control').data('post-id');
+            if (this.store.updatePostTag(postId, tag, true)) this.refresh(false);
+            else $form.find('.post-tag-input').trigger('focus');
+        });
+
         // Сохранение формы произведения
         $('#postForm').on('submit', (e) => {
             e.preventDefault();
@@ -1509,13 +1598,39 @@ class PoemApp {
      */
     bindDataEvents() {
         $('#exportBtn').on('click', () => {
-            this.store.exportJson();
-            this.store.markAsExported();
+            this.openLibraryTransferOptions('export');
         });
 
         $('#exportEpubBtn').on('click', () => this.openEpubAuthorsModal());
 
         $('#importBtn').on('click', () => $('#importFileInput').click());
+
+        this.libraryTransferModal = new bootstrap.Modal(document.getElementById('libraryTransferModal'));
+        $('#libraryTransferModal').on('hidden.bs.modal', () => {
+            this.pendingLibraryImport = null;
+            this.libraryTransferMode = null;
+        });
+        $('#confirmLibraryTransferBtn').on('click', () => {
+            const options = {
+                includeTags: $('#transferTagsCheckbox').is(':checked'),
+                includeBookmarks: $('#transferBookmarksCheckbox').is(':checked')
+            };
+
+            try {
+                if (this.libraryTransferMode === 'export') {
+                    this.store.exportJson(options);
+                    this.store.markAsExported();
+                } else if (this.libraryTransferMode === 'import' && this.pendingLibraryImport) {
+                    this.store.importJson(this.pendingLibraryImport, options);
+                    this.refresh();
+                }
+            } catch {
+                alert(this.libraryTransferMode === 'import' ? 'Ошибка загрузки файла JSON' : 'Не удалось сохранить файл JSON');
+                return;
+            }
+
+            this.libraryTransferModal.hide();
+        });
 
         // Очистка хранилища с предупреждением
         $('#clearStorageBtn').on('click', () => {
@@ -1544,8 +1659,7 @@ class PoemApp {
             try {
                 const res = await fetch('example.json');
                 if (!res.ok) throw new Error('not found');
-                this.store.importJson(await res.json());
-                this.refresh();
+                this.openLibraryTransferOptions('import', await res.json());
             } catch {
                 alert('Не удалось загрузить example.json.\n\n'
                     + 'Откройте приложение через локальный сервер (npx serve .) '
@@ -1556,17 +1670,37 @@ class PoemApp {
         $('#importFileInput').on('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            e.target.value = '';
             const reader = new FileReader();
             reader.onload = (evt) => {
                 try {
-                    this.store.importJson(JSON.parse(evt.target.result));
-                    this.refresh();
+                    this.openLibraryTransferOptions('import', JSON.parse(evt.target.result));
                 } catch {
                     alert('Ошибка чтения файла JSON');
                 }
             };
             reader.readAsText(file);
         });
+    }
+
+    /** Открывает выбор полей библиотеки для сохранения или загрузки. */
+    openLibraryTransferOptions(mode, importData = null) {
+        if (mode === 'import' && !Array.isArray(importData) && !Array.isArray(importData?.authors)) {
+            throw new Error('JSON не содержит список авторов библиотеки');
+        }
+        this.libraryTransferMode = mode;
+        this.pendingLibraryImport = mode === 'import' ? importData : null;
+        const isExport = mode === 'export';
+
+        $('#libraryTransferModalLabel').text(isExport ? 'Сохранение библиотеки' : 'Загрузка библиотеки');
+        $('#libraryTransferHelp').text(isExport
+            ? 'Выберите, включать ли теги и закладки в файл библиотеки.'
+            : 'Выберите, загружать ли теги и закладки из файла.');
+        $('#transferTagsLabel').text(isExport ? 'Включить теги в файл' : 'Загрузить теги из файла');
+        $('#transferBookmarksLabel').text(isExport ? 'Включить закладки в файл' : 'Загрузить закладки из файла');
+        $('#confirmLibraryTransferBtn').text(isExport ? 'Сохранить файл' : 'Загрузить библиотеку');
+        $('#transferTagsCheckbox, #transferBookmarksCheckbox').prop('checked', true);
+        this.libraryTransferModal.show();
     }
 
     /* ==========================================================================
@@ -1612,21 +1746,35 @@ class PoemApp {
                     <label class="form-check-label d-flex justify-content-between align-items-center w-100"
                            for="epub_author_${author.id}">
                         <span>${escapeHtml(fullName)}</span>
-                        <span class="badge bg-secondary rounded-pill">${postsCount} ${this.ui.getPostWord(postsCount)}.</span>
+                        <span class="badge bg-secondary">${postsCount}</span>
                     </label>
                 </div>
             `);
             listEl.append(item);
         });
 
+        const updateEpubSummary = () => {
+            const selectedAuthors = $('.epub-author-checkbox:checked');
+            let selectedPostsCount = 0;
+            selectedAuthors.each((_, checkbox) => {
+                const author = allAuthors.find(item => item.id === $(checkbox).val());
+                selectedPostsCount += author?.posts?.length || 0;
+            });
+            $('#epubSelectionSummary').text(`В EPUB попадут: авторов — ${selectedAuthors.length}, произведений — ${selectedPostsCount}`);
+        };
+        listEl.off('change.epubSummary').on('change.epubSummary', '.epub-author-checkbox', updateEpubSummary);
+        updateEpubSummary();
+
         // Обработчик «Выбрать всех»
         $('#epubSelectAllBtn').off('click').on('click', () => {
             $('.epub-author-checkbox').prop('checked', true);
+            updateEpubSummary();
         });
 
         // Обработчик «Снять всех»
         $('#epubDeselectAllBtn').off('click').on('click', () => {
             $('.epub-author-checkbox').prop('checked', false);
+            updateEpubSummary();
         });
 
         // Обработчик «Скачать»

@@ -58,6 +58,7 @@ class PoemStore {
         this.authorSortMode = SORT_AUTHORS.NONE;  // см. SORT_AUTHORS в storage-keys.js
         this.lastViewed = {};           // { authorId: timestamp }
         this.postBookmarks = {};        // { postId: true }
+        this.selectedPostTag = '';
     }
 
     /**
@@ -65,6 +66,7 @@ class PoemStore {
      */
     async init() {
         this.authorSortMode = localStorage.getItem(STORAGE_KEYS.AUTHOR_SORT) || SORT_AUTHORS.NONE;
+        this.selectedPostTag = localStorage.getItem(STORAGE_KEYS.POST_TAG_FILTER) || '';
 
         try {
             const v = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_VIEWED));
@@ -75,6 +77,7 @@ class PoemStore {
             const v = JSON.parse(localStorage.getItem(STORAGE_KEYS.POST_BOOKMARKS));
             this.postBookmarks = (v && typeof v === 'object') ? v : {};
         } catch { this.postBookmarks = {}; }
+        const legacyBookmarksRaw = localStorage.getItem(STORAGE_KEYS.POST_BOOKMARKS);
 
         const local = localStorage.getItem(STORAGE_KEYS.DATA);
         if (local) {
@@ -88,6 +91,22 @@ class PoemStore {
             }
         } else {
             await this.loadDefaultJson();
+        }
+
+        // Переносим прежние закладки из отдельной настройки в данные библиотеки.
+        for (const author of this.data.authors || []) {
+            for (const post of author.posts || []) {
+                if (typeof post.bookmarked === 'boolean') {
+                    if (post.bookmarked) this.postBookmarks[post.id] = true;
+                    else delete this.postBookmarks[post.id];
+                } else if (this.postBookmarks[post.id]) {
+                    post.bookmarked = true;
+                }
+            }
+        }
+        if (legacyBookmarksRaw !== null) {
+            localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify({ data: this.data }));
+            localStorage.removeItem(STORAGE_KEYS.POST_BOOKMARKS);
         }
     }
 
@@ -151,9 +170,9 @@ class PoemStore {
 
     /** Сохраняет пользовательские настройки и состояние просмотров. */
     saveSettings() {
-        localStorage.setItem(STORAGE_KEYS.POST_BOOKMARKS, JSON.stringify(this.postBookmarks));
         localStorage.setItem(STORAGE_KEYS.LAST_VIEWED,    JSON.stringify(this.lastViewed));
         localStorage.setItem(STORAGE_KEYS.AUTHOR_SORT,    this.authorSortMode);
+        localStorage.setItem(STORAGE_KEYS.POST_TAG_FILTER, this.selectedPostTag);
     }
 
     /** Сохраняет ширину сайдбара. */
@@ -219,8 +238,16 @@ class PoemStore {
      * @param {boolean} state
      */
     toggleBookmark(postId, state = true) {
-        this.postBookmarks[postId] = state;
-        this.saveSettings();
+        const post = (this.data.authors || []).flatMap(author => author.posts || []).find(item => item.id === postId);
+        if (!post) return;
+        if (state) {
+            this.postBookmarks[postId] = true;
+            post.bookmarked = true;
+        } else {
+            delete this.postBookmarks[postId];
+            delete post.bookmarked;
+        }
+        this.save();
     }
 
     /** @param {string} postId @returns {boolean} */
@@ -235,6 +262,37 @@ class PoemStore {
      */
     countAuthorBookmarks(author) {
         return (author.posts || []).filter(p => this.getPostBookmark(p.id)).length;
+    }
+
+    /** Возвращает число произведений с каждым тегом. */
+    getPostTagCounts() {
+        const counts = new Map();
+        for (const author of this.data.authors || []) {
+            for (const post of author.posts || []) {
+                for (const tag of this.getPostTags(post)) counts.set(tag, (counts.get(tag) || 0) + 1);
+            }
+        }
+        return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b, 'ru'));
+    }
+
+    /** @param {Object} post @returns {string[]} */
+    getPostTags(post) {
+        return Array.isArray(post?.tags) ? post.tags.filter(tag => typeof tag === 'string' && tag.trim()) : [];
+    }
+
+    /** Добавляет или удаляет тег произведения и сохраняет библиотеку. */
+    updatePostTag(postId, tag, add = true) {
+        const post = (this.data.authors || []).flatMap(a => a.posts || []).find(p => p.id === postId);
+        const cleanTag = String(tag || '').trim().replace(/^#+/, '').trim().slice(0, 40);
+        if (!post || !cleanTag) return false;
+        const tags = this.getPostTags(post);
+        const existing = tags.find(value => value.toLocaleLowerCase() === cleanTag.toLocaleLowerCase());
+        if (add && !existing) tags.push(cleanTag);
+        else if (!add && existing) tags.splice(tags.indexOf(existing), 1);
+        else return false;
+        post.tags = tags;
+        this.save();
+        return true;
     }
 
 
@@ -255,6 +313,14 @@ class PoemStore {
                     (author.posts || []).some(post => isPostMatch(post, q));
             })
             : [...this.data.authors];
+
+        if (this.selectedPostTag) {
+            const tag = this.selectedPostTag.toLocaleLowerCase();
+            authors = authors.filter(author => (author.posts || []).some(post => {
+                const matchesTag = this.getPostTags(post).some(value => value.toLocaleLowerCase() === tag);
+                return matchesTag && (!searchQuery.trim() || isPostMatch(post, searchQuery.toLowerCase().trim()) || isAuthorMatch(author, searchQuery.toLowerCase().trim()));
+            }));
+        }
 
         switch (this.authorSortMode) {
             case SORT_AUTHORS.BIRTHDAY:
@@ -615,6 +681,7 @@ class PoemStore {
     body { font-family: serif; margin: 5%; line-height: 1.4; }
     h2 { text-align: center; }
     .note, .p_year { font-size: 0.85em; color: #666; font-style: italic; }
+    .note { white-space: pre-wrap; }
     .stanza { margin: 0 0 1.2em; font-style: normal }
     .line { display: block; font-style: normal }
   </style>
@@ -697,8 +764,17 @@ class PoemStore {
     /**
      * Экспортирует библиотеку в JSON-файл (с нормализацией Unicode).
      */
-    exportJson() {
+    exportJson(options = {}) {
+        const includeTags = options.includeTags !== false;
+        const includeBookmarks = options.includeBookmarks !== false;
         const normalizedData = JSON.parse(JSON.stringify(this.data));
+
+        for (const author of normalizedData.authors || []) {
+            for (const post of author.posts || []) {
+                if (!includeTags) delete post.tags;
+                if (!includeBookmarks) delete post.bookmarked;
+            }
+        }
 
         const normalizeObj = (obj) => {
             if (!obj || typeof obj !== 'object') return;
@@ -739,7 +815,9 @@ class PoemStore {
      * Импортирует библиотеку из JSON-файла.
      * @param {Object} jsonData
      */
-    importJson(jsonData) {
+    importJson(jsonData, options = {}) {
+        const includeTags = options.includeTags !== false;
+        const includeBookmarks = options.includeBookmarks !== false;
         if (jsonData.authors) {
             this.data = {
                 meta: jsonData.meta || null,
@@ -750,6 +828,18 @@ class PoemStore {
                 authors: Array.isArray(jsonData) ? jsonData : (jsonData.authors || [])
             };
         }
+        this.postBookmarks = {};
+        for (const author of this.data.authors || []) {
+            for (const post of author.posts || []) {
+                if (!includeTags) delete post.tags;
+                if (includeBookmarks && post.bookmarked === true) {
+                    this.postBookmarks[post.id] = true;
+                } else {
+                    delete post.bookmarked;
+                }
+            }
+        }
+        localStorage.removeItem(STORAGE_KEYS.POST_BOOKMARKS);
         this.selectedAuthorId = this.data.authors.length > 0 ? this.data.authors[0].id : null;
         this.save();
     }
@@ -766,6 +856,7 @@ class PoemStore {
         this.selectedAuthorId = null;
         this.selectedPostId = null;
         this.postBookmarks = {};
+        localStorage.removeItem(STORAGE_KEYS.POST_BOOKMARKS);
         this.lastViewed = {};
         this.save();
         this.markAsExported();

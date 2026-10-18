@@ -180,6 +180,7 @@ class PoemUI {
      * @param {string} searchQuery
      */
     renderAuthorsList(authors, selectedId, selectedPostId = null, searchQuery = '') {
+        this.updatePostTagFilter();
         this.$authorsList.empty();
         this.$authorsCount.text(authors.length);
 
@@ -195,6 +196,8 @@ class PoemUI {
             // q непустой значит, что поиск уже идёт и авторы просто не нашлись.
             if (q) {
                 this.$authorsList.html('<div class="p-3 text-muted small">Авторы не найдены&nbsp;&nbsp;&nbsp;<a class="view-all" href="#">Сбросить поиск</a></div>');
+            } else if (app.store.selectedPostTag) {
+                this.$authorsList.html(`<div class="p-3 text-muted small">По тегу #${escapeHtml(app.store.selectedPostTag)} произведений не найдено. <button type="button" class="btn btn-link btn-sm p-0 clear-post-tag-filter">Сбросить фильтр</button></div>`);
             } else {
                 this.$authorsList.html(`
                     <div class="p-3 small">
@@ -211,12 +214,16 @@ class PoemUI {
             const isMatchedAuthor = q && isAuthorMatch(author, q);
 
             let authorPosts = author.posts || [];
+            if (app.store.selectedPostTag) {
+                const selectedTag = app.store.selectedPostTag.toLocaleLowerCase();
+                authorPosts = authorPosts.filter(p => app.store.getPostTags(p).some(tag => tag.toLocaleLowerCase() === selectedTag));
+            }
             if (q && authorPosts.length > 0) {
                 authorPosts = authorPosts.filter(p => isPostMatch(p, q));
             }
             this._sortPostsDefault(authorPosts);
 
-            const postsCount = (isMatchedAuthor && authorPosts.length === 0)
+            const postsCount = (isMatchedAuthor && authorPosts.length === 0 && !app.store.selectedPostTag)
                 ? author.posts.length
                 : authorPosts.length;
 
@@ -303,6 +310,10 @@ class PoemUI {
         if (q) {
             posts = posts.filter(p => isPostMatch(p, q));
         }
+        if (app.store.selectedPostTag) {
+            const selectedTag = app.store.selectedPostTag.toLocaleLowerCase();
+            posts = posts.filter(p => app.store.getPostTags(p).some(tag => tag.toLocaleLowerCase() === selectedTag));
+        }
 
         const displayPosts = selectedPostId
             ? posts.filter(p => p.id === selectedPostId)
@@ -314,7 +325,7 @@ class PoemUI {
         const postsHtml = !emptyHtml
             ? displayPosts.map(p => this.createPoemCardHtml(p, author, q)).join('')
             : `<div class="alert alert-light text-center border py-4 text-muted">
-          ${searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых произведений'}
+          ${app.store.selectedPostTag ? `У этого автора нет произведений с тегом #${escapeHtml(app.store.selectedPostTag)}.` : searchQuery ? 'В произведениях этого автора совпадений не найдено. <a class="view-all" href="#">Смотреть все</a>' : 'У этого автора пока нет сохранённых произведений'}
          </div>`;
 
         const hideYears = !author.birthYear && !author.deathYear;
@@ -456,6 +467,7 @@ class PoemUI {
         const writtenYears = (author?.birthYear && post.year) ? post.year - author.birthYear : '';
         const yearsWord = writtenYears ? this.getAgeWord(writtenYears) : '';
         const bookmarkBtn = this.renderBookmarkButton(post.id, app.store.getPostBookmark(post.id));
+        const tagControls = this.renderPostTagControls(post);
 
         const linksHtml = (post.links?.length > 0)
             ? `<div class="poem-links d-flex align-items-center gap-2 flex-wrap pt-2 border-top mt-3">
@@ -482,7 +494,7 @@ class PoemUI {
           <div class="d-flex align-items-center justify-content-between pb-0 border-bottom" style="height: 4em">
             <div class="post-header-wrapper">
               <h3 class="poem-title mb-0">${titleHtml}</h3>
-              <div class="post-bookmark-wrapper">${bookmarkBtn}</div>
+              <div class="post-bookmark-wrapper">${bookmarkBtn}${tagControls}</div>
             </div>
             <div class="d-flex align-items-center gap-2">
               ${post.year ? `<span class="poem-year-tag">${post.year} г ${writtenYears ? `, ${writtenYears} ${yearsWord}` : ''}</span>` : ''}
@@ -531,6 +543,38 @@ class PoemUI {
         return `<svg class="bookmark-icon bookmark-filled item-bookmark-filled" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
       </svg>`;
+    }
+
+    /** Отрисовывает теги произведения и компактное меню управления ими. */
+    renderPostTagControls(post) {
+        const tags = app.store.getPostTags(post);
+        const tagHtml = tags.map(tag => `<span class="post-tag-item">#${escapeHtml(tag)}<button type="button" class="post-tag-remove" data-post-id="${escapeHtml(post.id)}" data-tag="${escapeHtml(tag)}" title="Удалить тег #${escapeHtml(tag)}" aria-label="Удалить тег #${escapeHtml(tag)}">×</button></span>`).join('');
+        const options = app.store.getPostTagCounts().map(([tag]) => `<option value="${escapeHtml(tag)}">#${escapeHtml(tag)}</option>`).join('');
+        return `<div class="post-tags-control" data-post-id="${escapeHtml(post.id)}">
+          ${tagHtml}
+          <button type="button" class="post-tag-add" title="Добавить тег" aria-label="Добавить тег">+</button>
+          <form class="post-tag-form d-none">
+            <select class="form-select form-select-sm post-tag-existing" aria-label="Выбрать тег"><option value="">Новый тег…</option>${options}</select>
+            <input class="form-control form-control-sm post-tag-input" type="text" maxlength="40" placeholder="Название тега" aria-label="Название нового тега">
+            <button class="btn btn-sm btn-vintage-outline" type="submit">Добавить</button>
+          </form>
+        </div>`;
+    }
+
+    /** Обновляет список тегов и количества в фильтре сайдбара. */
+    updatePostTagFilter() {
+        const $filter = $('#postTagFilter');
+        if (!$filter.length) return;
+        const selected = app.store.selectedPostTag;
+        const options = ['<option value="">Все теги</option>', ...app.store.getPostTagCounts().map(([tag, count]) =>
+            `<option value="${escapeHtml(tag)}">#${escapeHtml(tag)} (${count})</option>`
+        )];
+        $filter.html(options.join('')).val(selected);
+        if ($filter.val() !== selected) {
+            app.store.selectedPostTag = '';
+            $filter.val('');
+        }
+        $('#clearPostTagFilter').toggleClass('d-none', !app.store.selectedPostTag);
     }
 
 
@@ -743,27 +787,26 @@ class PoemUI {
      * @returns {string}
      */
     renderBookmarksDropdown() {
-        const ids = Object.keys(app.store.postBookmarks || {});
-
-        if (ids.length === 0) {
-            return `<div class="timeline-dropdown-menu shadow-sm show">
-                <div class="timeline-dropdown-header">Закладки</div>
-                <div class="p-3 text-muted text-center style-sm">Нет закладок</div>
-            </div>`;
-        }
-
         const bookmarkedPosts = [];
         app.store.data.authors.forEach(author => {
             (author.posts || []).forEach(post => {
-                if (app.store.postBookmarks[post.id]) {
+                if (app.store.getPostBookmark(post.id)) {
                     bookmarkedPosts.push({...post, authorId: author.id});
                 }
             });
         });
 
-        sortPosts(bookmarkedPosts)
+        const title = `Закладки (${bookmarkedPosts.length})`;
+        if (bookmarkedPosts.length === 0) {
+            return `<div class="timeline-dropdown-menu shadow-sm show">
+                <div class="timeline-dropdown-header">${title}</div>
+                <div class="p-3 text-muted text-center style-sm">Нет закладок</div>
+            </div>`;
+        }
 
-        return this.renderPostsDropdown(bookmarkedPosts, 'Закладки', 'show');
+        sortPosts(bookmarkedPosts);
+
+        return this.renderPostsDropdown(bookmarkedPosts, title, 'show');
     }
 
     /**
