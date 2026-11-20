@@ -460,7 +460,10 @@ class PoemUI {
         } else {
             bodyHtml = `<div class="poem-text-container mt-4"><pre class="poem-content">${formatLines(rawContent)}</pre></div>`;
         }
-        const titleHtml = query ? this.highlightText(escapeHtml(post.title), query) : escapeHtml(post.title);
+        // Ограничиваем заголовок в карточке, включая старые импортированные записи.
+        const fullTitle = String(post.title || '');
+        const displayTitle = fullTitle.length > 100 ? `${fullTitle.slice(0, 99).trimEnd()}…` : fullTitle;
+        const titleHtml = query ? this.highlightText(escapeHtml(displayTitle), query) : escapeHtml(displayTitle);
         const noteHtml = (post.note && query) ? this.highlightText(escapeHtml(post.note), query) : escapeHtml(post.note);
         const isYoutube = (url) => /(youtube\.com|youtu\.be)/i.test(url);
         const postMatch = query && isPostMatch(post, query);
@@ -491,7 +494,7 @@ class PoemUI {
         return `
       <article class="${postMatch ? 'query-selection' : ''} paper-bg-light poem-card card border-0 shadow-sm mb-4" data-author-id="${author.id}" data-post-id="${post.id}">
         <div class="card-body p-4 pt-0">
-          <div class="d-flex align-items-center justify-content-between pb-0 border-bottom" style="height: 4em">
+          <div class="poem-card-header d-flex align-items-center justify-content-between pb-0 border-bottom">
             <div class="post-header-wrapper">
               <h3 class="poem-title mb-0">${titleHtml}</h3>
               <div class="post-bookmark-wrapper">${bookmarkBtn}${tagControls}</div>

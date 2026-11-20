@@ -703,6 +703,12 @@ class PoemApp {
         return first ? first.replace(/[.,;:!?—–\-]+$/, '').trim() : 'Без названия';
     }
 
+    /** Ограничивает заголовок ста символами, обозначая обрезку многоточием. */
+    _limitPostTitle(title) {
+        const text = String(title || '');
+        return text.length > 100 ? `${text.slice(0, 99).trimEnd()}…` : text;
+    }
+
     /**
      * Убирает все нецифровые символы из строки.
      * Используется только в bindAuthorEvents() и bindPostEvents().
@@ -1370,6 +1376,14 @@ class PoemApp {
      * ссылки, закладки, HTML-режим, случайное произведение.
      */
     bindPostEvents() {
+        $(document).on('input', '#postTitle', (e) => {
+            const limitedTitle = this._limitPostTitle(e.currentTarget.value);
+            if (limitedTitle !== e.currentTarget.value) {
+                e.currentTarget.value = limitedTitle;
+                e.currentTarget.setSelectionRange(limitedTitle.length, limitedTitle.length);
+            }
+        });
+
         $(document).on('click', '#addPostBtn', () => {
             if (!this.store.selectedAuthorId) {
                 alert('Сначала выберите или создайте автора!');
@@ -1518,7 +1532,7 @@ class PoemApp {
             }
 
             const rawTitle = $('#postTitle').val().trim();
-            const title = rawTitle || this._extractFirstLine(isHtml ? contentHtml : contentText, isHtml);
+            const title = this._limitPostTitle(rawTitle || this._extractFirstLine(isHtml ? contentHtml : contentText, isHtml));
             const yearRaw = this._cleanNumericValue($('#postYear').val());
 
             const links = [];

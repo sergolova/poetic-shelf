@@ -814,10 +814,22 @@ a.view-all {
 }
 
 .poem-title {
+    flex: 1 1 auto;
+    min-width: 0;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: 1.35rem;
     color: var(--text-main);
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.poem-card-header {
+    min-height: 4em;
+    gap: 1rem;
 }
 
 .poem-year-tag {
@@ -943,9 +955,15 @@ a.view-all {
 /* Управление закладками произведения */
 .post-header-wrapper {
     display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
     gap: 12px;
     align-items: center;
     justify-content: left;
+}
+
+.poem-card-header > .d-flex:last-child {
+    flex: 0 0 auto;
 }
 
 .post-bookmark-wrapper {
