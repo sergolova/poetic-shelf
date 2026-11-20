@@ -493,6 +493,33 @@ class PoemStore {
         return new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
     }
 
+    /**
+     * Подготавливает HTML произведения к вставке в XHTML-файл EPUB.
+     * Сохраняет абзацы и переносы строк, удаляя атрибуты и неподдерживаемую разметку.
+     * @param {string} html
+     * @returns {string}
+     */
+    formatEpubHtml(html) {
+        const document = new DOMParser().parseFromString(html, 'text/html');
+        const allowedTags = new Set([
+            'p', 'div', 'br', 'blockquote', 'ul', 'ol', 'li',
+            'em', 'strong', 'i', 'b', 'u', 'sub', 'sup'
+        ]);
+
+        const serializeNode = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.nodeValue || '');
+            if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+            const tagName = node.tagName.toLowerCase();
+            const children = Array.from(node.childNodes, serializeNode).join('');
+            if (!allowedTags.has(tagName)) return children;
+            if (tagName === 'br') return '<br />';
+            return `<${tagName}>${children}</${tagName}>`;
+        };
+
+        return Array.from(document.body.childNodes, serializeNode).join('');
+    }
+
     async cropImageToCircle(base64Data) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -663,9 +690,15 @@ class PoemStore {
 
             (author.posts || []).forEach((post, pIdx) => {
                 const postId   = `post_${aIdx}_${pIdx}`;
-                let postBody   = post.contentHtml ? this.stripTags(post.contentHtml) : post.content;
+                let postBody;
 
-                if (postBody) {
+                if (post.contentHtml) {
+                    postBody = this.formatEpubHtml(post.contentHtml);
+                } else {
+                    postBody = post.content || '';
+                }
+
+                if (postBody && !post.contentHtml) {
                     postBody = postBody.split(/\n\s*\n/).map(stanza =>
                         `<div class="stanza">${stanza.trim().split(/\n/).map(l => `<span class="line">${escapeHtml(l)}</span>`).join('')}</div>`
                     ).join('\n');
@@ -684,6 +717,9 @@ class PoemStore {
     .note { white-space: pre-wrap; }
     .stanza { margin: 0 0 1.2em; font-style: normal }
     .line { display: block; font-style: normal }
+    .content p { margin: 0 0 1em; }
+    .content blockquote { margin: 1em 2em; }
+    .content ul, .content ol { margin: 1em 0; padding-left: 2em; }
   </style>
 </head>
 <body>
